@@ -34,7 +34,7 @@ function runtests(exportingTool)
     end
 end
 
-@testset "FMI.jl" begin
+@testset "FMIImport.jl" begin
     if Sys.iswindows()
         @info "Automated testing is supported on Windows."
         for exportingTool in exportingToolsWindows
