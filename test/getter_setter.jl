@@ -55,10 +55,10 @@ cacheString = ""
 @test fmi2GetString(comp, stringValueReferences[1]) == rndString
 
 if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
-    fmi2Set(fmuStruct, 
+    fmi2Set(comp, 
             [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]], 
             [rndReal,                rndInteger,                rndBoolean,                rndString])
-    @test fmi2Get(fmuStruct, 
+    @test fmi2Get(comp, 
                   [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]]) == 
                   [rndReal,                rndInteger,                rndBoolean,                rndString]
 end 
