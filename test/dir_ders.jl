@@ -40,10 +40,12 @@ for i in 1:fmi2GetNumberOfStates(myFMU)
     end
 end
 
-jac = fmi2GetJacobian(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-@test jac ≈ hcat(targetValues...)
+if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
+    jac = fmi2GetJacobian(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+    @test jac ≈ hcat(targetValues...)
 
-jac = fmi2SampleDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-@test jac ≈ hcat(targetValues...)
+    jac = fmi2SampleDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+    @test jac ≈ hcat(targetValues...)
+end
 
 fmi2Unload(myFMU)
