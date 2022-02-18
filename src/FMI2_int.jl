@@ -131,7 +131,7 @@ function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Uni
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
-    @assert length(vr) == length(values) "fmi2SetReal(...): `vr` and `values` need to be the same length."
+    @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
 
     nvr = Csize_t(length(vr))
     fmi2SetReal(c.fmu.cSetReal, c.compAddr, vr, nvr, Array{fmi2Real}(values))

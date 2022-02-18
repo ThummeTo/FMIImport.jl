@@ -316,6 +316,7 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
         component = FMU2Component(compAddr, fmu) 
+        component.jacobianFct = fmi2GetJacobian!
         push!(fmu.components, component)
     end 
 
@@ -527,6 +528,77 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
         end
     else
         jac = fmi2SampleDirectionalDerivative(comp, rdx, rx)
+    end
+
+    return nothing
+end
+
+function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            #@assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetReal(comp, vr)
+        elseif mv.datatype.datatype == fmi2Integer 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetInteger(comp, vr)
+        elseif mv.datatype.datatype == fmi2Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetBoolean(comp, vr)
+        elseif mv.datatype.datatype == fmi2String 
+            #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetString(comp, vr)
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Get!(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
+    end
+
+    return nothing
+end
+
+function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+    vrs = prepareValueReference(comp, vrs)
+    dstArray = Array{Any,1}(undef, length(vrs))
+    fmi2Get!(comp, vrs, dstArray)
+    return dstArray
+end
+
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
+            fmi2SetReal(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Integer 
+            @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
+            fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi2Boolean 
+            @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
+            fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+        elseif mv.datatype.datatype == fmi2String 
+            @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
+            fmi2SetString(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
     end
 
     return nothing
