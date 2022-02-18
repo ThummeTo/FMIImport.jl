@@ -316,6 +316,7 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
         component = FMU2Component(compAddr, fmu) 
+        component.jacobianFct = fmi2GetJacobian!
         push!(fmu.components, component)
     end 
 
@@ -527,6 +528,68 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
         end
     else
         jac = fmi2SampleDirectionalDerivative(comp, rdx, rx)
+    end
+
+    return nothing
+end
+
+function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            dstArray[i] = fmi2GetReal(comp, vr)
+        elseif mv.datatype.datatype == fmi2Integer 
+            dstArray[i] = fmi2GetInteger(comp, vr)
+        elseif mv.datatype.datatype == fmi2Boolean 
+            dstArray[i] = fmi2GetBoolean(comp, vr)
+        elseif mv.datatype.datatype == fmi2String 
+            dstArray[i] = fmi2GetString(comp, vr)
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Get!(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert false "fmi2Get!(...): Unknown datatype = `$(mv.datatype.datatype)`."
+        end
+    end
+
+    return nothing
+end
+
+function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+    dstArray = Array{Any,1}(undef, length(vrs))
+    fmi2Get!(comp, vrs, dstArray)
+    return dstArray
+end
+
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            fmi2SetReal(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Integer 
+            fmi2SetInteger(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Boolean 
+            fmi2SetBoolean(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2String 
+            fmi2SetString(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert false "fmi2Set(...): Unknown datatype = `$(mv.datatype.datatype)`."
+        end
     end
 
     return nothing

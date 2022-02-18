@@ -58,6 +58,7 @@ export fmi2GetStartValue, fmi2SampleDirectionalDerivative, fmi2CompletedIntegrat
 export fmi2Unzip, fmi2Load, loadBinary, fmi2Reload, fmi2Unload, fmi2Instantiate!
 export fmi2SampleDirectionalDerivative!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
+export fmi2Get, fmi2Get!, fmi2Set 
 
 # FMI2_md.jl
 export fmi2LoadModelDescription
