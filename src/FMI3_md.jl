@@ -446,13 +446,13 @@ function fmi3SetDatatypeVariables(node::EzXML.Node, md::fmi3ModelDescription)
         type.declaredType = node["declaredType"]
     end
 
-    if haskey(node, "initial")
-        for i in 0:(length(instances(fmi3initial))-1)
-            if "fmi3" * node["initial"] == string(fmi3initial(i))
-                type.initial = fmi3initial(i)
-            end
-        end
-    end
+    # if haskey(node, "initial")
+    #     for i in 0:(length(instances(fmi3initial))-1)
+    #         if "fmi3" * node["initial"] == string(fmi3initial(i))
+    #             type.initial = fmi3initial(i)
+    #         end
+    #     end
+    # end
 
     if haskey(node, "start")
         if node.firstelement !== nothing && node.firstelement.name == "Dimension"
@@ -733,7 +733,7 @@ end
 """
 Returns true, if the FMU provides directional derivatives
 """
-function fmi3ProvidesDirectionalDerivatives(md::fmi3ModelDescription)
+function fmi3ProvidesDirectionalDerivative(md::fmi3ModelDescription)
     if md.CSprovidesDirectionalDerivatives || md.MEprovidesDirectionalDerivatives
         return true
     else
@@ -744,7 +744,7 @@ end
 """
 Returns true, if the FMU provides adjoint derivatives
 """
-function fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
+function fmi3ProvidesAdjointDerivative(md::fmi3ModelDescription)
     if md.CSproivdesAdjointDerivatives || md.MEprovidesAdjointDerivatives
         return true
     else

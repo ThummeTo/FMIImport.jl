@@ -30,7 +30,7 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing)
     pathToModelDescription = joinpath(fmu.path, "modelDescription.xml")
 
     # parse modelDescription.xml
-    fmu.modelDescription = fmi3ReadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
+    fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
     fmu.modelName = fmu.modelDescription.modelName
     fmu.instanceName = fmu.modelDescription.modelName
     fmuName = fmi3GetModelIdentifier(fmu.modelDescription) # tmpName[length(tmpName)] TODO
@@ -81,11 +81,11 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing)
     cd(lastDirectory)
 
     if fmi3IsCoSimulation(fmu) 
-        fmu.type = fmi3CoSimulation::fmi3Type
+        fmu.type = fmi3TypeCoSimulation
     elseif fmi3IsModelExchange(fmu) 
-        fmu.type = fmi3ModelExchange::fmi3Type
+        fmu.type = fmi3TypeModelExchange
     elseif fmi3IsScheduledExecution(fmu) 
-        fmu.type = fmi3ScheduledExecution::fmi3Type
+        fmu.type = fmi3TypeScheduledExecution
     else
         error(unknownFMUType)
     end
