@@ -598,11 +598,20 @@ Compute state derivatives at the current time instant and for the current states
 For more information call ?fmi2GetDerivatives
 """
 function fmi2GetDerivatives(c::FMU2Component)
-    nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
     derivatives = zeros(fmi2Real, nx)
-    fmi2GetDerivatives!(c.fmu.cGetDerivatives, c.compAddr, derivatives, nx)
-    
+    fmi2GetDerivatives!(c, derivatives)
     return derivatives
+end
+
+"""
+TODO: FMI specification reference.
+
+Compute state derivatives at the current time instant and for the current states.
+
+For more information call ?fmi2GetDerivatives
+"""
+function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
+    fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
 end
 
 """
@@ -615,8 +624,20 @@ For more information call ?fmi2GetEventIndicators
 function fmi2GetEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     eventIndicators = zeros(fmi2Real, ni)
+    fmi2GetEventIndicators!(c, eventIndicators)
+    return eventIndicators
+end
+
+"""
+TODO: FMI specification reference.
+
+Returns the event indicators of the FMU.
+
+For more information call ?fmi2GetEventIndicators
+"""
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::SubArray{fmi2Real})
+    ni = Csize_t(length(eventIndicators))
     fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.compAddr, eventIndicators, ni)
-    eventIndicators
 end
 
 """

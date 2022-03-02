@@ -399,8 +399,8 @@ Retrieves the n-th derivative of output values.
 vr defines the value references of the variables
 the array order specifies the corresponding order of derivation of the variables
 """
-function fmi2GetRealOutputDerivatives(c::FMU2Component,  vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
-    fmi2GetRealOutputDerivatives(c.fmu.cGetRealOutputDerivatives,
+function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
+    fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
                 c.compAddr, vr, nvr, order, value)
 end
 
@@ -529,8 +529,8 @@ Source: FMISpec2.0.2[p.84]: 3.2.2 Evaluation of Model Equations
 
 The FMU is in Event Mode and the super dense time is incremented by this call.
 """
-function fmi2NewDiscreteStates(c::FMU2Component, eventInfo::fmi2EventInfo)
-    fmi2NewDiscreteStates(c.fmu.cNewDiscreteStates,
+function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
+    fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
                     c.compAddr, Ref(eventInfo))
 end
 
@@ -566,11 +566,11 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Compute state derivatives at the current time instant and for the current states.
 """
-function fmi2GetDerivatives(c::FMU2Component,
+function fmi2GetDerivatives!(c::FMU2Component,
                             derivatives::Array{fmi2Real},
                             nx::Csize_t)
                             
-    fmi2GetDerivatives(c.fmu.cGetDerivatives,
+    fmi2GetDerivatives!(c.fmu.cGetDerivatives,
           c.compAddr, derivatives, nx)
 end
 
@@ -579,8 +579,8 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Compute event indicators at the current time instant and for the current states.
 """
-function fmi2GetEventIndicators(c::FMU2Component, eventIndicators::Array{fmi2Real}, ni::Csize_t)
-    fmi2GetEventIndicators(c.fmu.cGetEventIndicators,
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::SubArray{fmi2Real}, ni::Csize_t)
+    fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
                     c.compAddr, eventIndicators, ni)
 end
 
@@ -589,11 +589,11 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Return the new (continuous) state vector x.
 """
-function fmi2GetContinuousStates(c::FMU2Component,
+function fmi2GetContinuousStates!(c::FMU2Component,
                                  x::Array{fmi2Real},
                                  nx::Csize_t)
                                  
-    fmi2GetContinuousStates(c.fmu.cGetContinuousStates,
+    fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
           c.compAddr, x, nx)
 end
 
@@ -602,7 +602,7 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Return the nominal values of the continuous states.
 """
-function fmi2GetNominalsOfContinuousStates(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
-    fmi2GetNominalsOfContinuousStates(c.fmu.cGetNominalsOfContinuousStates,
+function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
+    fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
 end

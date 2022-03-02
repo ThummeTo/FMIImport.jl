@@ -9,6 +9,7 @@
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIImport.jl)
 
 ## How can I use FMIImport.jl?
+FMIImport.jl is part of [FMI.jl](https://github.com/ThummeTo/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, FMIImport.jl might be the right way to go. You can install it via:
 1. open a Julia-Command-Window, activate your preferred environment
 1. goto package manager using ```]```
 1. type ```add FMIImport```
