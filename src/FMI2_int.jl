@@ -598,6 +598,7 @@ Compute state derivatives at the current time instant and for the current states
 For more information call ?fmi2GetDerivatives
 """
 function fmi2GetDerivatives(c::FMU2Component)
+    nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
     derivatives = zeros(fmi2Real, nx)
     fmi2GetDerivatives!(c, derivatives)
     return derivatives
@@ -739,7 +740,7 @@ This function samples the directional derivative by manipulating corresponding v
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
-                                          dvUnknown::AbstractArray,
+                                          dvUnknown::SubArray,
                                           steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
     
     for i in 1:length(vKnown_ref)
