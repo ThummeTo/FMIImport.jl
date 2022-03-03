@@ -472,7 +472,7 @@ function fmi2GetJacobian!(jac::Matrix{fmi2Real},
                 # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]])
             else 
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], steps, view(jac, sensitive_rdx_inds, i))
+                fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
                 # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
             end
         end
