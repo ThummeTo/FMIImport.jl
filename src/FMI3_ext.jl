@@ -323,7 +323,7 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
     stateEvent  = fmi3False
     timeEvent   = fmi3False
     stepEvent   = fmi3False
-    component = fmi3Component(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent)
+    component = fmi3Component(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent) # TODO component
     push!(fmu.components, component)
     component
 end
@@ -354,7 +354,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingO
         return nothing
     end
 
-    component = fmi3Component(compAddr, fmu)
+    component = fmi3Component(compAddr, fmu) # todo component
     push!(fmu.components, component)
     component
 end
@@ -378,7 +378,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cv
         return nothing
     end
 
-    component = fmi3Component(compAddr, fmu)
+    component = fmi3Component(compAddr, fmu) # TODO component
     push!(fmu.components, component)
     component
 end
