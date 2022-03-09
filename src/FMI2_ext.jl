@@ -285,9 +285,16 @@ Returns the instance of a new FMU component.
 
 For more information call ?fmi2Instantiate
 """
-function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false)
+function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false)
 
     ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    if externalCallbacks
+        if fmu.callbackLibHandle == C_NULL
+            @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
+            fmu.callbackLibHandle = dlopen(joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll"))
+        end
+        ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
+    end 
     ptrAllocateMemory = @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
     ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
     ptrStepFinished = C_NULL # ToDo
