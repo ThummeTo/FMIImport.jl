@@ -26,7 +26,7 @@ end
 function prepareValueReference(fmu::FMU3, vr::fmi3ValueReferenceFormat)
     prepareValueReference(fmu.modelDescription, vr)
 end
-function prepareValueReference(comp::FMU3Component, vr::fmi3ValueReferenceFormat)
+function prepareValueReference(comp::FMU3Instance, vr::fmi3ValueReferenceFormat)
     prepareValueReference(comp.fmu.modelDescription, vr)
 end
 
