@@ -31,14 +31,15 @@ function fmi2CallbackLogger(componentEnvironment::fmi2ComponentEnvironment,
             status::Cuint,
             category::Ptr{Cchar},
             message::Ptr{Cchar})
+    
     _message = unsafe_string(message)
     _category = unsafe_string(category)
     _status = fmi2StatusToString(status)
     _instanceName = unsafe_string(instanceName)
 
-    if status == Integer(fmi2StatusOK)
+    if status == fmi2StatusOK
         @info "[$_status][$_category][$_instanceName]: $_message"
-    elseif status == Integer(fmi2StatusWarning)
+    elseif status == fmi2StatusWarning
         @warn "[$_status][$_category][$_instanceName]: $_message"
     else
         @error "[$_status][$_category][$_instanceName]: $_message"
@@ -46,6 +47,13 @@ function fmi2CallbackLogger(componentEnvironment::fmi2ComponentEnvironment,
 
     nothing
 end
+
+# (cfmi2CallbackLogger, fmi2CallbackLogger) = Cfunction{                      fmi2ComponentEnvironment,               Ptr{Cchar},         Cuint,           Ptr{Cchar},          Tuple{Ptr{Cchar}, Vararg}   }() do componentEnvironment::fmi2ComponentEnvironment, instanceName::Ptr{Cchar}, status::Cuint, category::Ptr{Cchar}, message::Tuple{Ptr{Cchar}, Vararg}
+#     printf(message)
+#     nothing
+# end 
+
+
 
 """
 Source: FMISpec2.0.2[p.21-22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
