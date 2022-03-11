@@ -284,6 +284,11 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 
 For more information call ?fmi2Instantiate
+
+# Keywords
+- `visible` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks` if an external DLL should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
 """
 function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false)
 
