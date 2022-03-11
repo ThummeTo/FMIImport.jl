@@ -550,8 +550,11 @@ For more information call ?fmi2SetContinuousStates
 """
 function fmi2SetContinuousStates(c::FMU2Component, x::Union{Array{Float32}, Array{Float64}})
     nx = Csize_t(length(x))
-    c.x = copy(x)
-    fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    if status == fmi2StatusOK
+        c.x = x
+    end 
+    return status
 end
 
 """
@@ -613,8 +616,11 @@ Compute state derivatives at the current time instant and for the current states
 For more information call ?fmi2GetDerivatives
 """
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
-    c.ẋ = copy(derivatives)
-    fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    if status == fmi2StatusOK
+        c.ẋ = derivatives
+    end 
+    return status
 end
 
 """
