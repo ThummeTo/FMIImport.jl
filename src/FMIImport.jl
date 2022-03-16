@@ -2,7 +2,7 @@ module FMIImport
 
 using FMICore
 
-using FMICore: fmi2Component, fmi3Component
+using FMICore: fmi2Component, fmi3Instance
 
 # functions that have (currently) no better place 
 
@@ -58,6 +58,7 @@ export fmi2GetStartValue, fmi2SampleDirectionalDerivative, fmi2CompletedIntegrat
 export fmi2Unzip, fmi2Load, loadBinary, fmi2Reload, fmi2Unload, fmi2Instantiate!
 export fmi2SampleDirectionalDerivative!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
+export fmi2Get, fmi2Get!, fmi2Set 
 
 # FMI2_md.jl
 export fmi2LoadModelDescription
@@ -81,7 +82,7 @@ include("FMI3_fmu_to_md.jl")
 
 # FMI3_c.jl
 export fmi3CallbackLogger, fmi3CallbackIntermediateUpdate, fmi3CallbackClockUpdate
-export fmi3ComponentState
+export fmi3InstanceState
 export fmi3InstantiateModelExchange, fmi3InstantiateCoSimulation, fmi3InstantiateScheduledExecution, fmi3FreeInstance!
 export fmi3GetVersion, fmi3SetDebugLogging
 export fmi3EnterInitializationMode, fmi3ExitInitializationMode, fmi3Terminate, fmi3Reset

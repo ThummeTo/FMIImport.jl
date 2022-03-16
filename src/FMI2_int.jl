@@ -131,7 +131,7 @@ function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Uni
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
-    @assert length(vr) == length(values) "fmi2SetReal(...): `vr` and `values` need to be the same length."
+    @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
 
     nvr = Csize_t(length(vr))
     fmi2SetReal(c.fmu.cSetReal, c.compAddr, vr, nvr, Array{fmi2Real}(values))
@@ -550,7 +550,11 @@ For more information call ?fmi2SetContinuousStates
 """
 function fmi2SetContinuousStates(c::FMU2Component, x::Union{Array{Float32}, Array{Float64}})
     nx = Csize_t(length(x))
-    fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    if status == fmi2StatusOK
+        c.x = x
+    end 
+    return status
 end
 
 """
@@ -600,9 +604,23 @@ For more information call ?fmi2GetDerivatives
 function fmi2GetDerivatives(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
     derivatives = zeros(fmi2Real, nx)
-    fmi2GetDerivatives!(c.fmu.cGetDerivatives, c.compAddr, derivatives, nx)
-    
+    fmi2GetDerivatives!(c, derivatives)
     return derivatives
+end
+
+"""
+TODO: FMI specification reference.
+
+Compute state derivatives at the current time instant and for the current states.
+
+For more information call ?fmi2GetDerivatives
+"""
+function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
+    status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    if status == fmi2StatusOK
+        c.ẋ = derivatives
+    end 
+    return status
 end
 
 """
@@ -615,8 +633,20 @@ For more information call ?fmi2GetEventIndicators
 function fmi2GetEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     eventIndicators = zeros(fmi2Real, ni)
+    fmi2GetEventIndicators!(c, eventIndicators)
+    return eventIndicators
+end
+
+"""
+TODO: FMI specification reference.
+
+Returns the event indicators of the FMU.
+
+For more information call ?fmi2GetEventIndicators
+"""
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::Union{SubArray{fmi2Real}, Vector{fmi2Real}})
+    ni = Csize_t(length(eventIndicators))
     fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.compAddr, eventIndicators, ni)
-    eventIndicators
 end
 
 """

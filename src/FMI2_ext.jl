@@ -284,10 +284,22 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 
 For more information call ?fmi2Instantiate
+
+# Keywords
+- `visible` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks` if an external DLL should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
 """
-function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false)
+function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false)
 
     ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    if externalCallbacks
+        if fmu.callbackLibHandle == C_NULL
+            @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
+            fmu.callbackLibHandle = dlopen(joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll"))
+        end
+        ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
+    end 
     ptrAllocateMemory = @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
     ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
     ptrStepFinished = C_NULL # ToDo
@@ -316,6 +328,7 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
         component = FMU2Component(compAddr, fmu) 
+        component.jacobianFct = fmi2GetJacobian!
         push!(fmu.components, component)
     end 
 
@@ -467,12 +480,12 @@ function fmi2GetJacobian!(jac::Matrix{fmi2Real},
         if length(sensitive_rdx) > 0
             if ddsupported
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                # fmi2GetDirectionalDerivative!(fmu, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
+                fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]])
             else 
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                # fmi2SampleDirectionalDerivative!(fmu, sensitive_rdx, [rx[i]], steps, view(jac, sensitive_rdx_inds, i))
-                jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
+                fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
             end
         end
     end
@@ -527,6 +540,77 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
         end
     else
         jac = fmi2SampleDirectionalDerivative(comp, rdx, rx)
+    end
+
+    return nothing
+end
+
+function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            #@assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetReal(comp, vr)
+        elseif mv.datatype.datatype == fmi2Integer 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetInteger(comp, vr)
+        elseif mv.datatype.datatype == fmi2Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetBoolean(comp, vr)
+        elseif mv.datatype.datatype == fmi2String 
+            #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi2GetString(comp, vr)
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Get!(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
+    end
+
+    return nothing
+end
+
+function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+    vrs = prepareValueReference(comp, vrs)
+    dstArray = Array{Any,1}(undef, length(vrs))
+    fmi2Get!(comp, vrs, dstArray)
+    return dstArray
+end
+
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi2Real 
+            @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
+            fmi2SetReal(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Integer 
+            @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
+            fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi2Boolean 
+            @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
+            fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+        elseif mv.datatype.datatype == fmi2String 
+            @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
+            fmi2SetString(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi2Enum 
+            @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
     end
 
     return nothing

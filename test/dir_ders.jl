@@ -35,13 +35,17 @@ for i in 1:fmi2GetNumberOfStates(myFMU)
         # single derivative call 
         dir_der = fmi2GetDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences[1], myFMU.modelDescription.stateValueReferences[1])
         @test dir_der == targetValues[1][1]
-
-        # ToDo: Test fmi2GetJacobian (and it's derivatives)
-
     else 
         @warn "Skipping directional derivative testing, FMU from $(ENV["EXPORTINGTOOL"]) doesn't support directional derivatives."
     end
-    
+end
+
+if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
+    jac = fmi2GetJacobian(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+    @test jac ≈ hcat(targetValues...)
+
+    jac = fmi2SampleDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+    @test jac ≈ hcat(targetValues...)
 end
 
 fmi2Unload(myFMU)
