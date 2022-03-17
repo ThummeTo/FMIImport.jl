@@ -742,6 +742,7 @@ function fmi2SampleDirectionalDerivative(c::FMU2Component,
     dvUnknown
 end
 
+# TODO should probably in FMI2_ext.jl
 """
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
