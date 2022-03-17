@@ -284,10 +284,22 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 
 For more information call ?fmi2Instantiate
+
+# Keywords
+- `visible` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks` if an external DLL should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
 """
-function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false)
+function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false)
 
     ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    if externalCallbacks
+        if fmu.callbackLibHandle == C_NULL
+            @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
+            fmu.callbackLibHandle = dlopen(joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll"))
+        end
+        ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
+    end 
     ptrAllocateMemory = @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
     ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
     ptrStepFinished = C_NULL # ToDo

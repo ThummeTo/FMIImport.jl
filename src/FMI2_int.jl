@@ -550,7 +550,11 @@ For more information call ?fmi2SetContinuousStates
 """
 function fmi2SetContinuousStates(c::FMU2Component, x::Union{Array{Float32}, Array{Float64}})
     nx = Csize_t(length(x))
-    fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    if status == fmi2StatusOK
+        c.x = x
+    end 
+    return status
 end
 
 """
@@ -612,7 +616,11 @@ Compute state derivatives at the current time instant and for the current states
 For more information call ?fmi2GetDerivatives
 """
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
-    fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    if status == fmi2StatusOK
+        c.ẋ = derivatives
+    end 
+    return status
 end
 
 """
@@ -636,7 +644,7 @@ Returns the event indicators of the FMU.
 
 For more information call ?fmi2GetEventIndicators
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::SubArray{fmi2Real})
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::Union{SubArray{fmi2Real}, Vector{fmi2Real}})
     ni = Csize_t(length(eventIndicators))
     fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.compAddr, eventIndicators, ni)
 end
