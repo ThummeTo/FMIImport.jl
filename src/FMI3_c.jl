@@ -10,7 +10,6 @@
 # Any c-function `f(c::fmi3Instance, args...)` in the spec is implemented as `f(c::FMU3Instance, args...)`.
 # Any c-function `f(args...)` without a leading `fmi3Instance`-arguemnt is implented as `f(c_ptr, args...)` where `c_ptr` is a pointer to the c-function (inside the DLL).
 
-import FMICore: fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
 import FMICore: fmi3InstantiateCoSimulation, fmi3InstantiateModelExchange, fmi3InstantiateScheduledExecution, fmi2FreeInstance!, fmi2GetTypesPlatform, fmi2GetVersion
 import FMICore: fmi3SetDebugLogging, fmi3EnterInitializationMode, fmi3ExitInitializationMode, fmi3Terminate, fmi3Reset
 import FMICore: fmi3GetFloat32!, fmi3SetFloat32, fmi3GetFloat64!, fmi3SetFloat64

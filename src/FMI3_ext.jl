@@ -10,15 +10,88 @@ using Libdl
 using ZipFile
 
 """
+Create a copy of the .fmu file as a .zip folder and unzips it.
+Returns the paths to the zipped and unzipped folders.
+Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+"""
+function fmi3Unzip(pathToFMU::String; unpackPath=nothing)
+
+    fileNameExt = basename(pathToFMU)
+    (fileName, fileExt) = splitext(fileNameExt)
+        
+    if unpackPath === nothing
+        # cleanup=true leads to issues with automatic testing on linux server.
+        unpackPath = mktempdir(; prefix="fmijl_", cleanup=false)
+    end
+
+    zipPath = joinpath(unpackPath, fileName * ".zip")
+    unzippedPath = joinpath(unpackPath, fileName)
+
+    # only copy ZIP if not already there
+    if !isfile(zipPath)
+        cp(pathToFMU, zipPath; force=true)
+    end
+
+    @assert isfile(zipPath) ["fmi3Unzip(...): ZIP-Archive couldn't be copied to `$zipPath`."]
+
+    zipAbsPath = isabspath(zipPath) ?  zipPath : joinpath(pwd(), zipPath)
+    unzippedAbsPath = isabspath(unzippedPath) ? unzippedPath : joinpath(pwd(), unzippedPath)
+
+    @assert isfile(zipAbsPath) ["fmi3Unzip(...): Can't deploy ZIP-Archive at `$(zipAbsPath)`."]
+
+    numFiles = 0
+
+    # only unzip if not already done
+    if !isdir(unzippedAbsPath)
+        mkpath(unzippedAbsPath)
+
+        zarchive = ZipFile.Reader(zipAbsPath)
+        for f in zarchive.files
+            fileAbsPath = normpath(joinpath(unzippedAbsPath, f.name))
+
+            if endswith(f.name,"/") || endswith(f.name,"\\")
+                mkpath(fileAbsPath) # mkdir(fileAbsPath)
+
+                @assert isdir(fileAbsPath) ["fmi3Unzip(...): Can't create directory `$(f.name)` at `$(fileAbsPath)`."]
+            else
+                # create directory if not forced by zip file folder
+                mkpath(dirname(fileAbsPath))
+
+                numBytes = write(fileAbsPath, read(f))
+                
+                if numBytes == 0
+                    @info "fmi3Unzip(...): Written file `$(f.name)`, but file is empty."
+                end
+
+                @assert isfile(fileAbsPath) ["fmi3Unzip(...): Can't unzip file `$(f.name)` at `$(fileAbsPath)`."]
+                numFiles += 1
+            end
+        end
+        close(zarchive)
+    end
+
+    @assert isdir(unzippedAbsPath) ["fmi3Unzip(...): ZIP-Archive couldn't be unzipped at `$(unzippedPath)`."]
+    @info "fmi3Unzip(...): Successfully unzipped $numFiles files at `$unzippedAbsPath`."
+
+    (unzippedAbsPath, zipAbsPath)
+end
+
+"""
 Sets the properties of the fmu by reading the modelDescription.xml.
 Retrieves all the pointers of binary functions.
 Returns the instance of the FMU struct.
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
 """
-function fmi3Load(pathToFMU::String; unpackPath=nothing)
+function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     # Create uninitialized FMU
     fmu = FMU3()
-    fmu.components = []
+
+    if startswith(pathToFMU, "http")
+        @info "Downloading FMU from `$(pathToFMU)`."
+        pathToFMU = download(pathToFMU)
+    end
+
+    fmu.instances = []
 
     pathToFMU = normpath(pathToFMU)
 
@@ -33,66 +106,66 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing)
     fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
     fmu.modelName = fmu.modelDescription.modelName
     fmu.instanceName = fmu.modelDescription.modelName
+
+    # TODO special use case?
+    if (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:CS) 
+        fmu.type = fmi3TypeCoSimulation::fmi3Type
+    elseif (fmi3IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
+        fmu.type = fmi3TypeModelExchange::fmi3Type
+    elseif fmi3IsScheduledExecution(fmu.modelDescription) && type==:SE
+        fmu.type = fmi3TypeScheduledExecution::fmi3Type
+    elseif fmi3IsCoSimulation(fmu.modelDescription) && (type===nothing || type==:CS)
+        fmu.type = fmi3TypeCoSimulation::fmi3Type
+    elseif fmi3IsModelExchange(fmu.modelDescription) && (type===nothing || type==:ME)
+        fmu.type = fmi3TypeModelExchange::fmi3Type
+    elseif fmi3IsScheduledExecution(fmu.modelDescription) && (type === nothing || type ==:SE)
+        fmu.type = fmi3TypeScheduledExecution::Fmi3Type
+    else
+        error(unknownFMUType)
+    end
+
     fmuName = fmi3GetModelIdentifier(fmu.modelDescription) # tmpName[length(tmpName)] TODO
 
     directoryBinary = ""
     pathToBinary = ""
 
     if Sys.iswindows()
-        directories = [joinpath("binaries", "win64"), joinpath("binaries", "x86_64-windows")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).dll")
-                break
-            end
+        if juliaArch == 64
+            directories = [joinpath("binaries", "win64"), joinpath("binaries","x86_64-windows")]
+        else 
+            directories = [joinpath("binaries", "win32"), joinpath("binaries","i686-windows")]
         end
-        @assert isfile(pathToBinary) "Target platform is Windows, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+        osStr = "Windows"
+        fmuExt = "dll"
     elseif Sys.islinux()
-        directories = [joinpath("binaries", "linux64"), joinpath("binaries", "x86_64-linux")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).so")
-                break
-            end
+        if juliaArch == 64
+            directories = [joinpath("binaries", "linux64"), joinpath("binaries", "x86_64-linux")]
+        else 
+            directories = []
         end
-        @assert isfile(pathToBinary) "Target platform is Linux, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+        osStr = "Linux"
+        fmuExt = "so"
     elseif Sys.isapple()
-        directories = [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).dylib")
-                break
-            end
+        if juliaArch == 64
+            directories = [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+        else 
+            directories = []
         end
-        @assert isfile(pathToBinary) "Target platform is macOS, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+        osStr = "Mac"
+        fmuExt = "dylib"
     else
-        @assert false "Unsupported target platform. Supporting Windows64, Linux64 and Mac64."
+        @assert false "fmi3Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS."
     end
 
-    lastDirectory = pwd()
-    cd(directoryBinary)
-
-    # set FMU binary handler
-    fmu.libHandle = dlopen(pathToBinary)
-
-    cd(lastDirectory)
-
-    if fmi3IsCoSimulation(fmu) 
-        fmu.type = fmi3TypeCoSimulation
-    elseif fmi3IsModelExchange(fmu) 
-        fmu.type = fmi3TypeModelExchange
-    elseif fmi3IsScheduledExecution(fmu) 
-        fmu.type = fmi3TypeScheduledExecution
-    else
-        error(unknownFMUType)
+    @assert (length(directories) > 0) "fmi3Load(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
+    for directory in directories
+        directoryBinary = joinpath(fmu.path, directory)
+        if isdir(directoryBinary)
+            pathToBinary = joinpath(directoryBinary, "$(fmuName).$(fmuExt)")
+            break
+        end
     end
-
-    if fmi3IsCoSimulation(fmu) && fmi3IsModelExchange(fmu) 
-        @info "fmi3Load(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
-    end
+    @assert isfile(pathToBinary) "fmi3Load(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
 
     # make URI ressource location
     tmpResourceLocation = string("file:///", fmu.path)
@@ -101,7 +174,35 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing)
 
     @info "fmi3Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
 
-    # # retrieve functions 
+    if fmi3IsCoSimulation(fmu) && fmi3IsModelExchange(fmu) 
+        @info "fmi3Load(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
+    end
+
+    fmu.binaryPath = pathToBinary
+    loadBinary(fmu)
+   
+    # initialize further variables TODO check if needed
+    fmu.jac_x = zeros(Float64, fmu.modelDescription.numberOfContinuousStates)
+    fmu.jac_t = -1.0
+    fmu.jac_dxy_x = zeros(fmi2Real,0,0)
+    fmu.jac_dxy_u = zeros(fmi2Real,0,0)
+   
+    # dependency matrix 
+    # fmu.dependencies
+
+    fmu
+end
+
+function loadBinary(fmu::FMU3)
+    lastDirectory = pwd()
+    cd(dirname(fmu.binaryPath))
+
+    # set FMU binary handler
+    fmu.libHandle = dlopen(fmu.binaryPath)
+
+    cd(lastDirectory)
+
+    # retrieve functions 
     fmu.cInstantiateModelExchange                  = dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
     fmu.cInstantiateCoSimulation                   = dlsym(fmu.libHandle, :fmi3InstantiateCoSimulation)
     fmu.cInstantiateScheduledExecution             = dlsym(fmu.libHandle, :fmi3InstantiateScheduledExecution)
@@ -198,108 +299,6 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing)
         fmu.cGetShiftFraction                      = dlsym(fmu.libHandle, :fmi3GetShiftFraction)
         fmu.cActivateModelPartition                = dlsym(fmu.libHandle, :fmi3ActivateModelPartition)
     end
-    # initialize further variables TODO check if needed
-    fmu.jac_x = zeros(Float64, fmu.modelDescription.numberOfContinuousStates)
-    fmu.jac_t = -1.0
-    fmu.jac_dxy_x = zeros(fmi2Real,0,0)
-    fmu.jac_dxy_u = zeros(fmi2Real,0,0)
-   
-    # dependency matrix 
-    # fmu.dependencies
-
-    fmu
-end
-
-"""
-Create a copy of the .fmu file as a .zip folder and unzips it.
-Returns the paths to the zipped and unzipped folders.
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
-"""
-function fmi3Unzip(pathToFMU::String; unpackPath=nothing)
-
-    fileNameExt = basename(pathToFMU)
-    (fileName, fileExt) = splitext(fileNameExt)
-        
-    if unpackPath === nothing
-        # cleanup=true leads to issues with automatic testing on linux server.
-        unpackPath = mktempdir(; prefix="fmijl_", cleanup=false)
-    end
-
-    zipPath = joinpath(unpackPath, fileName * ".zip")
-    unzippedPath = joinpath(unpackPath, fileName)
-
-    # only copy ZIP if not already there
-    if !isfile(zipPath)
-        cp(pathToFMU, zipPath; force=true)
-    end
-
-    @assert isfile(zipPath) ["fmi3Unzip(...): ZIP-Archive couldn't be copied to `$zipPath`."]
-
-    zipAbsPath = isabspath(zipPath) ?  zipPath : joinpath(pwd(), zipPath)
-    unzippedAbsPath = isabspath(unzippedPath) ? unzippedPath : joinpath(pwd(), unzippedPath)
-
-    @assert isfile(zipAbsPath) ["fmi3Unzip(...): Can't deploy ZIP-Archive at `$(zipAbsPath)`."]
-
-    numFiles = 0
-
-    # only unzip if not already done
-    if !isdir(unzippedAbsPath)
-        mkpath(unzippedAbsPath)
-
-        zarchive = ZipFile.Reader(zipAbsPath)
-        for f in zarchive.files
-            fileAbsPath = normpath(joinpath(unzippedAbsPath, f.name))
-
-            if endswith(f.name,"/") || endswith(f.name,"\\")
-                mkpath(fileAbsPath) # mkdir(fileAbsPath)
-
-                @assert isdir(fileAbsPath) ["fmi3Unzip(...): Can't create directory `$(f.name)` at `$(fileAbsPath)`."]
-            else
-                # create directory if not forced by zip file folder
-                mkpath(dirname(fileAbsPath))
-
-                numBytes = write(fileAbsPath, read(f))
-                
-                if numBytes == 0
-                    @info "fmi3Unzip(...): Written file `$(f.name)`, but file is empty."
-                end
-
-                @assert isfile(fileAbsPath) ["fmi3Unzip(...): Can't unzip file `$(f.name)` at `$(fileAbsPath)`."]
-                numFiles += 1
-            end
-        end
-        close(zarchive)
-    end
-
-    @assert isdir(unzippedAbsPath) ["fmi3Unzip(...): ZIP-Archive couldn't be unzipped at `$(unzippedPath)`."]
-    @info "fmi3Unzip(...): Successfully unzipped $numFiles files at `$unzippedAbsPath`."
-
-    (unzippedAbsPath, zipAbsPath)
-end
-
-"""
-Unload a FMU.
-Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
-"""
-function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
-
-    while length(fmu.components) > 0
-        fmi3FreeInstance!(fmu.components[end])
-    end
-
-    dlclose(fmu.libHandle)
-
-    # the components are removed from the component list via call to fmi3FreeInstance!
-    @assert length(fmu.components) == 0 "fmi3Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
-
-    if cleanUp
-        try
-            rm(fmu.path; recursive = true, force = true)
-            rm(fmu.zipPath; recursive = true, force = true)
-        catch e
-            @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
-        end
-    end
 end
 
 """
@@ -318,14 +317,30 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
         @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
         return nothing
     end
-    previous_z  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
-    rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
-    stateEvent  = fmi3False
-    timeEvent   = fmi3False
-    stepEvent   = fmi3False
-    component = fmi3Component(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent) # TODO component
-    push!(fmu.components, component)
-    component
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateModelExchange!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        previous_z  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
+        rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
+        stateEvent  = fmi3False
+        timeEvent   = fmi3False
+        stepEvent   = fmi3False
+        instance = FMU3Instance(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent)
+        push!(fmu.instances, instance)
+    end 
+
+    instance
 end
 
 """
@@ -354,9 +369,24 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingO
         return nothing
     end
 
-    component = fmi3Component(compAddr, fmu) # todo component
-    push!(fmu.components, component)
-    component
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateCoSimulation!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(compAddr, fmu)
+        push!(fmu.instances, instance)
+    end 
+
+    instance
 end
 
 # TODO not tested
@@ -378,7 +408,316 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cv
         return nothing
     end
 
-    component = fmi3Component(compAddr, fmu) # TODO component
-    push!(fmu.components, component)
-    component
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateScheduledExecution!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(compAddr, fmu)
+        push!(fmu.instances, instance)
+    end 
+
+    instance
+end
+
+"""
+Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
+"""
+function fmi3Reload(fmu::FMU3)
+    dlclose(fmu.libHandle)
+    loadBinary(fmu)
+end
+
+
+"""
+Unload a FMU.
+Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
+"""
+function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
+
+    while length(fmu.instances) > 0
+        fmi3FreeInstance!(fmu.instances[end])
+    end
+
+    dlclose(fmu.libHandle)
+
+    # the instances are removed from the instances list via call to fmi3FreeInstance!
+    @assert length(fmu.instances) == 0 "fmi3Unload(...): Failure during deleting instances, $(length(fmu.instances)) remaining in stack."
+
+    if cleanUp
+        try
+            rm(fmu.path; recursive = true, force = true)
+            rm(fmu.zipPath; recursive = true, force = true)
+        catch e
+            @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
+        end
+    end
+end
+
+# TODO fmi2SampleDirectionalDerivative
+
+"""
+Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetJacobian(comp::FMU3Instance, 
+                         rdx::Array{fmi3ValueReference}, 
+                         rx::Array{fmi3ValueReference}; 
+                         steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    mat = zeros(fmi3Float64, length(rdx), length(rx))
+    fmi3GetJacobian!(mat, comp, rdx, rx; steps=steps)
+    return mat
+end
+
+"""
+Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetJacobian!(jac::Matrix{fmi3GetFloat64}, 
+                          comp::FMU3Instance, 
+                          rdx::Array{fmi3ValueReference}, 
+                          rx::Array{fmi3ValueReference}; 
+                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+
+    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
+
+    if length(rdx) == 0 || length(rx) == 0
+        jac = zeros(length(rdx), length(rx))
+        return nothing
+    end 
+
+    ddsupported = fmi3ProvidesDirectionalDerivative(comp.fmu)
+
+    # ToDo: Pick entries based on dependency matrix!
+    #depMtx = fmi2GetDependencies(fmu)
+    rdx_inds = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
+    rx_inds  = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
+    
+    for i in 1:length(rx)
+
+        sensitive_rdx_inds = 1:length(rdx)
+        sensitive_rdx = rdx
+
+        # sensitive_rdx_inds = Int64[]
+        # sensitive_rdx = fmi2ValueReference[]
+
+        # for j in 1:length(rdx)
+        #     if depMtx[rdx_inds[j], rx_inds[i]] != fmi2DependencyIndependent
+        #         push!(sensitive_rdx_inds, j)
+        #         push!(sensitive_rdx, rdx[j])
+        #     end
+        # end
+
+        if length(sensitive_rdx) > 0
+            if ddsupported
+                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
+                fmi3GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]])
+            else 
+                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
+                # fmi3SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i)) TODO not implemented
+                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
+            end
+        end
+    end
+     
+    return nothing
+end
+
+"""
+Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+No performance optimization, for an optimized version use `fmi2GetJacobian`.
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetFullJacobian(comp::FMU3Instance, 
+                             rdx::Array{fmi3ValueReference}, 
+                             rx::Array{fmi3ValueReference}; 
+                             steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    mat = zeros(fmi3Float64, length(rdx), length(rx))
+    fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
+    return mat
+end
+
+"""
+Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+No performance optimization, for an optimized version use `fmi2GetJacobian!`.
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64}, 
+                              comp::FMU3Instance, 
+                              rdx::Array{fmi3ValueReference}, 
+                              rx::Array{fmi3ValueReference}; 
+                              steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    @assert size(jac) == (length(rdx),length(rx)) "fmi3GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
+
+    @warn "`fmi3GetFullJacobian!` is for benchmarking only, please use `fmi3GetJacobian`."
+
+    if length(rdx) == 0 || length(rx) == 0
+        jac = zeros(length(rdx), length(rx))
+        return nothing
+    end 
+
+    if fmi3ProvidesDirectionalDerivative(comp.fmu)
+        for i in 1:length(rx)
+            jac[:,i] = fmi3GetDirectionalDerivative(comp, rdx, [rx[i]])
+        end
+    else
+        # jac = fmi3SampleDirectionalDerivative(comp, rdx, rx) TODO not implemented
+    end
+
+    return nothing
+end
+
+function fmi3Get!(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(dstArray) "fmi3Get!(...): Number of value references doesn't match number of `dstArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi3ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi3Float32 
+            #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetFloat32(comp, vr)
+        elseif mv.datatype.datatype == fmi3Float64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetFloat64(comp, vr)
+        elseif mv.datatype.datatype == fmi3Int8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt8(comp, vr)
+        elseif mv.datatype.datatype == fmi3Int16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt16(comp, vr)
+        elseif mv.datatype.datatype == fmi3Int32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt32(comp, vr)
+        elseif mv.datatype.datatype == fmi3GetInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt64(comp, vr)
+        elseif mv.datatype.datatype == fmi3UInt8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt8(comp, vr)
+        elseif mv.datatype.datatype == fmi3UInt16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt16(comp, vr)
+        elseif mv.datatype.datatype == fmi3UInt32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt32(comp, vr)
+        elseif mv.datatype.datatype == fmi3GetUInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt64(comp, vr)
+        elseif mv.datatype.datatype == fmi3Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetBoolean(comp, vr)
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetString(comp, vr)
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetString(comp, vr)
+        elseif mv.datatype.datatype == fmi3Binary 
+            #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetBinary(comp, vr)
+        elseif mv.datatype.datatype == fmi3Enum 
+            @warn "fmi3Get!(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
+    end
+
+    return nothing
+end
+
+function fmi3Get(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat)
+    vrs = prepareValueReference(comp, vrs)
+    dstArray = Array{Any,1}(undef, length(vrs))
+    fmi2Get!(comp, vrs, dstArray)
+    return dstArray
+end
+
+function fmi3Set(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(comp, vrs)
+
+    @assert length(vrs) == length(srcArray) "fmi3Set(...): Number of value references doesn't match number of `srcArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi3ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = mv[1]
+
+        if mv.datatype.datatype == fmi3Float32 
+            #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetFloat32(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Float64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetFloat64(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Int8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetInt8(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Int16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetInt16(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Int32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetInt32(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3SetInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetInt64(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetUInt8(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetUInt16(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetUInt32(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3SetUInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetUInt64(comp, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetBoolean(comp, vr, Bool(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetString(comp, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Binary 
+            #@assert isa(dstArray[i], String) "fmi2Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3SetBinary(comp, vr, pointer(srcArray[i])) # TODO fix this
+        elseif mv.datatype.datatype == fmi3Enum 
+            @warn "fmi3Set!(...): Currently not implemented for fmi2Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
+    end
+    
+    return nothing
 end

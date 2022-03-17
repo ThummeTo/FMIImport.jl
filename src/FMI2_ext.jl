@@ -79,6 +79,7 @@ end
 
 # Checks with dlsym for available function in library.
 # Prints an info text and returns C_NULL if not (soft-check).
+# TODO used in FMI3_ext.jl too other spot to put it?
 function dlsym_opt(libHandle, symbol)
     addr = dlsym(libHandle, symbol; throw_error=false)
     if addr == nothing
