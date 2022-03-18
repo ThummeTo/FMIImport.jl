@@ -4,7 +4,6 @@
 #
 
 import FMIImport: fmi2StatusError
-using Suppressor
 
 myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
@@ -12,11 +11,19 @@ myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test comp != 0
 
-output = @capture_out print(begin
-    @test fmi2ExitInitializationMode(comp) == fmi2StatusError
-end)
+open("/tmp/stdout", "w") do out
+    open("/tmp/stderr", "w") do err
+        redirect_stdout(out) do
+            redirect_stderr(err) do
+                @test fmi2ExitInitializationMode(comp) == fmi2StatusError
+            end
+        end
+    end 
+end
 output = read("/tmp/stdout", String)
-@test output == "" 
+@test output == "" # ToDo: this test is wrong / not working (capture doesn't work for color output)
+output = read("/tmp/stderr", String)
+@test output == "" # ToDo: this test is wrong / not working (capture doesn't work for color output)
 
 ### CASE B: Print log, but catch infos ###
 
