@@ -26,7 +26,7 @@ Source: FMISpec2.0.2[p.21]: 2.1.5 Creation, Destruction and Logging of FMU Insta
 
 Function that is called in the FMU, usually if an fmi2XXX function, does not behave as desired. If “logger” is called with “status = fmi2OK”, then the message is a pure information message. “instanceName” is the instance name of the model that calls this function. “category” is the category of the message. The meaning of “category” is defined by the modeling environment that generated the FMU. Depending on this modeling environment, none, some or all allowed values of “category” for this FMU are defined in the modelDescription.xml file via element “<fmiModelDescription><LogCategories>”, see section 2.2.4. Only messages are provided by function logger that have a category according to a call to fmi2SetDebugLogging (see below). Argument “message” is provided in the same way and with the same format control as in function “printf” from the C standard library. [Typically, this function prints the message and stores it optionally in a log file.]
 """
-function fmi2CallbackLogger(componentEnvironment::fmi2ComponentEnvironment,
+function fmi2CallbackLogger(_componentEnvironment::Ptr{FMU2ComponentEnvironment},
             instanceName::Ptr{Cchar},
             status::Cuint,
             category::Ptr{Cchar},
@@ -36,16 +36,20 @@ function fmi2CallbackLogger(componentEnvironment::fmi2ComponentEnvironment,
     _category = unsafe_string(category)
     _status = fmi2StatusToString(status)
     _instanceName = unsafe_string(instanceName)
+    componentEnvironment = unsafe_load(_componentEnvironment)
 
-    if status == fmi2StatusOK
+    if status == fmi2StatusOK && componentEnvironment.logStatusOK
         @info "[$_status][$_category][$_instanceName]: $_message"
-    elseif status == fmi2StatusWarning
+    elseif (status == fmi2StatusWarning && componentEnvironment.logStatusWarning) ||
+           (status == fmi2StatusPending && componentEnvironment.logStatusPending)
         @warn "[$_status][$_category][$_instanceName]: $_message"
-    else
+    elseif (status == fmi2StatusDiscard && componentEnvironment.logStatusDiscard) ||
+           (status == fmi2StatusError   && componentEnvironment.logStatusError) ||
+           (status == fmi2StatusFatal   && componentEnvironment.logStatusFatal)
         @error "[$_status][$_category][$_instanceName]: $_message"
     end
 
-    nothing
+    return nothing
 end
 
 # (cfmi2CallbackLogger, fmi2CallbackLogger) = Cfunction{                      fmi2ComponentEnvironment,               Ptr{Cchar},         Cuint,           Ptr{Cchar},          Tuple{Ptr{Cchar}, Vararg}   }() do componentEnvironment::fmi2ComponentEnvironment, instanceName::Ptr{Cchar}, status::Cuint, category::Ptr{Cchar}, message::Tuple{Ptr{Cchar}, Vararg}

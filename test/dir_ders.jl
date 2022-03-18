@@ -3,9 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-pathToFMU = "https://github.com/ThummeTo/FMI.jl/raw/main/model/" * ENV["EXPORTINGTOOL"] * "/SpringPendulum1D.fmu"
-
-myFMU = fmi2Load(pathToFMU)
+myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
@@ -13,10 +11,11 @@ comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test fmi2EnterInitializationMode(comp) == 0
 @test fmi2ExitInitializationMode(comp) == 0
 
+numStates = length(myFMU.modelDescription.stateValueReferences)
 targetValues = [[0.0, -10.0], [1.0, 0.0]]
-dir_ders_buffer = zeros(fmi2Real, 2)
-sample_ders_buffer = zeros(fmi2Real, 2, 1)
-for i in 1:fmi2GetNumberOfStates(myFMU)
+dir_ders_buffer = zeros(fmi2Real, numStates)
+sample_ders_buffer = zeros(fmi2Real, numStates, 1)
+for i in 1:numStates
 
     if fmi2ProvidesDirectionalDerivative(myFMU)
         # multi derivatives calls
@@ -40,12 +39,10 @@ for i in 1:fmi2GetNumberOfStates(myFMU)
     end
 end
 
-if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
-    jac = fmi2GetJacobian(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-    @test jac ≈ hcat(targetValues...)
+jac = fmi2GetJacobian(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+@test jac ≈ hcat(targetValues...)
 
-    jac = fmi2SampleDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-    @test jac ≈ hcat(targetValues...)
-end
+jac = fmi2SampleDirectionalDerivative(comp, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+@test jac ≈ hcat(targetValues...)
 
 fmi2Unload(myFMU)
