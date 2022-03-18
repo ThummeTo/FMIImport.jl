@@ -11,8 +11,8 @@ myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test comp != 0
 
-open("/tmp/stdout", "w") do out
-    open("/tmp/stderr", "w") do err
+open(joinpath(pwd(), "stdout"), "w") do out
+    open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
                 @test fmi2ExitInitializationMode(comp) == fmi2StatusError
@@ -21,9 +21,9 @@ open("/tmp/stdout", "w") do out
     end 
 end
 # ToDo: this test is wrong / not working (capture doesn't work for color output)
-#output = read("/tmp/stdout", String)
+#output = read(joinpath(pwd(), "stdout"), String)
 #@test output == "" 
-#output = read("/tmp/stderr", String)
+#output = read(joinpath(pwd(), "stderr"), String)
 #@test output == "" 
 
 ### CASE B: Print log, but catch infos ###
@@ -31,8 +31,8 @@ end
 comp = fmi2Instantiate!(myFMU; loggingOn=true, logStatusError=false)
 @test comp != 0
 
-open("/tmp/stdout", "w") do out
-    open("/tmp/stderr", "w") do err
+open(joinpath(pwd(), "stdout"), "w") do out
+    open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
                 @test fmi2ExitInitializationMode(comp) == fmi2StatusError
@@ -40,9 +40,9 @@ open("/tmp/stdout", "w") do out
         end
     end 
 end
-output = read("/tmp/stdout", String)
+output = read(joinpath(pwd(), "stdout"), String)
 @test output == ""
-output = read("/tmp/stderr", String)
+output = read(joinpath(pwd(), "stderr"), String)
 @test output == ""
 
 ### CASE C: Disable Log ###
@@ -50,8 +50,8 @@ output = read("/tmp/stderr", String)
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
-open("/tmp/stdout", "w") do out
-    open("/tmp/stderr", "w") do err
+open(joinpath(pwd(), "stdout"), "w") do out
+    open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
                 @test fmi2ExitInitializationMode(comp) == fmi2StatusError
@@ -60,9 +60,9 @@ open("/tmp/stdout", "w") do out
     end 
 end
 # ToDo: this test is wrong / not working (capture doesn't work for color output)
-#output = read("/tmp/stdout", String)
+#output = read(joinpath(pwd(), "stdout"), String)
 #@test output == ""
-#output = read("/tmp/stderr", String)
+#output = read(joinpath(pwd(), "stderr"), String)
 #@test output == ""
 
 # cleanup
