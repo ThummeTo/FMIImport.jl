@@ -35,7 +35,7 @@ function runtests(exportingTool)
         end
 
         @testset "Logging" begin
-            include("loggin.jl")
+            include("logging.jl")
         end
     end
 end
