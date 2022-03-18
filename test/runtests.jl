@@ -6,14 +6,16 @@
 using FMIImport
 using Test
 import Random
+using FMIZoo
 
 using FMIImport.FMICore: fmi2Integer, fmi2Boolean, fmi2Real, fmi2String
 
-exportingToolsWindows = ["Dymola/2020x", "OpenModelica/v1.17.0"]
-exportingToolsLinux = ["OpenModelica/v1.17.0"]
+exportingToolsWindows = [("Dymola", "2022x")]
+exportingToolsLinux = [("Dymola", "2022x")]
 
 function runtests(exportingTool)
-    ENV["EXPORTINGTOOL"] = exportingTool
+    ENV["EXPORTINGTOOL"] = exportingTool[1]
+    ENV["EXPORTINGVERSION"] = exportingTool[2]
 
     @testset "Testing FMUs exported from $exportingTool" begin
         @testset "Functions for fmi2Component" begin
@@ -30,6 +32,10 @@ function runtests(exportingTool)
 
         @testset "Model Description Parsing" begin
             include("model_description.jl")
+        end
+
+        @testset "Logging" begin
+            include("logging.jl")
         end
     end
 end
