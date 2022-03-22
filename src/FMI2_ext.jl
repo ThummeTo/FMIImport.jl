@@ -209,7 +209,7 @@ function loadBinary(fmu::FMU2)
     cd(dirname(fmu.binaryPath))
 
     # set FMU binary handler
-    fmu.libHandle = dlopen(fmu.binaryPath)
+    fmu.libHandle = dlopen(fmu.binaryPath) # , RTLD_NOW|RTLD_GLOBAL
 
     cd(lastDirectory)
 
