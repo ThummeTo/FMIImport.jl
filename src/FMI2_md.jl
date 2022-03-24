@@ -12,6 +12,9 @@
 using EzXML
 
 using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment
+using FMICore: fmi2ModelDescriptionReal, fmi2ModelDescriptionBoolean, fmi2ModelDescriptionInteger, fmi2ModelDescriptionString, fmi2ModelDescriptionEnumeration
+using FMICore: fmi2ModelDescriptionModelStructure
+using FMICore: fmi2DependencyKind
 
 ######################################
 # [Sec. 1a] fmi2LoadModelDescription #
@@ -56,6 +59,10 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
     md.modelExchange = nothing
     md.coSimulation = nothing
     md.defaultExperiment = nothing
+
+    # additionals 
+    md.valueReferences = []
+    md.valueReferenceIndicies = Dict{UInt, UInt}()
     
     for node in eachelement(root)
 
@@ -82,10 +89,22 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
             md.enumerations = createEnum(node)
 
         elseif node.name == "ModelVariables"
-            modelvariables = node
+            md.modelVariables = parseModelVariables(node, md)
 
         elseif node.name == "ModelStructure"
-            modelstructure = node
+            md.modelStructure = fmi2ModelDescriptionModelStructure()
+
+            for element in eachelement(node)
+                if element.name == "Derivatives" 
+                    parseDerivatives(element, md)
+                elseif element.name == "InitialUnknowns"
+                    parseInitialUnknowns(element, md)
+                elseif element.name == "Outputs"
+                    parseOutputs(element, md)
+                else
+                    @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
+                end
+            end
 
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi2ModelDescriptionDefaultExperiment()
@@ -93,23 +112,6 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
             md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
             md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance")
             md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
-        end
-    end
-
-    md.valueReferences = []
-    md.valueReferenceIndicies = Dict{Integer,Integer}()
-
-    derivativeindices = getDerivativeIndices(modelstructure)
-    md.modelVariables = parseModelVariables(modelvariables, md, derivativeindices)
-
-    # parse model dependencies (if available)
-    for element in eachelement(modelstructure)
-        if element.name == "Derivatives" || element.name == "InitialUnknowns"
-            parseDependencies(element, md)
-        elseif element.name == "Outputs"
-            # ToDo
-        else
-            @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
         end
     end
 
@@ -157,125 +159,231 @@ function getDerivativeIndices(node::EzXML.Node)
 end
 
 # Parses the model variables of the FMU model description.
-function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription, derivativeIndices)
-    lastValueReference = fmi2ValueReference(0)
-    derivativeIndex = nothing
-    if derivativeIndices != []
-        derivativeIndex = pop!(derivativeIndices)
-    end
+function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
     numberOfVariables = 0
     for node in eachelement(nodes)
         numberOfVariables += 1
     end
     scalarVariables = Array{fmi2ScalarVariable}(undef, numberOfVariables)
-    index = 1
 
+    index = 1
     for node in eachelement(nodes)
         name = node["name"]
-        ValueReference = parse(fmi2ValueReference, (node["valueReference"]))
-        description = nothing
-        causality = nothing
-        variability = nothing 
-        initial = nothing
+        valueReference = parse(fmi2ValueReference, node["valueReference"])
 
-        if !(ValueReference in md.valueReferences)
-            push!(md.valueReferences, ValueReference)
+        scalarVariables[index] = fmi2ScalarVariable(name, valueReference)
+        
+        if !(valueReference in md.valueReferences)
+            push!(md.valueReferences, valueReference)
         end
 
         if haskey(node, "description")
-            description = node["description"]
+            scalarVariables[index].description = node["description"]
         end
         if haskey(node, "causality")
-            causality = fmi2StringToCausality(node["causality"])
-        end
-        if haskey(node, "variability")
-            variabilityString = fmi2StringToVariability(node["variability"])
-        end
-        if haskey(node, "initial")
-            initialString = fmi2StringToInitial(node["initial"])
-        end
+            scalarVariables[index].causality = fmi2StringToCausality(node["causality"])
 
-        datatype = fmi2SetDatatypeVariables(node, md)
-
-        dependencies = []
-        dependenciesKind = []
-
-        if derivativeIndex != nothing
-            if index == derivativeIndex[1]
-                push!(md.stateValueReferences, lastValueReference)
-                push!(md.derivativeValueReferences, ValueReference)
-    
-                if derivativeIndices != []
-                    derivativeIndex = pop!(derivativeIndices)
-                end
+            if scalarVariables[index].causality == fmi2CausalityOutput
+                push!(md.outputValueReferences, valueReference)
+            elseif scalarVariables[index].causality == fmi2CausalityInput
+                push!(md.inputValueReferences, valueReference)
             end
         end
-        
-        scalarVariables[index] = fmi2ScalarVariable(name, ValueReference)
-        scalarVariables[index].datatype = datatype
-        scalarVariables[index].description = description
-        scalarVariables[index].causality = causality
-        scalarVariables[index].variability = variability
-        scalarVariables[index].initial = initial
-        #scalarVariables[index].dependencies = dependencies
-        #scalarVariables[index].dependenciesKind = dependenciesKind
-
-        if causality == fmi2CausalityOutput
-            push!(md.outputValueReferences, ValueReference)
-        elseif causality == fmi2CausalityInput
-            push!(md.inputValueReferences, ValueReference)
+        if haskey(node, "variability")
+            scalarVariables[index].variability = fmi2StringToVariability(node["variability"])
         end
-        md.stringValueReferences[name] = ValueReference
+        if haskey(node, "initial")
+            scalarVariables[index].initial = fmi2StringToInitial(node["initial"])
+        end
 
-        lastValueReference = ValueReference
+        # type node
+        typenode = nothing
+        typename = node.firstelement.name
+
+        if typename == "Real"
+            scalarVariables[index]._Real = fmi2ModelDescriptionReal()
+            typenode = scalarVariables[index]._Real
+            if haskey(node.firstelement, "quantity")
+                typenode.quantity = node.firstelement["quantity"]
+            end
+            if haskey(node.firstelement, "unit")
+                typenode.unit = node.firstelement["unit"]
+            end
+            if haskey(node.firstelement, "displayUnit")
+                typenode.displayUnit = node.firstelement["displayUnit"]
+            end
+            if haskey(node.firstelement, "relativeQuantity")
+                typenode.relativeQuantity = parseBoolean(node.firstelement["relativeQuantity"])
+            end
+            if haskey(node.firstelement, "min")
+                typenode.min = parseReal(node.firstelement["min"])
+            end
+            if haskey(node.firstelement, "max")
+                typenode.max = parseReal(node.firstelement["max"])
+            end
+            if haskey(node.firstelement, "nominal")
+                typenode.nominal = parseReal(node.firstelement["nominal"])
+            end
+            if haskey(node.firstelement, "unbounded")
+                typenode.unbounded = parseBoolean(node.firstelement["unbounded"])
+            end
+            if haskey(node.firstelement, "start")
+                typenode.start = parseReal(node.firstelement["start"])
+            end
+            if haskey(node.firstelement, "derivative")
+                typenode.derivative = parse(UInt, node.firstelement["derivative"])
+            end
+        elseif typename == "String"
+            scalarVariables[index]._String = fmi2ModelDescriptionString()
+            typenode = scalarVariables[index]._String
+            if haskey(node.firstelement, "start")
+                scalarVariables[index]._String.start = node.firstelement["start"]
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Boolean"
+            scalarVariables[index]._Boolean = fmi2ModelDescriptionBoolean()
+            typenode = scalarVariables[index]._Boolean
+            if haskey(node.firstelement, "start")
+                scalarVariables[index]._Boolean.start = parseFMI2Boolean(node.firstelement["start"])
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Integer"
+            scalarVariables[index]._Integer = fmi2ModelDescriptionInteger()
+            typenode = scalarVariables[index]._Integer
+            if haskey(node.firstelement, "start")
+                scalarVariables[index]._Integer.start = parseInteger(node.firstelement["start"])
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Enumeration"
+            scalarVariables[index]._Enumeration = fmi2ModelDescriptionEnumeration()
+            typenode = scalarVariables[index]._Enumeration
+            # ToDo: Save start value
+            # ToDo: remaining attributes
+        else 
+            @warn "Unknown data type `$(typename)`."
+        end
+
+        # generic attributes
+        if typenode != nothing 
+            if haskey(node.firstelement, "declaredType")
+                typenode.declaredType = node.firstelement["declaredType"]
+            end
+        end
+
+        md.stringValueReferences[name] = valueReference
+
         index += 1
     end
    
     scalarVariables
 end
 
-# Parses the model variables of the FMU model description.
-function parseDependencies(nodes::EzXML.Node, md::fmi2ModelDescription)
+# Parses the `ModelStructure.Derivatives` of the FMU model description.
+function parseUnknwon(node::EzXML.Node)
+    if haskey(node, "index")
+        varDep = fmi2VariableDependency(parseInteger(node["index"]))
+
+        if haskey(node, "dependencies")
+            dependencies = node["dependencies"]
+            if length(dependencies) > 0
+                dependenciesSplit = split(dependencies, " ")
+                if length(dependenciesSplit) > 0
+                    varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
+                end
+            end
+        end 
+
+        if haskey(node, "dependenciesKind")
+            dependenciesKind = node["dependenciesKind"]
+            if length(dependenciesKind) > 0
+                dependenciesKindSplit = split(dependenciesKind, " ")
+                if length(dependenciesKindSplit) > 0
+                    varDep.dependenciesKind = collect(fmi2StringToDependencyKind(e) for e in dependenciesKindSplit)
+                end
+            end
+        end
+
+        if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
+            if length(varDep.dependencies) != length(varDep.dependenciesKind)
+                @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
+            end
+        end
+
+        return varDep
+    else 
+        return nothing 
+    end
+end 
+
+function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
+    @assert (nodes.name == "Derivatives") "Wrong element name."
+    md.modelStructure.derivatives = []
     for node in eachelement(nodes)
-        
         if node.name == "Unknown"
-
-            index = 0
-            dependencies = nothing
-            dependenciesKind = nothing
-
             if haskey(node, "index")
-                index = parseInteger(node["index"])
-                dependencies = "" 
-                dependenciesKind = ""
+                varDep = parseUnknwon(node)
 
-                if haskey(node, "dependencies")
-                    dependencies = node["dependencies"]
-                end 
+                # find states and derivatives
+                derSV = md.modelVariables[varDep.index]
+                derVR = derSV.valueReference
+                stateVR = md.modelVariables[derSV._Real.derivative].valueReference
 
-                if haskey(node, "dependenciesKind")
-                    dependenciesKind = node["dependenciesKind"]
+                if stateVR ∉ md.stateValueReferences
+                    push!(md.stateValueReferences, stateVR)
+                end
+                if derVR ∉ md.derivativeValueReferences
+                    push!(md.derivativeValueReferences, derVR)
                 end
 
-                if length(dependencies) > 0 && length(dependenciesKind) > 0
-                    dependenciesSplit = split(dependencies, " ")
-                    dependenciesKindSplit = split(dependenciesKind, " ")
-
-                    if length(dependenciesSplit) != length(dependenciesKindSplit)
-                        @warn "Length of field dependencies ($(length(dependenciesSplit))) doesn't match length of dependenciesKind ($(length(dependenciesKindSplit)))."
-                    else
-                        #md.modelVariables[index].dependencies = vcat(md.modelVariables[index].dependencies, collect(parseInteger(s) for s in dependenciesSplit)) 
-                        #md.modelVariables[index].dependenciesKind = vcat(md.modelVariables[index].dependenciesKind,  dependenciesKindSplit)
-                    end
-                else 
-                    #md.modelVariables[index].dependencies = []
-                    #md.modelVariables[index].dependenciesKind = []
-                end
+                push!(md.modelStructure.derivatives, varDep)
             else 
                 @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
             end
         else 
-            @warn "Unknown entry in `ModelStructure` named `$(node.name)`."
+            @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
+        end 
+    end
+end
+
+function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
+    @assert (nodes.name == "InitialUnknowns") "Wrong element name."
+    md.modelStructure.initialUnknowns = []
+    for node in eachelement(nodes)
+        if node.name == "Unknown"
+            if haskey(node, "index")
+                varDep = parseUnknwon(node)
+
+                push!(md.modelStructure.initialUnknowns, varDep)
+            else 
+                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+            end
+        else 
+            @warn "Unknown entry in `ModelStructure.InitialUnknowns` named `$(node.name)`."
+        end 
+    end
+end
+
+function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
+    @assert (nodes.name == "Outputs") "Wrong element name."
+    md.modelStructure.outputs = []
+    for node in eachelement(nodes)
+        if node.name == "Unknown"
+            if haskey(node, "index")
+                varDep = parseUnknwon(node)
+
+                # find outputs
+                outVR = md.modelVariables[varDep.index].valueReference
+                
+                if outVR ∉ md.outputValueReferences
+                    push!(md.outputValueReferences, outVR)
+                end
+
+                push!(md.modelStructure.outputs, varDep)
+            else 
+                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+            end
+        else 
+            @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
         end 
     end
 end
@@ -360,7 +468,7 @@ function parseFMI2Boolean(s::Union{String, SubString{String}})
 end
 
 # set the datatype and attributes of an model variable
-function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription)
+function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv)
     type = fmi2DatatypeVariable()
     typenode = node.firstelement
     typename = typenode.name
@@ -379,6 +487,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription)
 
     if typename == "Real"
         type.datatype = fmi2Real
+        sv._Real = fmi2ModelDescriptionReal()
     elseif typename == "String"
         type.datatype = fmi2String
     elseif typename == "Boolean"
@@ -398,6 +507,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription)
     if haskey(typenode, "start")
         if typename == "Real"
             type.start = parse(fmi2Real, typenode["start"])
+            sv._Real.start = type.start
         elseif typename == "Integer"
             type.start = parse(fmi2Integer, typenode["start"])
         elseif typename == "Boolean"
@@ -450,6 +560,9 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription)
     end
     if haskey(typenode, "derivative") && type.datatype == fmi2Real
         type.derivative = parse(fmi2Integer, typenode["derivative"])
+        if typename == "Real"
+            sv._Real.derivative = type.derivative
+        end
     end
     if haskey(typenode, "reinit") && type.datatype == fmi2Real
         type.reinit = parseFMI2Boolean(typenode["reinit"])

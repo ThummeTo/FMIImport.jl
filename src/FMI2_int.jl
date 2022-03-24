@@ -712,10 +712,22 @@ function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat)
         mvs = fmi2ModelVariablesForValueReference(c.fmu.modelDescription, vr) 
 
         if length(mvs) == 0
-            @warn "fmi2GetStartValue(...) found no model variable with value reference $(vr)."
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
         end
     
-        push!(starts, mvs[1].datatype.start)
+        if mvs[1]._Real != nothing
+            push!(starts, mvs[1]._Real.start)
+        elseif mvs[1]._Integer != nothing
+            push!(starts, mvs[1]._Integer.start)
+        elseif mvs[1]._Boolean != nothing
+            push!(starts, mvs[1]._Boolean.start)
+        elseif mvs[1]._String != nothing
+            push!(starts, mvs[1]._String.start)
+        elseif mvs[1]._Enumeration != nothing
+            push!(starts, mvs[1]._Enumeration.start)
+        else 
+            @assert false "fmi2GetStartValue(...): Value reference $(vr) has no data type."
+        end
     end
 
     if length(vrs) == 1
