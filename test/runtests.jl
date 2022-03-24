@@ -20,22 +20,22 @@ function runtests(exportingTool)
     @testset "Testing FMUs exported from $exportingTool" begin
         @testset "Functions for fmi2Component" begin
             @testset "Variable Getters / Setters" begin
-                include("getter_setter.jl")
+                include("FMI2/getter_setter.jl")
             end
             @testset "State Manipulation" begin
-                include("state.jl")
+                include("FMI2/state.jl")
             end
             @testset "Directional derivatives" begin
-                include("dir_ders.jl")
+                include("FMI2/dir_ders.jl")
             end
         end
 
         @testset "Model Description Parsing" begin
-            include("model_description.jl")
+            include("FMI2/model_description.jl")
         end
 
         @testset "Logging" begin
-            include("logging.jl")
+            include("FMI2/logging.jl")
         end
     end
 end
