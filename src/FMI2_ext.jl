@@ -313,7 +313,17 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
-            fmu.callbackLibHandle = dlopen(joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll"))
+
+            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll")
+
+            # check permission to execute the DLL
+            perm = filemode(cbLibPath)
+            permRWX = 16895
+            if perm != permRWX
+                chmod(cbLibPath, permRWX; recursive=true)
+            end
+
+            fmu.callbackLibHandle = dlopen(cbLibPath)
         end
         ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
     end 

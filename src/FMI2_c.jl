@@ -143,6 +143,20 @@ function fmi2GetVersion(c::FMU2Component)
     fmi2GetVersion(c.fmu)
 end
 
+# helper 
+function checkStatus(c::FMU2Component, status::fmi2Status)
+    @assert (status != fmi2StatusWarning) || !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
+    
+    if status == fmi2StatusError
+        c.state = fmi2ComponentStateError
+        @assert !c.fmu.executionConfig.assertOnError "Assert on `fmi2StatusError`. See stack for errors."
+    
+    elseif status == fmi2StatusFatal 
+        c.state = fmi2ComponentStateFatal
+        @assert false "Assert on `fmi2StatusFatal`. See stack for errors."
+    end
+end
+
 """
 Source: FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 
@@ -151,6 +165,7 @@ The function controls debug logging that is output via the logger function callb
 function fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
     
     status = fmi2SetDebugLogging(c.fmu.cSetDebugLogging, c.compAddr, logginOn, nCategories, categories)
+    checkStatus(c, status)
     return status
 end
 
@@ -166,10 +181,17 @@ function fmi2SetupExperiment(c::FMU2Component,
     stopTimeDefined::fmi2Boolean,
     stopTime::fmi2Real)
 
+    if c.state != fmi2ComponentStateInstantiated
+        @warn "fmi2SetupExperiment(...): Needs to be called in state `fmi2ComponentStateInstantiated`."
+    end
+
     status = fmi2SetupExperiment(c.fmu.cSetupExperiment,
                 c.compAddr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
+    checkStatus(c, status)
 
-    status
+    # remain in status on success, nothing to do here
+
+    return status
 end
 
 """
@@ -179,7 +201,15 @@ Informs the FMU to enter Initialization Mode. Before calling this function, all 
 """
 function fmi2EnterInitializationMode(c::FMU2Component)
  
-    return fmi2EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr)
+    if c.state != fmi2ComponentStateInstantiated
+        @warn "fmi2EnterInitializationMode(...): Needs to be called in state `fmi2ComponentStateInstantiated`."
+    end
+    status = fmi2EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr)
+    checkStatus(c, status)
+    if status == fmi2StatusOK
+        c.state = fmi2ComponentStateInitializationMode
+    end
+    return status
 end
 
 """
@@ -188,10 +218,15 @@ Source: FMISpec2.0.2[p.23]: 2.1.6 Initialization, Termination, and Resetting an 
 Informs the FMU to exit Initialization Mode.
 """
 function fmi2ExitInitializationMode(c::FMU2Component)
+
+    if c.state != fmi2ComponentStateInitializationMode
+        @warn "fmi2ExitInitializationMode(...): Needs to be called in state `fmi2ComponentStateInitializationMode`."
+    end
   
     status = fmi2ExitInitializationMode(c.fmu.cExitInitializationMode, c.compAddr)
+    checkStatus(c, status)
     if status == fmi2StatusOK
-        c.state = fmi2ComponentStateModelInitialized
+        c.state = fmi2ComponentStateEventMode
     end 
     return status
 end
@@ -201,14 +236,19 @@ Source: FMISpec2.0.2[p.24]: 2.1.6 Initialization, Termination, and Resetting an 
 
 Informs the FMU that the simulation run is terminated.
 """
-function fmi2Terminate(c::FMU2Component)
-    if c.state != fmi2ComponentStateModelInitialized
-        @warn "fmi2Terminate(_): Should be only called in FMU state `modelInitialized`."
+function fmi2Terminate(c::FMU2Component; soft::Bool=false)
+    if c.state != fmi2ComponentStateContinuousTimeMode && c.state != fmi2ComponentStateEventMode
+        if soft 
+            return fmi2StatusOK
+        else
+            @warn "fmi2Terminate(_): Needs to be called in state `fmi2ComponentStateContinuousTimeMode` or `fmi2ComponentStateEventMode`."
+        end
     end
  
     status = fmi2Terminate(c.fmu.cTerminate, c.compAddr)
+    checkStatus(c, status)
     if status == fmi2StatusOK 
-        c.state = fmi2ComponentStateModelSetableFMUstate
+        c.state = fmi2ComponentStateTerminated
     end 
     return status
 end
@@ -218,9 +258,13 @@ Source: FMISpec2.0.2[p.24]: 2.1.6 Initialization, Termination, and Resetting an 
 
 Is called by the environment to reset the FMU after a simulation run. The FMU goes into the same state as if fmi2Instantiate would have been called.
 """
-function fmi2Reset(c::FMU2Component)
-    if c.state != fmi2ComponentStateModelSetableFMUstate
-        @warn "fmi2Reset(_): Should be only called in FMU state `modelSetableFMUstate`."
+function fmi2Reset(c::FMU2Component; soft::Bool=false)
+    if c.state != fmi2ComponentStateTerminated && c.state != fmi2ComponentStateError
+        if soft 
+            return fmi2StatusOK
+        else
+            @warn "fmi2Reset(_): Needs to be called in state `fmi2ComponentStateTerminated` or `fmi2ComponentStateError`."
+        end
     end
    
     if c.fmu.cReset == C_NULL
@@ -236,8 +280,9 @@ function fmi2Reset(c::FMU2Component)
         return fmi2StatusOK
     else
         status = fmi2Reset(c.fmu.cReset, c.compAddr)
+        checkStatus(c, status)
         if status == fmi2StatusOK
-            c.state = fmi2ComponentStateModelUnderEvaluation
+            c.state = fmi2ComponentStateInstantiated
         end 
         return status
     end
@@ -250,8 +295,10 @@ Functions to get and set values of variables idetified by their valueReference
 """
 function fmi2GetReal!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Real})
    
-    fmi2GetReal!(c.fmu.cGetReal,
+    status = fmi2GetReal!(c.fmu.cGetReal,
           c.compAddr, vr, nvr, value)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -263,7 +310,8 @@ function fmi2SetReal(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize
     
     status = fmi2SetReal(c.fmu.cSetReal,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -275,7 +323,8 @@ function fmi2GetInteger!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::C
    
     status = fmi2GetInteger!(c.fmu.cGetInteger,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -287,7 +336,8 @@ function fmi2SetInteger(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Cs
    
     status = fmi2SetInteger(c.fmu.cSetInteger,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -299,7 +349,8 @@ function fmi2GetBoolean!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::C
     
     status = fmi2GetBoolean!(c.fmu.cGetBoolean,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -311,7 +362,8 @@ function fmi2SetBoolean(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Cs
    
     status = fmi2SetBoolean(c.fmu.cSetBoolean,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -323,7 +375,8 @@ function fmi2GetString!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Cs
    
     status = fmi2GetString!(c.fmu.cGetString,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -335,7 +388,8 @@ function fmi2SetString(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csi
     
     status = fmi2SetString(c.fmu.cSetString,
                 c.compAddr, vr, nvr, value)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -347,7 +401,8 @@ function fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
    
     status = fmi2GetFMUstate!(c.fmu.cGetFMUstate,
                 c.compAddr, FMUstate)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -359,7 +414,8 @@ function fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
   
     status = fmi2SetFMUstate(c.fmu.cSetFMUstate,
                 c.compAddr, FMUstate)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -371,7 +427,8 @@ function fmi2FreeFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
    
     status = fmi2FreeFMUstate!(c.fmu.cFreeFMUstate,
                 c.compAddr, FMUstate)
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -383,6 +440,8 @@ function fmi2SerializedFMUstateSize!(c::FMU2Component, FMUstate::fmi2FMUstate, s
    
     status = fmi2SerializedFMUstateSize!(c.fmu.cSerializedFMUstateSize,
                 c.compAddr, FMUstate, size)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -394,6 +453,8 @@ function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serial
   
     status = fmi2SerializeFMUstate!(c.fmu.cSerializeFMUstate,
                 c.compAddr, FMUstate, serialzedState, size)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -405,6 +466,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::Array{fmi2B
   
     status = fmi2DeSerializeFMUstate!(c.fmu.cDeSerializeFMUstate,
                 c.compAddr, serializedState, size, FMUstate)
+    checkStatus(c, status)
     return status
 end
 
@@ -424,6 +486,7 @@ function fmi2GetDirectionalDerivative!(c::FMU2Component,
    
     status = fmi2GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
           c.compAddr, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
+    checkStatus(c, status)
     return status
 end
 
@@ -439,6 +502,8 @@ function fmi2SetRealInputDerivatives(c::FMU2Component, vr::Array{fmi2ValueRefere
     
     status = fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives,
                 c.compAddr, vr, nvr, order, value)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -450,8 +515,10 @@ the array order specifies the corresponding order of derivation of the variables
 """
 function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
    
-    fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
+    status = fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
                 c.compAddr, vr, nvr, order, value)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -462,8 +529,10 @@ The computation of a time step is started.
 function fmi2DoStep(c::FMU2Component, currentCommunicationPoint::fmi2Real, communicationStepSize::fmi2Real, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
     @assert c.fmu.cDoStep != C_NULL ["fmi2DoStep(...): This FMU does not support fmi2DoStep, probably it's a ME-FMU with no CS-support?"]
   
-    fmi2DoStep(c.fmu.cDoStep,
+    status = fmi2DoStep(c.fmu.cDoStep,
           c.compAddr, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -473,7 +542,9 @@ Can be called if fmi2DoStep returned fmi2Pending in order to stop the current as
 """
 function fmi2CancelStep(c::FMU2Component)
  
-    fmi2CancelStep(c.fmu.cCancelStep, c.compAddr)
+    status = fmi2CancelStep(c.fmu.cCancelStep, c.compAddr)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -494,8 +565,9 @@ function fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value)
     if rtype == fmi2Boolean
         status = fmi2GetStatus!(c.fmu.cGetRealStatus,
                     c.compAddr, s, Ref(value))
+        checkStatus(c, status)
     end 
-    status
+    return status
 end
 
 """
@@ -507,7 +579,8 @@ function fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Real
    
     status = fmi2GetRealStatus!(c.fmu.cGetRealStatus,
                 c.compAddr, s, Ref(value))
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -519,7 +592,8 @@ function fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2I
   
     status = fmi2GetIntegerStatus!(c.fmu.cGetIntegerStatus,
                 c.compAddr, s, Ref(value))
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -531,7 +605,8 @@ function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2B
   
     status = fmi2GetBooleanStatus!(c.fmu.cGetBooleanStatus,
                 c.compAddr, s, Ref(value))
-    status
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -543,7 +618,8 @@ function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2St
   
     status = fmi2GetStringStatus!(c.fmu.cGetStringStatus,
                 c.compAddr, s, Ref(value))
-    status
+    checkStatus(c, status)
+    return status
 end
 
 # Model Exchange specific Functions
@@ -557,6 +633,7 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real)
   
     status = fmi2SetTime(c.fmu.cSetTime,
           c.compAddr, time)
+    checkStatus(c, status)
     if status == fmi2StatusOK
         c.t = time 
     end 
@@ -572,7 +649,9 @@ function fmi2SetContinuousStates(c::FMU2Component,
                                  x::Array{fmi2Real},
                                  nx::Csize_t)
  
-    fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x, nx)
+    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x, nx)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -580,10 +659,23 @@ Source: FMISpec2.0.2[p.84]: 3.2.2 Evaluation of Model Equations
 
 The model enters Event Mode from the Continuous-Time Mode and discrete-time equations may become active (and relations are not “frozen”).
 """
-function fmi2EnterEventMode(c::FMU2Component)
+function fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
 
-    fmi2EnterEventMode(c.fmu.cEnterEventMode,
+    if c.state != fmi2ComponentStateContinuousTimeMode
+        if soft 
+            return fmi2StatusOK
+        else
+            @warn "fmi2EnterEventMode(...): Called at the wrong time."
+        end
+    end
+
+    status = fmi2EnterEventMode(c.fmu.cEnterEventMode,
           c.compAddr)
+    checkStatus(c, status)
+    if status == fmi2StatusOK
+        c.state = fmi2ComponentStateEventMode
+    end
+    return status
 end
 
 """
@@ -592,9 +684,16 @@ Source: FMISpec2.0.2[p.84]: 3.2.2 Evaluation of Model Equations
 The FMU is in Event Mode and the super dense time is incremented by this call.
 """
 function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
+
+    if c.state != fmi2ComponentStateEventMode
+        @warn "fmi2NewDiscreteStates(...): Needs to be called in state `fmi2ComponentStateEventMode`."
+    end
  
-    fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
-                    c.compAddr, Ref(eventInfo))
+    status = fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
+                    c.compAddr, Ptr{fmi2EventInfo}(pointer_from_objref(eventInfo)) )
+    checkStatus(c, status)
+    # remain in the same mode and status (or ToDo: Meta-states)
+    return status
 end
 
 """
@@ -603,10 +702,23 @@ Source: FMISpec2.0.2[p.85]: 3.2.2 Evaluation of Model Equations
 The model enters Continuous-Time Mode and all discrete-time equations become inactive and all relations are “frozen”.
 This function has to be called when changing from Event Mode (after the global event iteration in Event Mode over all involved FMUs and other models has converged) into Continuous-Time Mode.
 """
-function fmi2EnterContinuousTimeMode(c::FMU2Component)
+function fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
 
-    fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode,
+    if c.state != fmi2ComponentStateEventMode
+        if soft 
+            return fmi2StatusOK
+        else
+            @warn "fmi2EnterContinuousTimeMode(...): Needs to be called in state `fmi2ComponentStateEventMode`."
+        end
+    end
+
+    status = fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode,
           c.compAddr)
+    checkStatus(c, status)
+    if status == fmi2StatusOK
+        c.state = fmi2ComponentStateContinuousTimeMode
+    end
+    return status
 end
 
 """
@@ -621,8 +733,10 @@ function fmi2CompletedIntegratorStep!(c::FMU2Component,
                                       enterEventMode::fmi2Boolean,
                                       terminateSimulation::fmi2Boolean)
  
-    fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
+    status = fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
           c.compAddr, noSetFMUStatePriorToCurrentPoint, Ref(enterEventMode), Ref(terminateSimulation))
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -634,8 +748,10 @@ function fmi2GetDerivatives!(c::FMU2Component,
                             derivatives::Array{fmi2Real},
                             nx::Csize_t)
                     
-    fmi2GetDerivatives!(c.fmu.cGetDerivatives,
+    status = fmi2GetDerivatives!(c.fmu.cGetDerivatives,
           c.compAddr, derivatives, nx)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -645,8 +761,10 @@ Compute event indicators at the current time instant and for the current states.
 """
 function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::SubArray{fmi2Real}, ni::Csize_t)
 
-    fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
+    status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
                     c.compAddr, eventIndicators, ni)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -658,8 +776,10 @@ function fmi2GetContinuousStates!(c::FMU2Component,
                                  x::Array{fmi2Real},
                                  nx::Csize_t)
                        
-    fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
+    status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
           c.compAddr, x, nx)
+    checkStatus(c, status)
+    return status
 end
 
 """
@@ -669,6 +789,8 @@ Return the nominal values of the continuous states.
 """
 function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
  
-    fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
+    status = fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
+    checkStatus(c, status)
+    return status
 end
