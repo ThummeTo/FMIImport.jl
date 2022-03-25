@@ -13,7 +13,7 @@ using FMIImport.FMICore: fmi2Integer, fmi2Boolean, fmi2Real, fmi2String
 exportingToolsWindows = [("Dymola", "2022x")]
 exportingToolsLinux = [("Dymola", "2022x")]
 
-function runtests(exportingTool)
+function runtestsFMI2(exportingTool)
     ENV["EXPORTINGTOOL"] = exportingTool[1]
     ENV["EXPORTINGVERSION"] = exportingTool[2]
 
@@ -37,6 +37,36 @@ function runtests(exportingTool)
         @testset "Logging" begin
             include("FMI2/logging.jl")
         end
+    end
+end
+
+function runtestsFMI3(exportingTool)
+    ENV["EXPORTINGTOOL"] = exportingTool[1]
+    ENV["EXPORTINGVERSION"] = exportingTool[2]
+
+    @testset "Testing FMUs exported from $exportingTool" begin
+        # @testset "Functions for fmi2Component" begin
+        #     @testset "Variable Getters / Setters" begin
+        #         include("FMI3/getter_setter.jl")
+        #     end
+        #     @testset "State Manipulation" begin
+        #         include("FMI3/state.jl")
+        #     end
+        #     @testset "Directional derivatives" begin
+        #         include("FMI3/dir_ders.jl")
+        #     end
+        # end
+
+        # @testset "Model Description Parsing" begin
+        #     include("FMI3/model_description.jl")
+        # end
+
+        # @testset "Logging" begin
+        #     include("FMI3/logging.jl")
+        # end
+    
+    @testset "Testing Reference FMUs" begin
+        
     end
 end
 

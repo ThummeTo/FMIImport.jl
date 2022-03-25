@@ -3,19 +3,19 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMIImport: fmi2StatusError
+import FMIImport: fmi3StatusError
 
-myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = fmi3Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
 ### CASE A: Print log ###
-comp = fmi2Instantiate!(myFMU; loggingOn=true)
-@test comp != 0
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2ExitInitializationMode(comp) == fmi2StatusError
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
@@ -28,14 +28,14 @@ end
 
 ### CASE B: Print log, but catch infos ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=true, logStatusError=false)
-@test comp != 0
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true, logStatusError=false)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2ExitInitializationMode(comp) == fmi2StatusError
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
@@ -47,14 +47,14 @@ output = read(joinpath(pwd(), "stderr"), String)
 
 ### CASE C: Disable Log ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=false)
-@test comp != 0
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2ExitInitializationMode(comp) == fmi2StatusError
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
@@ -66,4 +66,4 @@ end
 #@test output == ""
 
 # cleanup
-fmi2Unload(myFMU)
+fmi3Unload(myFMU)
