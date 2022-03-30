@@ -35,6 +35,7 @@ end
 close(zarchive)
 fmu = fmi3Load(joinpath(path, "BouncingBall.fmu"))
 instance = fmi3InstantiateCoSimulation!(fmu; loggingOn=true)
+instance = fmi3InstantiateModelExchange!(fmu; loggingOn=true)
 t_start = 0.0
 t_stop = 3.0
 dt = 0.01

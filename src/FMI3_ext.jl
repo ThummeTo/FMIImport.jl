@@ -308,7 +308,7 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
 
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
 
-    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
+    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
@@ -328,12 +328,13 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
     if instance !== nothing
         @info "fmi3InstantiateModelExchange!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
-        previous_z  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
-        rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
-        stateEvent  = fmi3False
-        timeEvent   = fmi3False
-        stepEvent   = fmi3False
-        instance = FMU3Instance(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent)
+        
+        instance = FMU3Instance(compAddr, fmu)
+        instance.z_prev  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
+        instance.rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
+        instance.stateEvent  = fmi3False
+        instance.timeEvent   = fmi3False
+        instance.stepEvent   = fmi3False
         push!(fmu.instances, instance)
     end 
 

@@ -126,8 +126,8 @@ Disposes the given instance, unloads the loaded model, and frees all the allocat
 """
 function fmi3FreeInstance!(c::FMU3Instance)
 
-    ind = findall(x->x==c, c.fmu.components)
-    deleteat!(c.fmu.components, ind)
+    ind = findall(x->x==c, c.fmu.instances)
+    deleteat!(c.fmu.instances, ind)
     ccall(c.fmu.cFreeInstance, Cvoid, (Ptr{Cvoid},), c.compAddr)
 
     nothing
