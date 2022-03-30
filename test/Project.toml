@@ -1,8 +1,10 @@
 [deps]
 FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+GitHub = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-julia = "1.6"
 FMIZoo = "0.1.1"
+julia = "1.6"

@@ -34,12 +34,12 @@ function fmi3CanSerializeFMUstate(fmu::FMU3)
     fmi3CanSerializeFMUstate(fmu.modelDescription)
 end
 
-function fmi3ProvidesDirectionalDerivative(fmu::FMU3)
-    fmi3ProvidesDirectionalDerivative(fmu.modelDescription)
+function fmi3ProvidesDirectionalDerivatives(fmu::FMU3)
+    fmi3ProvidesDirectionalDerivatives(fmu.modelDescription)
 end
 
-function fmi3ProvidesAdjointDerivative(fmu::FMU3)
-    fmi3ProvidesAdjointDerivative(fmu.modelDescription)
+function fmi3ProvidesAdjointDerivatives(fmu::FMU3)
+    fmi3ProvidesAdjointDerivatives(fmu.modelDescription)
 end
 
 function fmi3IsCoSimulation(fmu::FMU3)

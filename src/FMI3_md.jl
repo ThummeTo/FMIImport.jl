@@ -11,6 +11,11 @@
 
 using EzXML
 
+
+using FMICore: fmi3ModelDescriptionModelExchange, fmi3ModelDescriptionCoSimulation, fmi3ModelDescriptionDefaultExperiment
+using FMICore: fmi3ModelDescriptionFloat, fmi3ModelDescriptionBoolean, fmi3ModelDescriptionInteger, fmi3ModelDescriptionString, fmi3ModelDescriptionEnumeration
+using FMICore: fmi3ModelDescriptionModelStructure
+using FMICore: fmi3DependencyKind
 ######################################
 # [Sec. 1a] fmi3LoadModelDescription #
 ######################################
@@ -29,30 +34,6 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
     md.intermediateUpdateValueReferences = Array{fmi3ValueReference}(undef, 0)
     md.numberOfEventIndicators = 0
 
-    # CS specific entries
-    md.CSmodelIdentifier = ""
-    md.CSneedsExecutionTool = false
-    md.CScanBeInstantiatedOnlyOncePerProcess = false
-    md.CScanGetAndSetFMUstate = false
-    md.CScanSerializeFMUstate = false
-    md.CSprovidesDirectionalDerivatives = false
-    md.CSproivdesAdjointDerivatives = false
-    md.CSprovidesPerElementDependencies = false
-    md.CScanHandleVariableCommunicationStepSize = false
-    md.CSmaxOutputDerivativeOrder = 0
-    md.CSprovidesIntermediateUpdate = false
-    md.CSrecommendedIntermediateInputSmoothness = 0
-    md.CScanReturnEarlyAfterIntermediateUpdate = false
-    md.CShasEventMode = false
-    md.CSprovidesEvaluateDiscreteStates = false
-
-    # ME specific entries
-    md.MEmodelIdentifier = ""
-    md.MEcanGetAndSetFMUstate = false
-    md.MEcanSerializeFMUstate = false
-    md.MEprovidesDirectionalDerivatives = false
-    md.MEprovidesAdjointDerivatives = false
-
     md.enumerations = []
     typedefinitions = nothing
     modelvariables = nothing
@@ -62,96 +43,92 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
 
     root = doc.root
 
+    # mandatory
     md.fmiVersion = root["fmiVersion"]
     md.modelName = root["modelName"]
     md.instantiationToken = root["instantiationToken"]
-    md.isModelExchange = false
-    md.isCoSimulation = false
-    md.isScheduledExecution = false
+
+    # optional
     md.generationTool = parseNodeString(root, "generationTool"; onfail="[Unknown generation tool]")
     md.generationDateAndTime = parseNodeString(root, "generationDateAndTime"; onfail="[Unknown generation date and time]")
-    md.variableNamingConvention = parseNodeString(root, "variableNamingConvention"; onfail="[Unknown variable naming convention]")
+    variableNamingConventionStr = parseNodeString(root, "variableNamingConvention"; onfail= "flat")
+    @assert (variableNamingConventionStr == "flat" || variableNamingConventionStr == "structured") ["fmi3ReadModelDescription(...): Unknown entry for `variableNamingConvention=$(variableNamingConventionStr)`."]
+    md.variableNamingConvention = (variableNamingConventionStr == "flat" ? fmi3VariableNamingConventionFlat : fmi3VariableNamingConventionStructured)
     md.description = parseNodeString(root, "description"; onfail="[Unknown Description]")
+
+    # defaults
+    md.modelExchange = nothing
+    md.coSimulation = nothing
+    md.scheduledExecution = nothing
+
+    # additionals 
+    md.valueReferences = []
+    md.valueReferenceIndicies = Dict{UInt, UInt}()
 
     md.defaultStartTime = 0.0
     md.defaultStopTime = 1.0
     md.defaultTolerance = 0.0001
 
     for node in eachelement(root)
+        if node.name == "CoSimulation" || node.name == "ModelExchange" || node.name == "ScheduledExecution"
+            if node.name == "CoSimulation"
+                md.coSimulation = fmi3ModelDescriptionCoSimulation()
+                md.coSimulation.modelIdentifier                        = node["modelIdentifier"]
+                md.coSimulation.canHandleVariableCommunicationStepSize = parseNodeBoolean(node, "canHandleVariableCommunicationStepSize"   ; onfail=false)
+                md.coSimulation.canInterpolateInputs                   = parseNodeBoolean(node, "canInterpolateInputs"                     ; onfail=false)
+                md.coSimulation.maxOutputDerivativeOrder               = parseNodeInteger(node, "maxOutputDerivativeOrder"                 ; onfail=nothing)
+                md.coSimulation.canGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
+                md.coSimulation.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
+                md.coSimulation.providesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
+                md.coSimulation.providesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
+            end
 
-        if node.name == "CoSimulation"
-            md.isCoSimulation = true
-            md.CSmodelIdentifier                        = node["modelIdentifier"]
-            md.CSneedsExecutionTool                     = parseNodeBoolean(node, "needsExecutionTool"                       ; onfail=false)
-            md.CScanBeInstantiatedOnlyOncePerProcess    = parseNodeBoolean(node, "canBeInstantiatedOnlyOncePerProcess"      ; onfail=false)
-            md.CScanGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUState"                     ; onfail=false)
-            md.CScanSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUState"                     ; onfail=false)
-            md.CSprovidesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
-            md.CSproivdesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
-            md.CSprovidesPerElementDependencies         = parseNodeBoolean(node, "providesPerElementDependencies"           ; onfail=false)
-            md.CScanHandleVariableCommunicationStepSize = parseNodeBoolean(node, "canHandleVariableCommunicationStepSize"   ; onfail=false)
-            md.CSmaxOutputDerivativeOrder               = parseNodeInteger(node, "maxOutputDerivativeOrder"                 ; onfail=0)
-            md.CSprovidesIntermediateUpdate             = parseNodeBoolean(node, "providesIntermediateUpdate"               ; onfail=false)
-            md.CSrecommendedIntermediateInputSmoothness = parseNodeInteger(node, "recommendedIntermediateInputSmoothness"   ; onfail=0)
-            md.CScanReturnEarlyAfterIntermediateUpdate  = parseNodeBoolean(node, "canReturnEarlyAfterIntermediateUpdate"    ; onfail=false)
-            md.CShasEventMode                           = parseNodeBoolean(node, "hasEventMode"                             ; onfail=false)
-            md.CSprovidesEvaluateDiscreteStates         = parseNodeBoolean(node, "providesEvaluateDiscreteStates"           ; onfail=false)
-
-        elseif node.name == "ModelExchange"
-            md.isModelExchange = true
-            md.MEmodelIdentifier                        = node["modelIdentifier"]
-            md.MEneedsExecutionTool                     = parseNodeBoolean(node, "needsExecutionTool"                       ; onfail=false)
-            md.MEcanBeInstantiatedOnlyOncePerProcess    = parseNodeBoolean(node, "canBeInstantiatedOnlyOncePerProcess"      ; onfail=false)
-            md.MEcanGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
-            md.MEcanSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
-            md.MEprovidesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
-            md.MEprovidesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
-            md.MEprovidesPerElementDependencies         = parseNodeBoolean(node, "providesPerElementDependencies"           ; onfail=false)
-        elseif node.name == "ScheduledExecution"
-            md.isScheduledExecution = true
-            md.SEmodelIdentifier                        = node["modelIdentifier"]
-            md.SEneedsExecutionTool                     = parseNodeBoolean(node, "needsExecutionTool"                       ; onfail=false)
-            md.SEcanBeInstantiatedOnlyOncePerProcess    = parseNodeBoolean(node, "canBeInstantiatedOnlyOncePerProcess"      ; onfail=false)
-            md.SEcanGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
-            md.SEcanSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
-            md.SEprovidesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
-            md.SEprovidesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
-            md.SEprovidesPerElementDependencies         = parseNodeBoolean(node, "providesPerElementDependencies"           ; onfail=false)
+            if node.name == "ModelExchange"
+                md.modelExchange = fmi3ModelDescriptionModelExchange()
+                md.modelExchange.modelIdentifier                        = node["modelIdentifier"]
+                md.modelExchange.canGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
+                md.modelExchange.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
+                md.modelExchange.providesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
+                md.modelExchange.providesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
+            end
+        
+            if node.name == "ScheduledExecution"
+                md.scheduledExecution = FMICore.fmi3ModelDescriptionScheduledExecution()
+                md.scheduledExecution.modelIdentifier                        = node["modelIdentifier"]
+                md.scheduledExecution.needsExecutionTool                     = parseNodeBoolean(node, "needsExecutionTool"                       ; onfail=false)
+                md.scheduledExecution.canBeInstantiatedOnlyOncePerProcess    = parseNodeBoolean(node, "canBeInstantiatedOnlyOncePerProcess"      ; onfail=false)
+                md.scheduledExecution.canGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
+                md.scheduledExecution.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
+                md.scheduledExecution.providesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
+                md.scheduledExecution.providesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
+                md.scheduledExecution.providesPerElementDependencies         = parseNodeBoolean(node, "providesPerElementDependencies"           ; onfail=false)
+            end
         elseif node.name == "TypeDefinitions"
-            typedefinitions = node
+            md.enumerations = createEnum(node)
 
         elseif node.name == "ModelVariables"
-            modelvariables = node
+            md.modelVariables = parseModelVariables(node, md)
 
         elseif node.name == "ModelStructure"
-            modelstructure = node
-        end
+            md.modelStructure = fmi3ModelDescriptionModelStructure()
 
-        # ToDo: Parse default experiment
-    end
-
-    if typedefinitions === nothing
-        md.enumerations = []
-    else
-        md.enumerations = createEnum(typedefinitions)
-    end
-
-    md.valueReferences = []
-    md.valueReferenceIndicies = Dict{Integer,Integer}()
-
-    derivativeindices = fmi3getDerivativeIndices(modelstructure)
-    md.modelVariables = parseModelVariables(modelvariables, md, derivativeindices)
-
-    # parse model dependencies (if available)
-    for element in eachelement(modelstructure)
-        if element.name == "Derivatives" || element.name == "InitialUnknown"
-            parseDependencies(element, md)
-        elseif element.name == "Output"
-
-        elseif element.name == "EventIndicator"
-            md.numberOfEventIndicators += 1
-        else
-            @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
+            for element in eachelement(node)
+                if element.name == "Derivatives" 
+                    parseDerivatives(element, md)
+                elseif element.name == "InitialUnknowns"
+                    parseInitialUnknowns(element, md)
+                elseif element.name == "Outputs"
+                    parseOutputs(element, md)
+                else
+                    @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
+                end
+            end
+        elseif node.name == "DefaultExperiment"
+            md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
+            md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
+            md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
+            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance")
+            md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
         end
     end
 
@@ -204,12 +181,7 @@ function fmi3getDerivativeIndices(node::EzXML.Node)
 end
 
 # Parses the model variables of the FMU model description.
-function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription, derivativeIndices)
-    lastValueReference = fmi3ValueReference(0)
-    derivativeIndex = nothing
-    if derivativeIndices != []
-        derivativeIndex = pop!(derivativeIndices)
-    end
+function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
     numberOfVariables = 0
     for node in eachelement(nodes)
         numberOfVariables += 1
@@ -218,54 +190,51 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription, deriva
     index = 1
     for node in eachelement(nodes)
         name = ""
-        ValueReference = parse(fmi3ValueReference, (node["valueReference"]))
-        description = ""
-        causality = ""
-        variability = ""
+        valueReference = parse(fmi3ValueReference, (node["valueReference"]))
+        
+        modelVariables[index] = fmi3ModelVariable(name, valueReference)
 
-        if !(ValueReference in md.valueReferences)
-            push!(md.valueReferences, ValueReference)
-        end
-
-        if haskey(node, "name")
-            name = node["name"]
+        if !(valueReference in md.valueReferences)
+            push!(md.valueReferences, valueReference)
         end
 
         if haskey(node, "description")
-            description = node["description"]
+            modelVariables[index].description = node["description"]
         end
         if haskey(node, "causality")
-            causality = node["causality"]
+            modelVariables[index].causality = fmi3StringToCausality(node["causality"])
+
+            if modelVariables[index].causality == fmi3CausalityOutput
+                push!(md.outputValueReferences, valueReference)
+            elseif modelVariables[index].causality == fmi3CausalityInput
+                push!(md.inputValueReferences, valueReference)
+            end
         end
         if haskey(node, "variability")
-            variability = node["variability"]
+            modelVariables[index].variability = fmi3StringToVariability(node["variability"])
+        end
+
+        if haskey(node, "initial")
+            modelVariables[index].initial = fmi3StringToInitial(node["initial"])
         end
         datatype = fmi3SetDatatypeVariables(node, md)
 
         dependencies = []
         dependenciesKind = []
 
-        if derivativeIndex !== nothing
-            if index == derivativeIndex[1]
-                push!(md.stateValueReferences, lastValueReference)
-                push!(md.derivativeValueReferences, ValueReference)
+        # if derivativeIndex !== nothing
+        #     if index == derivativeIndex[1]
+        #         push!(md.stateValueReferences, lastValueReference)
+        #         push!(md.derivativeValueReferences, valueReference)
     
-                if derivativeIndices != []
-                    derivativeIndex = pop!(derivativeIndices)
-                end
-            end
-        end
+        #         if derivativeIndices != []
+        #             derivativeIndex = pop!(derivativeIndices)
+        #         end
+        #     end
+        # end
 
-        modelVariables[index] = fmi3ModelVariable(name, ValueReference, datatype, description, causality, variability, dependencies, dependenciesKind)
+        md.stringValueReferences[name] = valueReference
 
-        if causality == "output"
-            push!(md.outputValueReferences, ValueReference)
-        elseif causality == "input"
-            push!(md.inputValueReferences, ValueReference)
-        end
-        md.stringValueReferences[name] = ValueReference
-
-        lastValueReference = ValueReference
         index += 1
     end
     md.numberOfContinuousStates = length(md.stateValueReferences)
@@ -308,19 +277,6 @@ function parseDependencies(nodes::EzXML.Node, md::fmi3ModelDescription)
             @warn "Unknown entry in `ModelStructure` named `$(node.name)`."
         end 
     end
-end
-
-""" 
-Returns the model variable(s) fitting the value reference.
-"""
-function fmi3ModelVariablesForValueReference(md::fmi3ModelDescription, vr::fmi3ValueReference)
-    ar = []
-    for modelVariable in md.modelVariables
-        if modelVariable.valueReference == vr 
-            push!(ar, modelVariable)
-        end 
-    end 
-    ar
 end
 
 # Parses a Bool value represented by a string.
@@ -675,20 +631,20 @@ end
 Returns true, if the FMU supports co simulation
 """
 function fmi3IsCoSimulation(md::fmi3ModelDescription)
-    md.isCoSimulation
+    return( md.coSimulation !== nothing)
 end
 
 """
 Returns true, if the FMU supports model exchange
 """
 function fmi3IsModelExchange(md::fmi3ModelDescription)
-    md.isModelExchange
+    return( md.modelExchange !== nothing)
 end
 """
 Returns true, if the FMU supports scheduled execution
 """
 function fmi3IsScheduledExecution(md::fmi3ModelDescription)
-    md.isScheduledExecution
+    return( md.scheduledExecution !== nothing)
 end
 
 ##################################
@@ -700,9 +656,9 @@ Returns the tag 'modelIdentifier' from CS or ME section.
 """
 function fmi3GetModelIdentifier(md::fmi3ModelDescription)
     if fmi3IsCoSimulation(md)
-        return md.CSmodelIdentifier
+        return md.coSimulation.modelIdentifier
     elseif fmi3IsModelExchange(md)
-        return md.MEmodelIdentifier
+        return md.modelExchange.modelIdentifier
     else
         @assert false "fmi3GetModelName(...): FMU does not support ME or CS!"
     end
@@ -712,42 +668,29 @@ end
 Returns true, if the FMU supports the getting/setting of states
 """
 function fmi3CanGetSetState(md::fmi3ModelDescription)
-    if md.CScanGetAndSetFMUstate || md.MEcanGetAndSetFMUstate
-        return true
-    else
-        return false
-    end
+    return (md.coSimulation != nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange != nothing && md.modelExchange.canGetAndSetFMUstate)
+
 end
 
 """
 Returns true, if the FMU state can be serialized
 """
 function fmi3CanSerializeFMUstate(md::fmi3ModelDescription)
-    if md.CScanSerializeFMUstate || md.MEcanSerializeFMUstate
-        return true
-    else
-        return false
-    end
+    return (md.coSimulation != nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange != nothing && md.modelExchange.canSerializeFMUstate)
+
 end
 
 """
 Returns true, if the FMU provides directional derivatives
 """
-function fmi3ProvidesDirectionalDerivative(md::fmi3ModelDescription)
-    if md.CSprovidesDirectionalDerivatives || md.MEprovidesDirectionalDerivatives
-        return true
-    else
-        return false
-    end
+function fmi3ProvidesDirectionalDerivatives(md::fmi3ModelDescription)
+    return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivatives) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivatives)
 end
 
 """
 Returns true, if the FMU provides adjoint derivatives
 """
-function fmi3ProvidesAdjointDerivative(md::fmi3ModelDescription)
-    if md.CSproivdesAdjointDerivatives || md.MEprovidesAdjointDerivatives
-        return true
-    else
-        return false
-    end
+function fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
+    return (md.coSimulation != nothing && md.coSimulation.providesAdjointDerivatives) || (md.modelExchange != nothing && md.modelExchange.providesAdjointDerivatives)
+
 end

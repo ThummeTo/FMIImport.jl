@@ -110,7 +110,7 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     # TODO special use case?
     if (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:CS) 
         fmu.type = fmi3TypeCoSimulation::fmi3Type
-    elseif (fmi3IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
+    elseif (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:ME)
         fmu.type = fmi3TypeModelExchange::fmi3Type
     elseif fmi3IsScheduledExecution(fmu.modelDescription) && type==:SE
         fmu.type = fmi3TypeScheduledExecution::fmi3Type
@@ -129,6 +129,9 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     directoryBinary = ""
     pathToBinary = ""
 
+    juliaArch = Sys.WORD_SIZE
+    @assert (juliaArch == 64 || juliaArch == 32) "fmi3Load(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
+    
     if Sys.iswindows()
         if juliaArch == 64
             directories = [joinpath("binaries", "win64"), joinpath("binaries","x86_64-windows")]
@@ -180,12 +183,6 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     fmu.binaryPath = pathToBinary
     loadBinary(fmu)
-   
-    # initialize further variables TODO check if needed
-    fmu.jac_x = zeros(Float64, fmu.modelDescription.numberOfContinuousStates)
-    fmu.jac_t = -1.0
-    fmu.jac_dxy_x = zeros(fmi2Real,0,0)
-    fmu.jac_dxy_u = zeros(fmi2Real,0,0)
    
     # dependency matrix 
     # fmu.dependencies
@@ -355,14 +352,14 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingO
     if ptrIntermediateUpdate === nothing
         ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
     end
-    if fmu.modelDescription.CShasEventMode 
+    if fmu.modelDescription.coSimulation.hasEventMode !== nothing
         mode = eventModeUsed
     else
         mode = false
     end
 
-    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), 
-                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.CScanReturnEarlyAfterIntermediateUpdate), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), fmu.instanceEnvironment, ptrLogger, ptrIntermediateUpdate)
+    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
+                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !== nothing), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), fmu.instanceEnvironment, ptrLogger, ptrIntermediateUpdate)
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateCoSimulation!(...): Instantiation failed!"
