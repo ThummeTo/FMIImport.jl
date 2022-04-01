@@ -185,6 +185,15 @@ function fmi2SetupExperiment(c::FMU2Component,
         @warn "fmi2SetupExperiment(...): Needs to be called in state `fmi2ComponentStateInstantiated`."
     end
 
+    if startTime != 0.0
+        if c.fmu.executionConfig.autoTimeShift
+            #@info "fmi2SetupExperiment(...): You picked a start time which is not zero. Many FMUs don't support that feature, so all time intervals are shifted in the background to achieve the desired result. If this feature is unwanted, please use `myFMU.executionConfig.autoTimeShift=false`."
+            c.t_offset = -startTime
+            stopTime -= startTime
+            startTime = 0.0 # equivalent to: startTime -= startTime
+        end
+    end
+
     status = fmi2SetupExperiment(c.fmu.cSetupExperiment,
                 c.compAddr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
     checkStatus(c, status)
@@ -632,7 +641,7 @@ Set a new time instant and re-initialize caching of variables that depend on tim
 function fmi2SetTime(c::FMU2Component, time::fmi2Real)
   
     status = fmi2SetTime(c.fmu.cSetTime,
-          c.compAddr, time)
+          c.compAddr, time + c.t_offset)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.t = time 
@@ -691,6 +700,11 @@ function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
  
     status = fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
                     c.compAddr, Ptr{fmi2EventInfo}(pointer_from_objref(eventInfo)) )
+
+    if eventInfo.nextEventTimeDefined == fmi2True
+        eventInfo.nextEventTime -= c.t_offset
+    end 
+
     checkStatus(c, status)
     # remain in the same mode and status (or ToDo: Meta-states)
     return status
