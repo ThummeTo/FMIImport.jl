@@ -217,22 +217,11 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         if haskey(node, "initial")
             modelVariables[index].initial = fmi3StringToInitial(node["initial"])
         end
-        datatype = fmi3SetDatatypeVariables(node, md)
+        modelVariables[index].datatype = fmi3SetDatatypeVariables(node, md)
 
         dependencies = []
         dependenciesKind = []
-
-        # if derivativeIndex !== nothing
-        #     if index == derivativeIndex[1]
-        #         push!(md.stateValueReferences, lastValueReference)
-        #         push!(md.derivativeValueReferences, valueReference)
-    
-        #         if derivativeIndices != []
-        #             derivativeIndex = pop!(derivativeIndices)
-        #         end
-        #     end
-        # end
-
+        
         md.stringValueReferences[name] = valueReference
 
         index += 1
@@ -275,6 +264,115 @@ function parseDependencies(nodes::EzXML.Node, md::fmi3ModelDescription)
             end
         else 
             @warn "Unknown entry in `ModelStructure` named `$(node.name)`."
+        end 
+    end
+end
+
+function parseUnknwon(node::EzXML.Node)
+    if haskey(node, "index")
+        varDep = fmi3VariableDependency(parseInteger(node["index"]))
+
+        if haskey(node, "dependencies")
+            dependencies = node["dependencies"]
+            if length(dependencies) > 0
+                dependenciesSplit = split(dependencies, " ")
+                if length(dependenciesSplit) > 0
+                    varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
+                end
+            end
+        end 
+
+        if haskey(node, "dependenciesKind")
+            dependenciesKind = node["dependenciesKind"]
+            if length(dependenciesKind) > 0
+                dependenciesKindSplit = split(dependenciesKind, " ")
+                if length(dependenciesKindSplit) > 0
+                    varDep.dependenciesKind = collect(fmi3StringToDependencyKind(e) for e in dependenciesKindSplit)
+                end
+            end
+        end
+
+        if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
+            if length(varDep.dependencies) != length(varDep.dependenciesKind)
+                @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
+            end
+        end
+
+        return varDep
+    else 
+        return nothing 
+    end
+end 
+
+function parseDerivatives(nodes::EzXML.Node, md::fmi3ModelDescription)
+    @assert (nodes.name == "Derivatives") "Wrong element name."
+    md.modelStructure.derivatives = []
+    for node in eachelement(nodes)
+        if node.name == "Unknown"
+            if haskey(node, "index")
+                varDep = parseUnknwon(node)
+
+                # find states and derivatives
+                derSV = md.modelVariables[varDep.index]
+                derVR = derSV.valueReference
+                stateVR = md.modelVariables[derSV._Real.derivative].valueReference
+
+                if stateVR ∉ md.stateValueReferences
+                    push!(md.stateValueReferences, stateVR)
+                end
+                if derVR ∉ md.derivativeValueReferences
+                    push!(md.derivativeValueReferences, derVR)
+                end
+
+                push!(md.modelStructure.derivatives, varDep)
+            else 
+                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+            end
+        else 
+            @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
+        end 
+    end
+end
+
+function parseInitialUnknowns(nodes::EzXML.Node, md::fmi3ModelDescription)
+    @assert (nodes.name == "InitialUnknowns") "Wrong element name."
+    md.modelStructure.initialUnknowns = []
+    for node in eachelement(nodes)
+        if node.name == "Unknown"
+            if haskey(node, "index")
+                varDep = parseUnknwon(node)
+
+                push!(md.modelStructure.initialUnknowns, varDep)
+            else 
+                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+            end
+        else 
+            @warn "Unknown entry in `ModelStructure.InitialUnknowns` named `$(node.name)`."
+        end 
+    end
+end
+
+function parseOutputs(nodes::EzXML.Node, md::fmi3ModelDescription)
+    @assert (nodes.name == "Outputs") "Wrong element name."
+    md.modelStructure.outputs = []
+    for node in eachelement(nodes)
+        if node.name == "Unknown"
+            if haskey(node, "index")
+                varDep = parseUnknwon(node)
+
+                # find outputs
+                outVR = md.modelVariables[varDep.index].valueReference
+                
+                if outVR ∉ md.outputValueReferences
+                    push!(md.outputValueReferences, outVR)
+                end
+
+                push!(md.modelStructure.outputs, varDep)
+            else 
+                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+            end
+        else 
+            @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
         end 
     end
 end
@@ -342,7 +440,7 @@ function fmi3SetDatatypeVariables(node::EzXML.Node, md::fmi3ModelDescription)
     type = fmi3DatatypeVariable()
     typename = node.name
     type.canHandleMultipleSet = nothing
-    type.intermediateUpdate = false
+    type.intermediateUpdate = fmi3False
     type.previous = nothing
     type.clocks = nothing
     type.declaredType = nothing
@@ -490,7 +588,7 @@ function fmi3SetDatatypeVariables(node::EzXML.Node, md::fmi3ModelDescription)
         end
     end
     if haskey(node, "intermediateUpdate")
-        type.intermediateUpdate = true
+        type.intermediateUpdate = fmi3True
     end
 
     if haskey(node, "min") && (type.datatype != fmi3Binary || type.datatype != fmiBoolean)

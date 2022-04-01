@@ -35,11 +35,26 @@ end
 close(zarchive)
 fmu = fmi3Load(joinpath(path, "BouncingBall.fmu"))
 instance = fmi3InstantiateCoSimulation!(fmu; loggingOn=true)
+test1 = fmi3GetNumberOfContinuousStates(instance)
+test2 = fmi3GetNumberOfEventIndicators(instance)
 instance = fmi3InstantiateModelExchange!(fmu; loggingOn=true)
-t_start = 0.0
-t_stop = 3.0
-dt = 0.01
-saveat = t_start:dt:t_stop
-success, data = fmi3SimulateCS(fmu, t_start, t_stop; recordValues=["h", "v"], saveat = saveat)
-fmiPlot(fmu,["h", "v"], data)
-fmi3Unload(fmu)
+fmi3EnterInitializationMode(instance, 0.0, 10.0)
+# TODO adding test for directional& adjoint derivatives
+for i in 1:2
+    for j in 1:2
+        println(fmi3GetDirectionalDerivative(instance, fmu.modelDescription.derivativeValueReferences[i], fmu.modelDescription.stateValueReferences[j]))
+        println(fmi3GetAdjointDerivative(instance, fmu.modelDescription.derivativeValueReferences[i], fmu.modelDescription.stateValueReferences[j]))
+    end
+end
+fmi3ExitInitializationMode(instance)
+
+fmi3EnterEventMode(instance, true, false, [Int32(2)], UInt64(0), false)
+fmi3GetDirectionalDerivative(instance, fmu.modelDescription.derivativeValueReferences[1], fmu.modelDescription.stateValueReferences[1])
+fmi3GetAdjointDerivative(instance, fmu.modelDescription.derivativeValueReferences[1], fmu.modelDescription.stateValueReferences[1])
+fmi3EnterStepMode(instance)
+fmi3GetDirectionalDerivative(instance, fmu.modelDescription.derivativeValueReferences[1], fmu.modelDescription.stateValueReferences[2])
+fmi3GetAdjointDerivative(instance, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences[1])
+fmi3Terminate(instance)
+
+fmi3GetOutputDerivatives(instance, UInt32(1), Int32(1))
+fmi3Unload(instance)

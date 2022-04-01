@@ -194,7 +194,7 @@ function fmi3Terminate(c::FMU3Instance)
     if c.state != fmi3InstanceStateModelInitialized
         @warn "fmi3Terminate(_): Should be only called in FMU state `modelInitialized`."
     end
-    c.state = fmi3ComponentStateModelSetableFMUstate
+    c.state = fmi3InstanceStateModelSetableFMUstate
     fmi3Terminate(c.fmu.cTerminate, c.compAddr)
 end
 
@@ -204,10 +204,10 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
 Is called by the environment to reset the FMU after a simulation run. The FMU goes into the same state as if fmi3InstantiateXXX would have been called.
 """
 function fmi3Reset(c::FMU3Instance)
-    if c.state != fmi3ComponentStateModelSetableFMUstate
+    if c.state != fmi3InstanceStateModelSetableFMUstate
         @warn "fmi3Reset(_): Should be only called in FMU state `modelSetableFMUstate`."
     end
-    c.state = fmi3ComponentStateModelUnderEvaluation
+    c.state = fmi3InstanceStateModelUnderEvaluation
     fmi3Reset(c.fmu.cReset, c.compAddr)
 end
 
