@@ -19,7 +19,7 @@ end
 export prepareValue, prepareValueReference
 
 # wildcards for how a user can pass a fmi[X]ValueReference
-fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}} 
+fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol} 
 fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
@@ -46,6 +46,7 @@ export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, f
 
 # FMI2_convert.jl
 export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference
+export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
 
 # FMI2_int.jl
 # almost everything exported in `FMI2_c.jl`

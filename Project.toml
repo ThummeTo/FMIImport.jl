@@ -4,6 +4,7 @@ authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelso
 version = "0.8.0"
 
 [deps]
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 FMICore = "8af89139-c281-408e-bce2-3005eb87462f"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
