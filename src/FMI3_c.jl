@@ -10,7 +10,7 @@
 # Any c-function `f(c::fmi3Instance, args...)` in the spec is implemented as `f(c::FMU3Instance, args...)`.
 # Any c-function `f(args...)` without a leading `fmi3Instance`-arguemnt is implented as `f(c_ptr, args...)` where `c_ptr` is a pointer to the c-function (inside the DLL).
 
-import FMICore: fmi3InstantiateCoSimulation, fmi3InstantiateModelExchange, fmi3InstantiateScheduledExecution, fmi2FreeInstance!, fmi2GetTypesPlatform, fmi2GetVersion
+import FMICore: fmi3InstantiateCoSimulation, fmi3InstantiateModelExchange, fmi3InstantiateScheduledExecution, fmi3FreeInstance!, fmi3GetVersion
 import FMICore: fmi3SetDebugLogging, fmi3EnterInitializationMode, fmi3ExitInitializationMode, fmi3Terminate, fmi3Reset
 import FMICore: fmi3GetFloat32!, fmi3SetFloat32, fmi3GetFloat64!, fmi3SetFloat64
 import FMICore: fmi3GetInt8!, fmi3SetInt8, fmi3GetInt16!, fmi3SetInt16,fmi3GetInt32!, fmi3SetInt32, fmi3GetInt64!, fmi3SetInt64
@@ -22,7 +22,7 @@ import FMICore: fmi3GetNumberOfVariableDependencies!, fmi3GetVariableDependencie
 import FMICore: fmi3GetDirectionalDerivative!, fmi3GetAdjointDerivative!, fmi3GetOutputDerivatives!
 import FMICore: fmi3EnterConfigurationMode, fmi3ExitConfigurationMode
 import FMICore: fmi3GetNumberOfContinuousStates!, fmi3GetNumberOfEventIndicators!
-import FMICore: fmi3DoStep, fmi3EnterStepMode
+import FMICore: fmi3DoStep!, fmi3EnterStepMode
 import FMICore: fmi3SetTime, fmi3SetContinuousStates, fmi3EnterEventMode, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3CompletedIntegratorStep!
 import FMICore: fmi3GetContinuousStateDerivatives, fmi3GetEventIndicators!, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!, fmi3EvaluateDiscreteStates
 
@@ -260,7 +260,7 @@ nValue - is different from nvr if the value reference represents an array and th
 """
 function fmi3SetFloat64(c::FMU3Instance, vr::Array{fmi3ValueReference}, nvr::Csize_t, value::Array{fmi3Float64}, nvalue::Csize_t)
     status = fmi3SetFloat64(c.fmu.cSetFloat64,
-                c.compAddr, vr, nvr, value, nvalue)
+               c.compAddr, vr, nvr, value, nvalue)
     status
 end
 

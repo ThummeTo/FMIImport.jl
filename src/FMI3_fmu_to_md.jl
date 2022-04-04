@@ -26,12 +26,16 @@ function fmi3GetVariableNamingConvention(fmu::FMU3)
     fmi3GetVariableNamingConvention(fmu.modelDescription)
 end
 
+function fmi3GetNumberOfEventIndicators(fmu::FMU3)
+    fmi3GetNumberOfEventIndicators(fmu.modelDescription)
+end
+
 function fmi3CanGetSetState(fmu::FMU3)
     fmi3CanGetSetState(fmu.modelDescription)
 end
 
-function fmi3CanSerializeFMUstate(fmu::FMU3)
-    fmi3CanSerializeFMUstate(fmu.modelDescription)
+function fmi3CanSerializeFMUState(fmu::FMU3)
+    fmi3CanSerializeFMUState(fmu.modelDescription)
 end
 
 function fmi3ProvidesDirectionalDerivatives(fmu::FMU3)

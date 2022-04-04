@@ -110,12 +110,14 @@ export fmi3GetDirectionalDerivative
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
+export fmi3Get, fmi3Get!, fmi3Set 
 
 # FMI3_md.jl
 export fmi3LoadModelDescription
 export fmi3GetModelName, fmi3GetInstantiationToken, fmi3GetGenerationTool, fmi3GetGenerationDateAndTime, fmi3GetVariableNamingConvention
 export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution 
-export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUstate, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
+export fmi3GetDefaultStartTime, fmi3GetDefaultStopTime, fmi3GetDefaultTolerance, fmi3GetDefaultStepSize
+export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
 
 # FMI3_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`

@@ -250,10 +250,10 @@ function loadBinary(fmu::FMU3)
         fmu.cFreeFMUState                          = dlsym_opt(fmu.libHandle, :fmi3FreeFMUState)
     end
 
-    if fmi3CanSerializeFMUstate(fmu)
+    if fmi3CanSerializeFMUState(fmu)
         fmu.cSerializedFMUStateSize                = dlsym_opt(fmu.libHandle, :fmi3SerializedFMUStateSize)
         fmu.cSerializeFMUState                     = dlsym_opt(fmu.libHandle, :fmi3SerializeFMUState)
-        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu.libHandle, :fmi3DeSerializeFMUState)
+        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu.libHandle, :fmi3DeserializeFMUState)
     end
 
     if fmi3ProvidesDirectionalDerivatives(fmu)
@@ -471,12 +471,12 @@ For optimization, if the FMU's model description has the optional entry 'depende
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi3GetJacobian(comp::FMU3Instance, 
+function fmi3GetJacobian(inst::FMU3Instance, 
                          rdx::Array{fmi3ValueReference}, 
                          rx::Array{fmi3ValueReference}; 
                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
     mat = zeros(fmi3Float64, length(rdx), length(rx))
-    fmi3GetJacobian!(mat, comp, rdx, rx; steps=steps)
+    fmi3GetJacobian!(mat, inst, rdx, rx; steps=steps)
     return mat
 end
 
@@ -490,24 +490,24 @@ For optimization, if the FMU's model description has the optional entry 'depende
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi3GetJacobian!(jac::Matrix{fmi3GetFloat64}, 
-                          comp::FMU3Instance, 
+                          inst::FMU3Instance, 
                           rdx::Array{fmi3ValueReference}, 
                           rx::Array{fmi3ValueReference}; 
                           steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
 
-    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
+    @assert size(jac) == (length(rdx), length(rx)) ["fmi3GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
 
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))
         return nothing
     end 
 
-    ddsupported = fmi3ProvidesDirectionalDerivative(comp.fmu)
+    ddsupported = fmi3ProvidesDirectionalDerivative(inst.fmu)
 
     # ToDo: Pick entries based on dependency matrix!
     #depMtx = fmi2GetDependencies(fmu)
-    rdx_inds = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
-    rx_inds  = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
+    rdx_inds = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
+    rx_inds  = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
     
     for i in 1:length(rx)
 
@@ -527,12 +527,12 @@ function fmi3GetJacobian!(jac::Matrix{fmi3GetFloat64},
         if length(sensitive_rdx) > 0
             if ddsupported
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                fmi3GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]])
+                fmi3GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]])
             else 
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                # fmi3SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i)) TODO not implemented
-                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
+                # fmi3SampleDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i)) TODO not implemented
+                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(inst, sensitive_rdx, [rx[i]], steps)
             end
         end
     end
@@ -545,16 +545,16 @@ Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, 
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-No performance optimization, for an optimized version use `fmi2GetJacobian`.
+No performance optimization, for an optimized version use `fmi3GetJacobian`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi3GetFullJacobian(comp::FMU3Instance, 
+function fmi3GetFullJacobian(inst::FMU3Instance, 
                              rdx::Array{fmi3ValueReference}, 
                              rx::Array{fmi3ValueReference}; 
                              steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
     mat = zeros(fmi3Float64, length(rdx), length(rx))
-    fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
+    fmi3GetFullJacobian!(mat, inst, rdx, rx; steps=steps)
     return mat
 end
 
@@ -563,12 +563,12 @@ Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, s
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-No performance optimization, for an optimized version use `fmi2GetJacobian!`.
+No performance optimization, for an optimized version use `fmi3GetJacobian!`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64}, 
-                              comp::FMU3Instance, 
+                              inst::FMU3Instance, 
                               rdx::Array{fmi3ValueReference}, 
                               rx::Array{fmi3ValueReference}; 
                               steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
@@ -581,71 +581,71 @@ function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64},
         return nothing
     end 
 
-    if fmi3ProvidesDirectionalDerivative(comp.fmu)
+    if fmi3ProvidesDirectionalDerivative(inst.fmu)
         for i in 1:length(rx)
-            jac[:,i] = fmi3GetDirectionalDerivative(comp, rdx, [rx[i]])
+            jac[:,i] = fmi3GetDirectionalDerivative(inst, rdx, [rx[i]])
         end
     else
-        # jac = fmi3SampleDirectionalDerivative(comp, rdx, rx) TODO not implemented
+        # jac = fmi3SampleDirectionalDerivative(inst, rdx, rx) TODO not implemented
     end
 
     return nothing
 end
 
-function fmi3Get!(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
-    vrs = prepareValueReference(comp, vrs)
+function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(inst, vrs)
 
     @assert length(vrs) == length(dstArray) "fmi3Get!(...): Number of value references doesn't match number of `dstArray` elements."
 
     for i in 1:length(vrs)
         vr = vrs[i]
-        mv = fmi3ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
 
         if mv.datatype.datatype == fmi3Float32 
             #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetFloat32(comp, vr)
+            dstArray[i] = fmi3GetFloat32(inst, vr)
         elseif mv.datatype.datatype == fmi3Float64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetFloat64(comp, vr)
+            dstArray[i] = fmi3GetFloat64(inst, vr)
         elseif mv.datatype.datatype == fmi3Int8 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetInt8(comp, vr)
+            dstArray[i] = fmi3GetInt8(inst, vr)
         elseif mv.datatype.datatype == fmi3Int16 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetInt16(comp, vr)
+            dstArray[i] = fmi3GetInt16(inst, vr)
         elseif mv.datatype.datatype == fmi3Int32 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetInt32(comp, vr)
+            dstArray[i] = fmi3GetInt32(inst, vr)
         elseif mv.datatype.datatype == fmi3GetInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetInt64(comp, vr)
+            dstArray[i] = fmi3GetInt64(inst, vr)
         elseif mv.datatype.datatype == fmi3UInt8 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetUInt8(comp, vr)
+            dstArray[i] = fmi3GetUInt8(inst, vr)
         elseif mv.datatype.datatype == fmi3UInt16 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetUInt16(comp, vr)
+            dstArray[i] = fmi3GetUInt16(inst, vr)
         elseif mv.datatype.datatype == fmi3UInt32 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetUInt32(comp, vr)
+            dstArray[i] = fmi3GetUInt32(inst, vr)
         elseif mv.datatype.datatype == fmi3GetUInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetUInt64(comp, vr)
+            dstArray[i] = fmi3GetUInt64(inst, vr)
         elseif mv.datatype.datatype == fmi3Boolean 
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetBoolean(comp, vr)
+            dstArray[i] = fmi3GetBoolean(inst, vr)
         elseif mv.datatype.datatype == fmi3String 
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetString(comp, vr)
+            dstArray[i] = fmi3GetString(inst, vr)
         elseif mv.datatype.datatype == fmi3String 
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetString(comp, vr)
+            dstArray[i] = fmi3GetString(inst, vr)
         elseif mv.datatype.datatype == fmi3Binary 
-            #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetBinary(comp, vr)
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetBinary(inst, vr)
         elseif mv.datatype.datatype == fmi3Enum 
-            @warn "fmi3Get!(...): Currently not implemented for fmi2Enum."
+            @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
         else 
             @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
@@ -654,64 +654,64 @@ function fmi3Get!(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::A
     return nothing
 end
 
-function fmi3Get(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat)
-    vrs = prepareValueReference(comp, vrs)
+function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
+    vrs = prepareValueReference(inst, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
-    fmi2Get!(comp, vrs, dstArray)
+    fmi3Get!(inst, vrs, dstArray)
     return dstArray
 end
 
-function fmi3Set(comp::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array)
-    vrs = prepareValueReference(comp, vrs)
+function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(inst, vrs)
 
     @assert length(vrs) == length(srcArray) "fmi3Set(...): Number of value references doesn't match number of `srcArray` elements."
 
     for i in 1:length(vrs)
         vr = vrs[i]
-        mv = fmi3ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
+        mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
-
+        # TODO future refactor
         if mv.datatype.datatype == fmi3Float32 
             #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetFloat32(comp, vr, srcArray[i])
+            fmi3SetFloat32(inst, vr, srcArray[i])
         elseif mv.datatype.datatype == fmi3Float64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetFloat64(comp, vr, srcArray[i])
+            fmi3SetFloat64(inst, vr, srcArray[i])
         elseif mv.datatype.datatype == fmi3Int8 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetInt8(comp, vr, Integer(srcArray[i]))
+            fmi3SetInt8(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3Int16 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetInt16(comp, vr, Integer(srcArray[i]))
+            fmi3SetInt16(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3Int32 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetInt32(comp, vr, Integer(srcArray[i]))
+            fmi3SetInt32(inst, vr, Int32(srcArray[i]))
         elseif mv.datatype.datatype == fmi3SetInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetInt64(comp, vr, Integer(srcArray[i]))
+            fmi3SetInt64(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3UInt8 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetUInt8(comp, vr, Integer(srcArray[i]))
+            fmi3SetUInt8(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3UInt16 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetUInt16(comp, vr, Integer(srcArray[i]))
+            fmi3SetUInt16(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3UInt32 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetUInt32(comp, vr, Integer(srcArray[i]))
+            fmi3SetUInt32(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3SetUInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetUInt64(comp, vr, Integer(srcArray[i]))
+            fmi3SetUInt64(inst, vr, Integer(srcArray[i]))
         elseif mv.datatype.datatype == fmi3Boolean 
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetBoolean(comp, vr, Bool(srcArray[i]))
+            fmi3SetBoolean(inst, vr, Bool(srcArray[i]))
         elseif mv.datatype.datatype == fmi3String 
             #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetString(comp, vr, srcArray[i])
+            fmi3SetString(inst, vr, srcArray[i])
         elseif mv.datatype.datatype == fmi3Binary 
-            #@assert isa(dstArray[i], String) "fmi2Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3SetBinary(comp, vr, pointer(srcArray[i])) # TODO fix this
+            #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            fmi3SetBinary(inst, vr, Csize_t(length(srcArray[i])), pointer(srcArray[i])) # TODO fix this
         elseif mv.datatype.datatype == fmi3Enum 
-            @warn "fmi3Set!(...): Currently not implemented for fmi2Enum."
+            @warn "fmi3Set!(...): Currently not implemented for fmi3Enum."
         else 
             @assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end

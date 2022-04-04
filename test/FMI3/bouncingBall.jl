@@ -1,5 +1,4 @@
 using FMIImport
-# using HTTP
 using ZipFile
 # using GitHub
 
