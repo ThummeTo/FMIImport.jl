@@ -5,6 +5,7 @@
 
 using FMIImport
 using Test
+using ZipFile
 import Random
 using FMIZoo
 
@@ -47,28 +48,25 @@ function runtestsFMI3(exportingTool)
     ENV["EXPORTINGVERSION"] = exportingTool[2]
 
     @testset "Testing FMUs exported from $exportingTool" begin
-        # @testset "Functions for fmi2Component" begin
-        #     @testset "Variable Getters / Setters" begin
-        #         include("FMI3/getter_setter.jl")
-        #     end
-        #     @testset "State Manipulation" begin
-        #         include("FMI3/state.jl")
-        #     end
-        #     @testset "Directional derivatives" begin
-        #         include("FMI3/dir_ders.jl")
-        #     end
-        # end
+        @testset "Functions for fmi3Instance" begin
+            @testset "Variable Getters / Setters" begin
+                include("FMI3/getter_setter.jl")
+            end
+            @testset "State Manipulation" begin
+                include("FMI3/state.jl")
+            end
+            @testset "Directional derivatives" begin
+                include("FMI3/dir_ders.jl")
+            end
+        end
 
-        # @testset "Model Description Parsing" begin
-        #     include("FMI3/model_description.jl")
-        # end
+        @testset "Model Description Parsing" begin
+            include("FMI3/model_description.jl")
+        end
 
-        # @testset "Logging" begin
-        #     include("FMI3/logging.jl")
-        # end
-    
-    @testset "Testing Reference FMUs" begin
-        
+        @testset "Logging" begin
+            include("FMI3/logging.jl")
+        end
     end
 end
 
@@ -76,12 +74,14 @@ end
     if Sys.iswindows()
         @info "Automated testing is supported on Windows."
         for exportingTool in exportingToolsWindows
-            runtests(exportingTool)
+            runtestsFMI2(exportingTool)
+            runtestsFMI3(exportingTool)
         end
     elseif Sys.islinux()
         @info "Automated testing is supported on Linux."
         for exportingTool in exportingToolsLinux
-            runtests(exportingTool)
+            runtestsFMI2(exportingTool)
+            runtestsFMI3(exportingTool)
         end
     elseif Sys.isapple()
         @warn "Test-sets are currrently using Windows- and Linux-FMUs, automated testing for macOS is currently not supported."

@@ -107,10 +107,14 @@ export fmi3GetInt8, fmi3GetUInt8, fmi3GetInt16, fmi3GetUInt16, fmi3GetInt32, fmi
 export fmi3GetBoolean, fmi3GetString, fmi3GetBinary, fmi3GetClock
 export fmi3GetFMUState, fmi3SerializedFMUStateSize, fmi3SerializeFMUState, fmi3DeSerializeFMUState
 export fmi3GetDirectionalDerivative
+export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegratorStep
+
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
 export fmi3Get, fmi3Get!, fmi3Set 
+export fmi3SampleDirectionalDerivative!
+export fmi3GetJacobian, fmi3GetJacobian!, fmi3GetFullJacobian, fmi3GetFullJacobian!
 
 # FMI3_md.jl
 export fmi3LoadModelDescription

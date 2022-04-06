@@ -304,9 +304,16 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateModelExchange
 """
-function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false)
+function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false,
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
 
     compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
 
@@ -347,9 +354,16 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateCoSimulation
 """
-function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false, eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing)
+function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false, eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     if ptrIntermediateUpdate === nothing
         ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
     end
@@ -394,9 +408,16 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateScheduledExecution
 """
-function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}; visible::Bool = false, loggingOn::Bool = false)
+function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}; visible::Bool = false, loggingOn::Bool = false, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
 
     compAddr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
@@ -460,7 +481,51 @@ function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
     end
 end
 
-# TODO fmi2SampleDirectionalDerivative
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences).
+"""
+function fmi3SampleDirectionalDerivative(c::fmi3Instance,
+                                       vUnknown_ref::Array{fmi3ValueReference},
+                                       vKnown_ref::Array{fmi3ValueReference},
+                                       steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+
+    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+"""
+function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
+                                          vUnknown_ref::Array{fmi3ValueReference},
+                                          vKnown_ref::Array{fmi3ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+    
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi3GetFloat64(c, vKnown)
+
+        fmi3SetFloat64(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
+end
 
 """
 Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
@@ -489,7 +554,7 @@ For optimization, if the FMU's model description has the optional entry 'depende
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi3GetJacobian!(jac::Matrix{fmi3GetFloat64}, 
+function fmi3GetJacobian!(jac::Matrix{fmi3Float64}, 
                           inst::FMU3Instance, 
                           rdx::Array{fmi3ValueReference}, 
                           rx::Array{fmi3ValueReference}; 
@@ -502,7 +567,7 @@ function fmi3GetJacobian!(jac::Matrix{fmi3GetFloat64},
         return nothing
     end 
 
-    ddsupported = fmi3ProvidesDirectionalDerivative(inst.fmu)
+    ddsupported = fmi3ProvidesDirectionalDerivatives(inst.fmu)
 
     # ToDo: Pick entries based on dependency matrix!
     #depMtx = fmi2GetDependencies(fmu)

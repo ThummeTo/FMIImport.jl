@@ -35,32 +35,27 @@ category - is the category of the message. The meaning of “category” is defi
 message - is provided in the same way and with the same format control as in function “printf” from the C standard library. [Typically, this function prints the message and stores it optionally in a log file.]
 """
 # TODO error in the specification??
-function fmi3CallbackLogger(instanceEnvironment::Ptr{Cvoid},
-            category::Ptr{Cchar},
-            status::Cuint,
-            message::Ptr{Cchar})
-    
-    if message != C_NULL
-        _message = unsafe_string(message)
-    else
-        _message = ""
-    end
+function fmi3CallbackLogger(_instanceEnvironment::Ptr{Cvoid},
+    _status::Cuint,
+    _category::Ptr{Cchar},
+    _message::Ptr{Cchar})
 
-    if category != C_NULL
-        _category = unsafe_string(category)
-    else
-        _category = "No category"
-    end
-    _status = fmi3StatusString(status)
-    if status == Integer(fmi3StatusOK)
-        @info "[$_status][$_category]: $_message"
-    elseif status == Integer(fmi3StatusWarning)
-        @warn "[$_status][$_category]: $_message"
-    else
-        @error "[$_status][$_category]: $_message"
-    end
+message = unsafe_string(_message)
+category = unsafe_string(_category)
+status = fmi2StatusToString(_status)
+instanceEnvironment = unsafe_load(_instanceEnvironment)
 
-    nothing
+if status == fmi3StatusOK && instanceEnvironment.logStatusOK
+@info "[$status][$category][$instanceName]: $message"
+elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning)
+@warn "[$status][$category][$instanceName]: $message"
+elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
+   (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
+   (status == fmi3StatusFatal   && instanceEnvironment.logStatusFatal)
+@error "[$status][$category][$instanceName]: $message"
+end
+
+return nothing
 end
 
 """
@@ -113,7 +108,7 @@ function fmi3CallbackClockUpdate(instanceEnvironment::Ptr{Cvoid})
     @debug "to be implemented!"
 end
 
-# this is a custom type to catch the internal state of the component 
+# this is a custom type to catch the internal state of the instance 
 @enum fmi3InstanceState begin
     # ToDo
     fmi3InstanceStateToDo

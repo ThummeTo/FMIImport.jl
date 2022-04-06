@@ -222,8 +222,72 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         end
         modelVariables[index].datatype = fmi3SetDatatypeVariables(node, md)
 
-        dependencies = []
-        dependenciesKind = []
+        # type node
+        typenode = nothing
+        typename = node.name
+
+        if typename == "Float32" || typename == "Float64"
+            modelVariables[index]._Float = fmi3ModelDescriptionFloat()
+            typenode = modelVariables[index]._Float
+            if haskey(node, "quantity")
+                typenode.quantity = node["quantity"]
+            end
+            if haskey(node, "unit")
+                typenode.unit = node["unit"]
+            end
+            if haskey(node, "displayUnit")
+                typenode.displayUnit = node["displayUnit"]
+            end
+            if haskey(node, "relativeQuantity")
+                typenode.relativeQuantity = fmi3parseBoolean(node["relativeQuantity"])
+            end
+            if haskey(node, "min")
+                typenode.min = fmi3parseFloat(node["min"])
+            end
+            if haskey(node, "max")
+                typenode.max = fmi3parseFloat(node["max"])
+            end
+            if haskey(node, "nominal")
+                typenode.nominal = fmi3parseFloat(node["nominal"])
+            end
+            if haskey(node, "unbounded")
+                typenode.unbounded = fmi3parseBoolean(node["unbounded"])
+            end
+            if haskey(node, "start")
+                typenode.start = fmi3parseFloat(node["start"])
+            end
+            if haskey(node, "derivative")
+                typenode.derivative = parse(UInt, node["derivative"])
+            end
+        elseif typename == "String"
+            modelVariables[index]._String = fmi3ModelDescriptionString()
+            typenode = modelVariables[index]._String
+            if haskey(node, "start")
+                modelVariables[index]._String.start = node["start"]
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Boolean"
+            modelVariables[index]._Boolean = fmi3ModelDescriptionBoolean()
+            typenode = modelVariables[index]._Boolean
+            if haskey(node, "start")
+                modelVariables[index]._Boolean.start = fmi3parseBoolean(node["start"])
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Int32"
+            modelVariables[index]._Integer = fmi3ModelDescriptionInteger()
+            typenode = modelVariables[index]._Integer
+            if haskey(node, "start")
+                modelVariables[index]._Integer.start = fmi3parseInteger(node["start"])
+            end
+            # ToDo: remaining attributes
+        elseif typename == "Enumeration"
+            modelVariables[index]._Enumeration = fmi3ModelDescriptionEnumeration()
+            typenode = modelVariables[index]._Enumeration
+            # ToDo: Save start value
+            # ToDo: remaining attributes
+        else 
+            @warn "Unknown data type `$(typename)`."
+        end
         
         md.stringValueReferences[name] = valueReference
 
@@ -234,110 +298,85 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
 end
 
 # Parses the model variables of the FMU model description.
-function parseDependencies(nodes::EzXML.Node, md::fmi3ModelDescription)
-    for node in eachelement(nodes)
-        
-        if node.name == "InitialUnknown"
-
-            index = 0
-            dependencies = nothing
-            dependenciesKind = nothing
-
-            if haskey(node, "valueReference") && haskey(node, "dependencies") && haskey(node, "dependenciesKind")
-                index = fmi3parseInteger(node["valueReference"])
-                dependencies = node["dependencies"]
-                dependenciesKind = node["dependenciesKind"]
-
-                if length(dependencies) > 0 && length(dependenciesKind) > 0
-                    dependenciesSplit = split(dependencies, " ")
-                    dependenciesKindSplit = split(dependenciesKind, " ")
-
-                    if length(dependenciesSplit) != length(dependenciesKindSplit)
-                        @warn "Length of field dependencies ($(length(dependenciesSplit))) doesn't match length of dependenciesKind ($(length(dependenciesKindSplit)))."
-                    else
-                        md.modelVariables[index].dependencies = vcat(md.modelVariables[index].dependencies, collect(fmi3parseInteger(s) for s in dependenciesSplit)) 
-                        md.modelVariables[index].dependenciesKind = vcat(md.modelVariables[index].dependenciesKind,  dependenciesKindSplit)
-                    end
-                else 
-                    md.modelVariables[index].dependencies = []
-                    md.modelVariables[index].dependenciesKind = []
-                end
-            else 
-                @warn "Invalid entry for node `Unknown` in `ModelStructure`."
-            end
-        else 
-            @warn "Unknown entry in `ModelStructure` named `$(node.name)`."
-        end 
-    end
-end
-
 function parseModelStructure(nodes::EzXML.Node, md::fmi3ModelDescription)
     @assert (nodes.name == "ModelStructure") "Wrong section name."
     md.modelStructure.continuousStateDerivatives = []
+    md.modelStructure.initialUnknowns = []
+    md.modelStructure.eventIndicators = []
+    md.modelStructure.outputs = []
     for node in eachelement(nodes)
-        if node.name == "InitialUnknown"
-            if haskey(node, "index")
-                varDep = parseUnknwon(node)
+        if haskey(node, "valueReference")
+            varDep = parseDependencies(node)
+            if node.name == "InitialUnknown"
+                push!(md.modelStructure.initialUnknowns, varDep)
+            elseif node.name == "EventIndicator"
+                md.numberOfEventIndicators += 1
+                push!(md.modelStructure.eventIndicators)
+                # TODO parse valueReferences to another array
+            elseif node.name == "ContinuousStateDerivative"
 
-                # find states and derivatives
-                derSV = md.modelVariables[varDep.index]
+                # find states and derivatives^
+                derSV = fmi3ModelVariablesForValueReference(md, fmi3ValueReference(fmi3parseInteger(node["valueReference"])))[1]
+                # derSV = md.modelVariables[varDep.index]
                 derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV._Real.derivative].valueReference
-
+                stateVR = md.modelVariables[derSV._Float.derivative].valueReference
+    
                 if stateVR ∉ md.stateValueReferences
                     push!(md.stateValueReferences, stateVR)
                 end
                 if derVR ∉ md.derivativeValueReferences
                     push!(md.derivativeValueReferences, derVR)
                 end
+    
+                push!(md.modelStructure.continuousStateDerivatives, varDep)
+            elseif node.name =="Output"
+                # find outputs
+                outVR = fmi3ValueReference(fmi3parseInteger(node["valueReference"]))
+                
+                if outVR ∉ md.outputValueReferences
+                    push!(md.outputValueReferences, outVR)
+                end
 
-                push!(md.modelStructure.derivatives, varDep)
-            else 
-                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
+                push!(md.modelStructure.outputs, varDep)
+            else
+                @warn "Unknown entry in `ModelStructure` named `$(node.name)`."
             end
-        elseif node.name == "EventIndicator"
-            md.numberOfEventIndicators += 1
-            # TODO parse valueReferences to another array
-        else
-            @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
-        end 
+        else 
+            @warn "Invalid entry for node `$(node.name)` in `ModelStructure`, missing entry `valueReference`."
+        end
     end
 end
 
-function parseUnknwon(node::EzXML.Node)
-    if haskey(node, "index")
-        varDep = fmi3VariableDependency(parseInteger(node["index"]))
+function parseDependencies(node::EzXML.Node)
+    varDep = fmi3VariableDependency(fmi3ValueReference(fmi3parseInteger(node["valueReference"])))
 
-        if haskey(node, "dependencies")
-            dependencies = node["dependencies"]
-            if length(dependencies) > 0
-                dependenciesSplit = split(dependencies, " ")
-                if length(dependenciesSplit) > 0
-                    varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
-                end
-            end
-        end 
-
-        if haskey(node, "dependenciesKind")
-            dependenciesKind = node["dependenciesKind"]
-            if length(dependenciesKind) > 0
-                dependenciesKindSplit = split(dependenciesKind, " ")
-                if length(dependenciesKindSplit) > 0
-                    varDep.dependenciesKind = collect(fmi3StringToDependencyKind(e) for e in dependenciesKindSplit)
-                end
+    if haskey(node, "dependencies")
+        dependencies = node["dependencies"]
+        if length(dependencies) > 0
+            dependenciesSplit = split(dependencies, " ")
+            if length(dependenciesSplit) > 0
+                varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
             end
         end
+    end 
 
-        if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
-            if length(varDep.dependencies) != length(varDep.dependenciesKind)
-                @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
+    if haskey(node, "dependenciesKind")
+        dependenciesKind = node["dependenciesKind"]
+        if length(dependenciesKind) > 0
+            dependenciesKindSplit = split(dependenciesKind, " ")
+            if length(dependenciesKindSplit) > 0
+                varDep.dependenciesKind = collect(fmi3StringToDependencyKind(e) for e in dependenciesKindSplit)
             end
         end
-
-        return varDep
-    else 
-        return nothing 
     end
+
+    if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
+        if length(varDep.dependencies) != length(varDep.dependenciesKind)
+            @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
+        end
+    end
+
+    return varDep
 end 
 
 function parseContinuousStateDerivative(nodes::EzXML.Node, md::fmi3ModelDescription)
@@ -351,7 +390,7 @@ function parseContinuousStateDerivative(nodes::EzXML.Node, md::fmi3ModelDescript
                 # find states and derivatives
                 derSV = md.modelVariables[varDep.index]
                 derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV._Real.derivative].valueReference
+                stateVR = md.modelVariables[derSV._Float.derivative].valueReference
 
                 if stateVR ∉ md.stateValueReferences
                     push!(md.stateValueReferences, stateVR)
@@ -373,9 +412,8 @@ function parseContinuousStateDerivative(nodes::EzXML.Node, md::fmi3ModelDescript
     end
 end
 
-function parseInitialUnknowns(nodes::EzXML.Node, md::fmi3ModelDescription)
-    @assert (nodes.name == "InitialUnknowns") "Wrong element name."
-    md.modelStructure.initialUnknowns = []
+function parseInitialUnknowns(node::EzXML.Node, md::fmi3ModelDescription)
+    @assert (node.name == "InitialUnknowns") "Wrong element name."
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
@@ -413,6 +451,27 @@ function parseOutputs(nodes::EzXML.Node, md::fmi3ModelDescription)
         else 
             @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
         end 
+    end
+end
+
+# Parses a real value represented by a string.
+function fmi3parseFloat(s::Union{String, SubString{String}}; onfail=nothing)
+    if onfail == nothing
+        return parse(fmi3Float64, s)
+    else
+        try
+            return parse(fmi3Float64, s)
+        catch
+            return onfail
+        end
+    end
+end
+
+function fmi3parseNodeFloat(node, key; onfail=nothing)
+    if haskey(node, key)
+        return fmi3parseFloat(node[key]; onfail=onfail)
+    else
+        return onfail
     end
 end
 

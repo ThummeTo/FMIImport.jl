@@ -1074,7 +1074,7 @@ function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat,
     vr = prepareValueReference(c, vr)
     nvr = Csize_t(length(vr))
     values = Array{fmi3Float64}(undef, nvr)
-    fmi3GetOutputDerivatives!(c, vr, nvr, order, values, nvr)
+    fmi3GetOutputDerivatives!(c, vr, nvr, fmi3Int32.(order), values, nvr)
     values
 end
 
@@ -1338,3 +1338,51 @@ function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat)
         return starts 
     end
 end 
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences).
+"""
+function fmi3SampleDirectionalDerivative(c::FMU3Instance,
+                                       vUnknown_ref::Array{fmi3ValueReference},
+                                       vKnown_ref::Array{fmi3ValueReference},
+                                       steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+
+    dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+# TODO should probably in FMI3_ext.jl
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+"""
+function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
+                                          vUnknown_ref::Array{fmi3ValueReference},
+                                          vKnown_ref::Array{fmi3ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+    
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi3GetFloat64(c, vKnown)
+
+        fmi3SetFloat64(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
+end
+

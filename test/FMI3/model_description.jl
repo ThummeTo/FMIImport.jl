@@ -3,9 +3,9 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIImport.FMICore: fmi3VariableNamingConventionFlat
-using FMIImport
-using ZipFile
+# using FMIImport.FMICore: fmi3VariableNamingConventionFlat
+# using FMIImport
+# using ZipFile
 
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
