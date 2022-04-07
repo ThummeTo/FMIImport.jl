@@ -109,64 +109,68 @@ function fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReferen
     fmi2ValueReferenceToString(fmu.modelDescription, reference)
 end
 
-function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat)
+function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
  
-    ignore_derivatives() do
-        vr = prepareValueReference(solution.fmu, vr)[1]
-    end
-
     index = 0
 
-    ignore_derivatives() do
-        if solution.states !== nothing
-            for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
-                if solution.fmu.modelDescription.stateValueReferences[i] == vr
-                    index = i 
-                    break 
+    if isIndex
+        index = vr 
+    else 
+        ignore_derivatives() do
+            vr = prepareValueReference(solution.fmu, vr)[1]
+        
+            if solution.states !== nothing
+                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
+                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
                 end
             end
-        end
+           
+        end # ignore_derivatives
     end
 
     if index > 0 
         return collect(u[index] for u in solution.states.u)
     end
-   
+
     return nothing
 end
 
-function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat)
-
-    ignore_derivatives() do
-        vr = prepareValueReference(solution.fmu, vr)[1]
-    end
+function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
     index = 0
 
-    ignore_derivatives() do
-        if solution.states !== nothing
-            for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
-                if solution.fmu.modelDescription.stateValueReferences[i] == vr
-                    index = i 
-                    break 
+    if isIndex
+        index = vr 
+    else 
+        ignore_derivatives() do
+            vr = prepareValueReference(solution.fmu, vr)[1]
+        
+            if solution.states !== nothing
+                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
+                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
                 end
             end
-        end
-    end
 
-    if index > 0 
-        return collect(u[index] for u in solution.states.u)
-    end
-
-    ignore_derivatives() do
-        if solution.values !== nothing
-            for i in 1:length(solution.valueReferences)
-                if solution.valueReferences[i] == vr
-                    index = i 
-                    break 
+            if index > 0 
+                return collect(u[index] for u in solution.states.u)
+            end
+        
+            if solution.values !== nothing
+                for i in 1:length(solution.valueReferences)
+                    if solution.valueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
                 end
             end
-        end
+           
+        end # ignore_derivatives
     end
 
     if index > 0 

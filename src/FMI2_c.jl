@@ -101,11 +101,15 @@ If a null pointer is provided for “c”, the function call is ignored (does no
 
 Removes the component from the FMUs component list.
 """
-function fmi2FreeInstance!(c::FMU2Component)
+function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
-    ind = findall(x->x==c, c.fmu.components)
+    if popComponent
+        ind = findall(x -> x.compAddr==c.compAddr, c.fmu.components)
+        @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
+        deleteat!(c.fmu.components, ind)
+    end
+
     fmi2FreeInstance!(c.fmu.cFreeInstance, c.compAddr)
-    deleteat!(c.fmu.components, ind)
 
     nothing
 end
