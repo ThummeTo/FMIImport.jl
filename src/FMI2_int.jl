@@ -73,7 +73,7 @@ function fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} =
         stopTime = 0.0 # dummy value, will be ignored
     end
 
-    fmi2SetupExperiment(c.fmu.cSetupExperiment, c.compAddr, fmi2Boolean(toleranceDefined), fmi2Real(tolerance), fmi2Real(startTime), fmi2Boolean(stopTimeDefined), fmi2Real(stopTime))
+    fmi2SetupExperiment(c, fmi2Boolean(toleranceDefined), fmi2Real(tolerance), fmi2Real(startTime), fmi2Boolean(stopTimeDefined), fmi2Real(stopTime))
 end
 
 """
@@ -566,8 +566,7 @@ For more information call ?fmi2NewDiscretestates
 """
 function fmi2NewDiscreteStates(c::FMU2Component)
     eventInfo = fmi2EventInfo()
-    ptr = Ptr{fmi2EventInfo}(pointer_from_objref(eventInfo))
-    fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates, c.compAddr, ptr)
+    fmi2NewDiscreteStates!(c, eventInfo)
     eventInfo
 end
 

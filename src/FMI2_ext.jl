@@ -9,8 +9,6 @@
 using Libdl
 using ZipFile
 
-DEFAULT_SAMPLE_STEP = 1e-8
-
 """
 Create a copy of the .fmu file as a .zip folder and unzips it.
 Returns the paths to the zipped and unzipped folders.
@@ -298,7 +296,7 @@ For more information call ?fmi2Instantiate
 - `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false, 
+function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false, 
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -313,7 +311,17 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
-            fmu.callbackLibHandle = dlopen(joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll"))
+
+            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll")
+
+            # check permission to execute the DLL
+            perm = filemode(cbLibPath)
+            permRWX = 16895
+            if perm != permRWX
+                chmod(cbLibPath, permRWX; recursive=true)
+            end
+
+            fmu.callbackLibHandle = dlopen(cbLibPath)
         end
         ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
     end 
@@ -334,7 +342,7 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
 
     component = nothing
 
-    # check if address is already inside of the component (this may be)
+    # check if address is already inside of the components (this may be in FMIExport.jl)
     for c in fmu.components
         if c.compAddr == compAddr
             component = c
@@ -346,10 +354,13 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
         component = FMU2Component(compAddr, fmu) 
-        component.jacobianFct = fmi2GetJacobian!
+        component.jacobianUpdate! = fmi2GetJacobian!
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
-        push!(fmu.components, component)
+
+        if pushComponents
+            push!(fmu.components, component)
+        end
     end 
 
     component
@@ -395,7 +406,7 @@ This function samples the directional derivative by manipulating corresponding v
 function fmi2SampleDirectionalDerivative(c::fmi2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
-                                       steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+                                       steps::Union{Array{fmi2Real}, Nothing} = nothing)
 
     dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
@@ -411,24 +422,29 @@ function fmi2SampleDirectionalDerivative!(c::fmi2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
-                                          steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+                                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
     
+    if steps == nothing 
+        steps = fmi2GetReal(c, vKnown)
+        steps = abs.(steps) * eps(fmi2Real)
+    end 
+
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
-        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
+        fmi2SetReal(c, vKnown, origValue - steps[i])
         negValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
+        fmi2SetReal(c, vKnown, origValue + steps[i])
         posValues = fmi2GetReal(c, vUnknown_ref)
 
         fmi2SetReal(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+            dvUnknown[1,i] = (posValues-negValues) ./ (steps[i] * 2.0)
         else
-            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+            dvUnknown[:,i] = (posValues-negValues) ./ (steps[i] * 2.0)
         end
     end
 
@@ -447,7 +463,7 @@ If sampling is used, sampling step size can be set (for each direction individua
 function fmi2GetJacobian(comp::FMU2Component, 
                          rdx::Array{fmi2ValueReference}, 
                          rx::Array{fmi2ValueReference}; 
-                         steps::Array{fmi2Real} = ones(fmi2Real, length(rdx)).*DEFAULT_SAMPLE_STEP)
+                         steps::Union{Array{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -466,7 +482,7 @@ function fmi2GetJacobian!(jac::Matrix{fmi2Real},
                           comp::FMU2Component, 
                           rdx::Array{fmi2ValueReference}, 
                           rx::Array{fmi2ValueReference}; 
-                          steps::Array{fmi2Real} = ones(fmi2Real, length(rdx)).*DEFAULT_SAMPLE_STEP)
+                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
 
     @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
 
@@ -500,12 +516,18 @@ function fmi2GetJacobian!(jac::Matrix{fmi2Real},
         if length(sensitive_rdx) > 0
             if ddsupported
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]])
+                #try 
+                    fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                #catch e
+                #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
+                #end
             else 
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
+                #try 
+                    fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                #catch e 
+                #    jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
+                #end
             end
         end
     end
@@ -525,7 +547,7 @@ If sampling is used, sampling step size can be set (for each direction individua
 function fmi2GetFullJacobian(comp::FMU2Component, 
                              rdx::Array{fmi2ValueReference}, 
                              rx::Array{fmi2ValueReference}; 
-                             steps::Array{fmi2Real} = ones(fmi2Real, length(rdx)).*DEFAULT_SAMPLE_STEP)
+                             steps::Union{Array{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -544,7 +566,7 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
                               comp::FMU2Component, 
                               rdx::Array{fmi2ValueReference}, 
                               rx::Array{fmi2ValueReference}; 
-                              steps::Array{fmi2Real} = ones(fmi2Real, length(rdx)).*DEFAULT_SAMPLE_STEP)
+                              steps::Union{Array{fmi2Real}, Nothing} = nothing)
     @assert size(jac) == (length(rdx),length(rx)) "fmi2GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
 
     @warn "`fmi2GetFullJacobian!` is for benchmarking only, please use `fmi2GetJacobian`."
@@ -570,6 +592,8 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
 
     @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
 
+    retcodes = zeros(fmi2Status, length(vrs)) # fmi2StatusOK
+
     for i in 1:length(vrs)
         vr = vrs[i]
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
@@ -594,7 +618,7 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
         end
     end
 
-    return nothing
+    return retcodes
 end
 
 function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
@@ -609,6 +633,8 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
 
+    retcodes = zeros(fmi2Status, length(vrs)) # fmi2StatusOK
+
     for i in 1:length(vrs)
         vr = vrs[i]
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
@@ -616,16 +642,16 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
         if mv._Real != nothing
             @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
-            fmi2SetReal(comp, vr, srcArray[i])
+            retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
         elseif mv._Integer != nothing
             @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
-            fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+            retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
         elseif mv._Boolean != nothing
             @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
-            fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+            retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
         elseif mv._String != nothing
             @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
-            fmi2SetString(comp, vr, srcArray[i])
+            retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
         elseif mv._Enumeration != nothing
             @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
         else 
@@ -633,5 +659,5 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
         end
     end
 
-    return nothing
+    return retcodes
 end

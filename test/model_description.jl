@@ -6,6 +6,7 @@
 using FMIImport.FMICore: fmi2VariableNamingConventionStructured
 
 myFMU = fmi2Load("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
 
 @test fmi2GetVersion(myFMU) == "2.0"
 @test fmi2GetTypesPlatform(myFMU) == "default"

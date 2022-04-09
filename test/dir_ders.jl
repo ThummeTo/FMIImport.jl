@@ -4,6 +4,8 @@
 #
 
 myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
+
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
