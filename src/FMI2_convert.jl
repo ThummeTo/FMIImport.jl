@@ -24,15 +24,15 @@ function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceF
         return Array{fmi2ValueReference,1}()
     elseif tvr == Symbol
         if vr == :states 
-            return modelDescription.stateValueReferences
+            return md.stateValueReferences
         elseif vr == :derivatives
-            return modelDescription.derivativeValueReferences
+            return md.derivativeValueReferences
         elseif vr == :inputs
-            return modelDescription.inputValueReferences
+            return md.inputValueReferences
         elseif vr == :outputs
-            return modelDescription.outputValueReferences
+            return md.outputValueReferences
         elseif vr == :all
-            return modelDescription.valueReferences
+            return md.valueReferences
         elseif vr == :none
             return Array{fmi2ValueReference,1}()
         else

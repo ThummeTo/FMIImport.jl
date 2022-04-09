@@ -342,7 +342,7 @@ function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool 
 
     component = nothing
 
-    # check if address is already inside of the components (this may be)
+    # check if address is already inside of the components (this may be in FMIExport.jl)
     for c in fmu.components
         if c.compAddr == compAddr
             component = c
