@@ -8,6 +8,8 @@
 ###############
 
 myFMU = fmi2Load("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
+
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 

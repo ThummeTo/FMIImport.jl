@@ -10,6 +10,7 @@
 using FMIImport.FMICore: fmi2FMUstate
 
 myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
 
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test comp != 0
