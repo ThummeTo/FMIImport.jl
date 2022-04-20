@@ -7,13 +7,10 @@
 # Prepare FMU #
 ###############
 
-# using FMIImport.FMICore: fmi3FMUState
-# using FMIImport
-# using ZipFile
+import FMIImport.FMICore: fmi3FMUState
 
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
-zipPath = normpath(zipPath)
 zarchive = ZipFile.Reader(zipPath)
 path = joinpath(dir, "BouncingBall/")
 pathToFmu = joinpath(path, "BouncingBall.fmu")
@@ -31,7 +28,8 @@ for f in zarchive.files
 end
 close(zarchive)
 
-myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = fmi3Load(pathToFmu)
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
 @test inst != 0
 

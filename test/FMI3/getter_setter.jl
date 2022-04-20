@@ -6,8 +6,6 @@
 ###############
 # Prepare FMU #
 ###############
-# import FMIImport: fmi3Boolean, fmi3Int32
-# using FMIImport, Random, Test, ZipFile
 
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
@@ -41,8 +39,8 @@ for f in zarchive.files
 end
 close(zarchive)
 
-myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-# myFMU = fmi3Load(pathToFmu)
+# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = fmi3Load(pathToFmu)
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 

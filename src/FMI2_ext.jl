@@ -347,7 +347,7 @@ function fmi2Instantiate!(fmu::FMU2; visible::Bool = false, loggingOn::Bool = fa
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
         component = FMU2Component(compAddr, fmu) 
-        component.jacobianFct = fmi2GetJacobian!
+        component.jacobianUpdate! = fmi2GetJacobian!
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
         push!(fmu.components, component)

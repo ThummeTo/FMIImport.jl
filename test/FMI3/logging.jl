@@ -5,9 +5,6 @@
 
 import FMIImport: fmi3StatusError
 
-# using FMIImport
-# using ZipFile
-
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
 zarchive = ZipFile.Reader(zipPath)
@@ -27,8 +24,8 @@ for f in zarchive.files
 end
 close(zarchive)
 
-myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-# myFMU = fmi3Load(pathToFmu)
+# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = fmi3Load(pathToFmu)
 ### CASE A: Print log ###
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
 @test inst != 0

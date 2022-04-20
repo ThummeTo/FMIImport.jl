@@ -3,13 +3,10 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# using FMIImport.FMICore: fmi3VariableNamingConventionFlat
-# using FMIImport
-# using ZipFile
+import FMIImport.FMICore: fmi3VariableNamingConventionFlat
 
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
-zipPath = normpath(zipPath)
 zarchive = ZipFile.Reader(zipPath)
 path = joinpath(dir, "BouncingBall/")
 pathToFmu = joinpath(path, "BouncingBall.fmu")
@@ -26,7 +23,8 @@ for f in zarchive.files
     end
 end
 close(zarchive)
-myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = fmi3Load(pathToFmu)
 
 @test fmi3GetVersion(myFMU) == "3.0-beta.5"
 

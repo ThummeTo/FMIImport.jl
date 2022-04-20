@@ -3,13 +3,8 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# using FMIImport
-# import FMIImport:fmi3Float64
-# using ZipFile, Test
-
 zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
 dir = dirname(zipPath)
-zipPath = normpath(zipPath)
 zarchive = ZipFile.Reader(zipPath)
 path = joinpath(dir, "BouncingBall/")
 pathToFmu = joinpath(path, "BouncingBall.fmu")
@@ -27,9 +22,9 @@ for f in zarchive.files
 end
 close(zarchive)
 
-# myFMU = fmi3Load(pathToFmu)
+myFMU = fmi3Load(pathToFmu)
 
-myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
