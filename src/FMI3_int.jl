@@ -14,13 +14,20 @@ FMU enters Initialization mode.
 For more information call ?fmi3EnterInitializationMode
 """
 function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Real = 0.0, stopTime::Real = startTime; tolerance::Real = 0.0)
+    if c.state != fmi3InstanceStateInstantiated
+        @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
+    end
     c.t = startTime
 
     toleranceDefined = (tolerance > 0.0)
     stopTimeDefined = (stopTime > startTime)
 
-    fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
-
+    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
+    checkStatus(c, status)
+    if status == fmi3StatusOK
+        c.state = fmi3InstanceStateInitializationMode
+    end
+    return status
 end
 
 """

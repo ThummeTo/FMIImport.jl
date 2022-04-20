@@ -355,7 +355,6 @@ Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateCoSimulation
 """
 function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false, eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
-
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
     instEnv.logStatusWarning = logStatusWarning

@@ -81,6 +81,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
                 md.coSimulation.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUState"                     ; onfail=false)
                 md.coSimulation.providesDirectionalDerivatives         = parseNodeBoolean(node, "providesDirectionalDerivatives"           ; onfail=false)
                 md.coSimulation.providesAdjointDerivatives             = parseNodeBoolean(node, "providesAdjointDerivatives"               ; onfail=false)
+                md.coSimulation.hasEventMode                           = parseNodeBoolean(node, "hasEventMode"                             ; onfail=false)
             end
 
             if node.name == "ModelExchange"
