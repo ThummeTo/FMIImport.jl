@@ -10,9 +10,9 @@ function prepareValueReference(md::fmi3ModelDescription, vr::fmi3ValueReferenceF
     elseif tvr == fmi3ValueReference
         return [vr]
     elseif tvr == String
-        return [fmi3String2ValueReference(md, vr)]
+        return [fmi3StringToValueReference(md, vr)]
     elseif tvr == Array{String,1}
-        return fmi3String2ValueReference(md, vr)
+        return fmi3StringToValueReference(md, vr)
     elseif tvr == Int64
         return [fmi3ValueReference(vr)]
     elseif tvr == Array{Int64,1}
@@ -33,10 +33,10 @@ end
 """
 Returns an array of ValueReferences coresponding to the variable names.
 """
-function fmi3String2ValueReference(md::fmi3ModelDescription, names::Array{String})
+function fmi3StringToValueReference(md::fmi3ModelDescription, names::Array{String})
     vr = Array{fmi3ValueReference}(undef,0)
     for name in names
-        reference = fmi3String2ValueReference(md, name)
+        reference = fmi3StringToValueReference(md, name)
         if reference === nothing
             @warn "Value reference for variable '$name' not found, skipping."
         else
@@ -46,10 +46,23 @@ function fmi3String2ValueReference(md::fmi3ModelDescription, names::Array{String
     vr
 end
 
+""" 
+Returns the model variable(s) fitting the value reference.
+"""
+function fmi3ModelVariablesForValueReference(md::fmi3ModelDescription, vr::fmi3ValueReference)
+    ar = []
+    for modelVariable in md.modelVariables
+        if modelVariable.valueReference == vr 
+            push!(ar, modelVariable)
+        end 
+    end 
+    ar
+end
+
 """
 Returns the ValueReference coresponding to the variable name.
 """
-function fmi3String2ValueReference(md::fmi3ModelDescription, name::String)
+function fmi3StringToValueReference(md::fmi3ModelDescription, name::String)
     reference = nothing
     if haskey(md.stringValueReferences, name)
         reference = md.stringValueReferences[name]
@@ -59,20 +72,20 @@ function fmi3String2ValueReference(md::fmi3ModelDescription, name::String)
     reference
 end
 
-function fmi3String2ValueReference(fmu::FMU3, name::Union{String, Array{String}})
-    fmi3String2ValueReference(fmu.modelDescription, name)
+function fmi3StringToValueReference(fmu::FMU3, name::Union{String, Array{String}})
+    fmi3StringToValueReference(fmu.modelDescription, name)
 end
 
 """
 Returns an array of variable names matching a fmi3ValueReference.
 """
-function fmi3ValueReference2String(md::fmi3ModelDescription, reference::fmi3ValueReference)
+function fmi3ValueReferenceToString(md::fmi3ModelDescription, reference::fmi3ValueReference)
     [k for (k,v) in md.stringValueReferences if v == reference]
 end
-function fmi3ValueReference2String(md::fmi3ModelDescription, reference::Int64)
-    fmi3ValueReference2String(md, fmi3ValueReference(reference))
+function fmi3ValueReferenceToString(md::fmi3ModelDescription, reference::Int64)
+    fmi3ValueReferenceToString(md, fmi3ValueReference(reference))
 end
 
-function fmi3ValueReference2String(fmu::FMU3, reference::Union{fmi3ValueReference, Int64})
-    fmi3ValueReference2String(fmu.modelDescription, reference)
+function fmi3ValueReferenceToString(fmu::FMU3, reference::Union{fmi3ValueReference, Int64})
+    fmi3ValueReferenceToString(fmu.modelDescription, reference)
 end
