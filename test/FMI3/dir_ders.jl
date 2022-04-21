@@ -55,7 +55,7 @@ for i in 1:numStates
         dir_der = fmi3GetDirectionalDerivative(inst, myFMU.modelDescription.derivativeValueReferences[1], myFMU.modelDescription.stateValueReferences[1])
         @test dir_der == targetValues[1][1]
     else 
-        @warn "Skipping directional derivative testing, FMU from $(ENV["EXPORTINGTOOL"]) doesn't support directional derivatives."
+        @warn "Skipping directional derivative testing, this FMU from $(ENV["EXPORTINGTOOL"]) doesn't support directional derivatives."
     end
 end
 
