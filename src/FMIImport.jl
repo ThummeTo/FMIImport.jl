@@ -125,11 +125,11 @@ export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUstate, fmi
 ###
 
 fmi2Struct = Union{FMU2, FMU2Component}
-fmi3Struct = Union{FMU3, FMU3Component}
+fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
 
 fmi2StructMD = Union{FMU2, FMU2Component, fmi2ModelDescription}
-fmi3StructMD = Union{FMU3, FMU3Component, fmi3ModelDescription}
+fmi3StructMD = Union{FMU3, FMU3Instance, fmi3ModelDescription}
 export fmi2StructMD, fmi3StructMD
 
 end # module

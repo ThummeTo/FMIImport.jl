@@ -116,9 +116,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
-    fmu.modelName = fmu.modelDescription.modelName
-    fmu.instanceName = fmu.modelDescription.modelName
-
+    
     if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS) 
         fmu.type = fmi2TypeCoSimulation::fmi2Type
     elseif (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
@@ -296,7 +294,7 @@ For more information call ?fmi2Instantiate
 - `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false, 
+function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = false, instanceName::String=fmu.modelDescription.modelName,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -333,7 +331,7 @@ function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool 
 
     guidStr = "$(fmu.modelDescription.guid)"
 
-    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(fmu.instanceName), fmu.type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
+    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), fmu.type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi2Instantiate!(...): Instantiation failed!"
