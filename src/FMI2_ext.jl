@@ -8,6 +8,7 @@
 
 using Libdl
 using ZipFile
+import Downloads
 
 """
 Create a copy of the .fmu file as a .zip folder and unzips it.
@@ -103,7 +104,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     if startswith(pathToFMU, "http")
         @info "Downloading FMU from `$(pathToFMU)`."
-        pathToFMU = download(pathToFMU)
+        pathToFMU = Downloads.download(pathToFMU)
     end
 
     pathToFMU = normpath(pathToFMU)

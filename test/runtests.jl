@@ -5,7 +5,6 @@
 
 using FMIImport
 using Test
-using ZipFile
 import Random
 using FMIZoo
 

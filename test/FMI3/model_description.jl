@@ -5,26 +5,7 @@
 
 import FMIImport.FMICore: fmi3VariableNamingConventionFlat
 
-zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
-dir = dirname(zipPath)
-zarchive = ZipFile.Reader(zipPath)
-path = joinpath(dir, "BouncingBall/")
-pathToFmu = joinpath(path, "BouncingBall.fmu")
-for f in zarchive.files
-    if f.name == "3.0/BouncingBall.fmu"
-        if !ispath(path)
-            mkdir(path)
-        end
-      
-        numBytes = write(pathToFmu, read(f))
-        if numBytes == 0
-            print("Not able to read!")
-        end
-    end
-end
-close(zarchive)
-# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU = fmi3Load(pathToFmu)
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 
 @test fmi3GetVersion(myFMU) == "3.0-beta.5"
 

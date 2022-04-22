@@ -7,40 +7,7 @@
 # Prepare FMU #
 ###############
 
-zipPath = download("https://github.com/modelica/Reference-FMUs/releases/download/v0.0.14/Reference-FMUs-0.0.14.zip")
-dir = dirname(zipPath)
-zarchive = ZipFile.Reader(zipPath)
-pathfmu = joinpath(dir, "BouncingBall/BouncingBall.fmu")
-path = joinpath(dir, "BouncingBall/")
-path2 = joinpath(dir, "Feedthrough/")
-pathToFmu = joinpath(dir, "Feedthrough/Feedthrough.fmu")
-for f in zarchive.files
-    if f.name == "3.0/Feedthrough.fmu"
-        if !ispath(path2)
-            mkdir(path2)
-        end
-       
-        numBytes = write(pathToFmu, read(f))
-        if numBytes == 0
-            print("Not able to read!")
-        end
-    end
-
-    if f.name == "3.0/BouncingBall.fmu"
-        if !ispath(path)
-            mkdir(path) 
-        end
-
-        numBytes = write(pathfmu, read(f))
-        if numBytes == 0
-            print("Not able to read!")
-        end
-    end
-end
-close(zarchive)
-
-# myFMU = fmi3Load(pathToFmu, ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU = fmi3Load(pathToFmu)
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
