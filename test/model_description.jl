@@ -29,4 +29,35 @@ myFMU.executionConfig.assertOnWarning = true
 @test fmi2GetDefaultTolerance(myFMU.modelDescription) ≈ 1e-4
 @test fmi2GetDefaultStepSize(myFMU.modelDescription) === nothing
 
+@test length(fmi2GetNamesToValueReference(myFMU.modelDescription)) == 50
+@test length(fmi2GetNamesToValueReference(myFMU)) == 50
+
+@test length(fmi2GetValueRefenceToName(myFMU.modelDescription)) == 42
+@test length(fmi2GetValueRefenceToName(myFMU)) == 42
+
+@test length(fmi2GetInputNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetInputNames(myFMU)) == 0
+
+@test length(fmi2GetOutputNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetOutputNames(myFMU)) == 0
+
+@test length(fmi2GetParameterNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetParameterNames(myFMU)) == 0
+
+@test length(fmi2GetStateNames(myFMU.modelDescription)) == 3
+@test length(fmi2GetStateNames(myFMU)) == 3
+
+@test length(fmi2GetDerivateNames(myFMU.modelDescription)) == 2
+@test length(fmi2GetDerivateNames(myFMU)) == 2
+
+@test length(fmi2GetVariableDescriptions(myFMU.modelDescription)) == 50
+@test length(fmi2GetVariableDescriptions(myFMU)) == 50
+
+@test length(fmi2GetVariableUnits(myFMU.modelDescription)) == 50
+@test length(fmi2GetVariableUnits(myFMU)) == 50
+
+@test length(fmi2GetStartValues(myFMU.modelDescription)) == 50
+@test length(fmi2GetStartValues(myFMU)) == 50
+
+
 fmi2Unload(myFMU)
