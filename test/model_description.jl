@@ -46,9 +46,13 @@ myFMU.executionConfig.assertOnWarning = true
 
 @test length(fmi2GetStateNames(myFMU.modelDescription)) == 3
 @test length(fmi2GetStateNames(myFMU)) == 3
+@test fmi2GetStateNames(myFMU.modelDescription) == ["mass.s", "mass.v", "mass.v_relfric"]
+@test fmi2GetStateNames(myFMU) == ["mass.s", "mass.v", "mass.v_relfric"]
 
 @test length(fmi2GetDerivateNames(myFMU.modelDescription)) == 2
 @test length(fmi2GetDerivateNames(myFMU)) == 2
+@test fmi2GetDerivateNames(myFMU.modelDescription) == ["der(mass.s)", "der(mass.v)"]
+@test fmi2GetDerivateNames(myFMU) == ["der(mass.s)", "der(mass.v)"]
 
 @test length(fmi2GetVariableDescriptions(myFMU.modelDescription)) == 50
 @test length(fmi2GetVariableDescriptions(myFMU)) == 50

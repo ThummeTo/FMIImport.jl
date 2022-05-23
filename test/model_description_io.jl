@@ -16,9 +16,13 @@ myFMU.executionConfig.assertOnWarning = true
 
 @test length(fmi2GetInputNames(myFMU.modelDescription)) == 3
 @test length(fmi2GetInputNames(myFMU)) == 3
+@test fmi2GetInputNames(myFMU.modelDescription) == ["u_real", "u_boolean", "u_integer"]
+@test fmi2GetInputNames(myFMU) == ["u_real", "u_boolean", "u_integer"]
 
 @test length(fmi2GetOutputNames(myFMU.modelDescription)) == 3
 @test length(fmi2GetOutputNames(myFMU)) == 3
+@test fmi2GetOutputNames(myFMU.modelDescription) == ["y_real", "y_boolean", "y_integer"]
+@test fmi2GetOutputNames(myFMU) == ["y_real", "y_boolean", "y_integer"]
 
 @test length(fmi2GetParameterNames(myFMU.modelDescription)) == 0
 @test length(fmi2GetParameterNames(myFMU)) == 0
