@@ -901,7 +901,7 @@ end
 Returns a dictionary of variables with their units
 """
 function fmi2GetVariableUnits(md::fmi2ModelDescription)
-    [md.modelVariables[i]._Real !== nothing ? Dict(md.modelVariables[i].name => md.modelVariables[i]._Real.unit) : nothing for i = 1:length(md.modelVariables)]
+    [md.modelVariables[i]._Real !== nothing ? Dict(md.modelVariables[i].name => md.modelVariables[i]._Real.unit) : Dict(md.modelVariables[i].name => nothing)  for i = 1:length(md.modelVariables)]
 end
 
 function fmi2GetVariableUnits(fmu::FMU2)
