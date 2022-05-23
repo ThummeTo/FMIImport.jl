@@ -889,7 +889,7 @@ end
 Returns a dictionary of variables with their descriptions
 """
 function fmi2GetVariableDescriptions(md::fmi2ModelDescription)
-    [Dict(md.modelVariables[i].name => md.modelVariables[i].description) for i = 1:length(md.modelVariables)]
+    Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
 end
 
 function fmi2GetVariableDescriptions(fmu::FMU2)
@@ -901,7 +901,7 @@ end
 Returns a dictionary of variables with their units
 """
 function fmi2GetVariableUnits(md::fmi2ModelDescription)
-    [md.modelVariables[i]._Real !== nothing ? Dict(md.modelVariables[i].name => md.modelVariables[i]._Real.unit) : Dict(md.modelVariables[i].name => nothing)  for i = 1:length(md.modelVariables)]
+    Dict(md.modelVariables[i].name => md.modelVariables[i]._Real !== nothing ? md.modelVariables[i]._Real.unit : nothing for i = 1:length(md.modelVariables))
 end
 
 function fmi2GetVariableUnits(fmu::FMU2)
@@ -913,7 +913,7 @@ end
 Returns a dictionary of variables with their starting values
 """
 function fmi2GetStartValues(md::fmi2ModelDescription)
-    [Dict(md.modelVariables[i].name => md.modelVariables[i].initial) for i = 1:length(md.modelVariables)]
+    Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
 end
 
 function fmi2GetStartValues(fmu::FMU2)
