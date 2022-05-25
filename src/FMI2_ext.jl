@@ -423,29 +423,32 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
                                           steps::Union{Array{fmi2Real}, Nothing} = nothing)
-    
-    if steps === nothing 
-        vals = fmi2GetReal(c, vKnown_ref)
-        vals = max.(vals, ones(length(vals)))
-        steps = abs.(vals) .* eps(fmi2Real)
-    end 
+
+    step = 0.0
 
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
-        fmi2SetReal(c, vKnown, origValue - steps[i])
+        if steps === nothing 
+            # smaller than 1e-6 leads to issues
+            step = max(2.0 * eps(Float32(origValue)), 1e-6)
+        else
+            step = steps[i]
+        end 
+
+        fmi2SetReal(c, vKnown, origValue - step)
         negValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + steps[i])
+        fmi2SetReal(c, vKnown, origValue + step)
         posValues = fmi2GetReal(c, vUnknown_ref)
 
         fmi2SetReal(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[1,i] = (posValues-negValues) ./ (step * 2.0)
         else
-            dvUnknown[:,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[:,i] = (posValues-negValues) ./ (step * 2.0)
         end
     end
 
