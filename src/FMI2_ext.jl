@@ -734,5 +734,5 @@ Returns the `inital` entry of the corresponding model variable.
 ToDo: update docstring format.
 """
 function fmi2GetInitial(mv::fmi2ScalarVariable)
-    return mv..inital
+    return mv.inital
 end 
