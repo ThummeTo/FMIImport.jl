@@ -824,179 +824,226 @@ function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivative) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivative)
 end
 
-
 """
-Returns a dictionary of names to their value references
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names
 
 ToDo: update docstring format.
 """
-function fmi2GetNamesToValueReference(md::fmi2ModelDescription)
-    md.stringValueReferences
+function fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
+    dict = Dict{fmi2ValueReference, Array{String}}()
+    for vr in vrs
+        dict[vr] = fmi2ValueReferenceToString(md, vr)
+    end
+    return dict
 end
 
-function fmi2GetNamesToValueReference(fmu::FMU2)
-    fmi2GetNamesToValueReference(fmu.modelDescription)
+function fmi2GetValueReferencesAndNames(fmu::FMU2)
+    fmi2GetValueReferencesAndNames(fmu.modelDescription)
 end
-
 
 """
-Returns a dictionary of value references to their names
+Returns a array of names corresponding to value references `vrs`
+
+If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
 
 ToDo: update docstring format.
 """
-function fmi2GetValueRefenceToName(md::fmi2ModelDescription)
-    value_reference_to_name = Dict()
-    for (key, value) in md.stringValueReferences
-        if haskey(value_reference_to_name, value)
-            push!(value_reference_to_name[value], key)
+function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
+    names = []
+    for vr in vrs
+        ns = fmi2ValueReferenceToString(md, vr)
+
+        if mode == :first
+            push!(names, ns[1])
+        elseif mode == :group
+            push!(names, ns)
+        elseif mode == :flat 
+            for n in ns
+                push!(names, n)
+            end
         else
-            value_reference_to_name[value] = [key]
+            @assert false "fmi2GetNames(...) unknown mode `mode`, please choose between `:first`, `:group` and `:flat`."
         end
     end
-    value_reference_to_name 
+    return names
 end
 
-function fmi2GetValueRefenceToName(fmu::FMU2)
-    fmi2GetValueRefenceToName(fmu.modelDescription)
+function fmi2GetNames(fmu::FMU2; kwargs...)
+    fmi2GetNames(fmu.modelDescription; kwargs...)
 end
-
 
 """
-Returns names of inputs
+Returns a dict with (vrs, names of inputs)
 
 ToDo: update docstring format.
 """
-function fmi2GetInputNames(md::fmi2ModelDescription)
-    value_reference_to_name = fmi2GetValueRefenceToName(md)
-    input_names = []
-    for i in md.inputValueReferences
-        append!(input_names, value_reference_to_name[i])
-    end
-    input_names
+function fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.inputValueReferences)
 end
 
-function fmi2GetInputNames(fmu::FMU2)
-    fmi2GetInputNames(fmu.modelDescription)
+function fmi2GetInputValueReferencesAndNames(fmu::FMU2)
+    fmi2GetInputValueReferencesAndNames(fmu.modelDescription)
 end
-
 
 """
-Returns names of outputs
+Returns names of inputs 
 
 ToDo: update docstring format.
 """
-function fmi2GetOutputNames(md::fmi2ModelDescription)
-    value_reference_to_name = fmi2GetValueRefenceToName(md)
-    output_names = []
-    for i in md.outputValueReferences
-        append!(output_names, value_reference_to_name[i])
-    end
-    output_names
+function fmi2GetInputNames(md::fmi2ModelDescription; kwargs...)
+    fmi2GetNames(md; vrs=md.inputValueReferences, kwargs...)
 end
 
-function fmi2GetOutputNames(fmu::FMU2)
-    fmi2GetOutputNames(fmu.modelDescription)
+function fmi2GetInputNames(fmu::FMU2; kwargs...)
+    fmi2GetInputNames(fmu.modelDescription; kwargs...)
 end
 
+"""
+ToDo: update docstring format.
+"""
+function fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.outputValueReferences)
+end
+
+function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
+    fmi2GetOutputValueReferencesAndNames(fmu.modelDescription)
+end
+
+"""
+Returns names of outputs 
+
+ToDo: update docstring format.
+"""
+function fmi2GetOutputNames(md::fmi2ModelDescription; kwargs...)
+    fmi2GetNames(md; vrs=md.outputValueReferences, kwargs...)
+end
+
+function fmi2GetOutputNames(fmu::FMU2; kwargs...)
+    fmi2GetOutputNames(fmu.modelDescription; kwargs...)
+end
+
+"""
+ToDo: update docstring format.
+"""
+function fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences)
+end
+
+function fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
+    fmi2GetParameterValueReferencesAndNames(fmu.modelDescription)
+end
 
 """
 Returns names of parameters
 
 ToDo: update docstring format.
 """
-function fmi2GetParameterNames(md::fmi2ModelDescription)
-    value_reference_to_name = fmi2GetValueRefenceToName(md)
-    parameter_names = []
-    for i in md.parameterValueReferences
-        append!(parameter_names, value_reference_to_name[i])
-    end
-    parameter_names
+function fmi2GetParameterNames(md::fmi2ModelDescription; kwargs...)
+    fmi2GetNames(md; vrs=md.parameterValueReferences, kwargs...)
 end
 
-function fmi2GetParameterNames(fmu::FMU2)
-    fmi2GetParameterNames(fmu.modelDescription)
+function fmi2GetParameterNames(fmu::FMU2; kwargs...)
+    fmi2GetParameterNames(fmu.modelDescription; kwargs...)
 end
 
 """
-Returns names of states
+Returns dict(vrs, names of states)
 
 ToDo: update docstring format.
 """
-function fmi2GetStateNames(md::fmi2ModelDescription)
-    value_reference_to_name = fmi2GetValueRefenceToName(md)
-    state_names = []
-    for i in md.stateValueReferences
-        append!(state_names, value_reference_to_name[i])
-    end
-    state_names
+function fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.stateValueReferences)
 end
 
-function fmi2GetStateNames(fmu::FMU2)
-    fmi2GetStateNames(fmu.modelDescription)
+function fmi2GetStateValueReferencesAndNames(fmu::FMU2)
+    fmi2GetStateValueReferencesAndNames(fmu.modelDescription)
 end
 
+"""
+Returns names of states 
 
+ToDo: update docstring format.
+"""
+function fmi2GetStateNames(md::fmi2ModelDescription; kwargs...)
+    fmi2GetNames(md; vrs=md.stateValueReferences, kwargs...)
+end
+
+function fmi2GetStateNames(fmu::FMU2; kwargs...)
+    fmi2GetStateNames(fmu.modelDescription; kwargs...)
+end
+
+"""
+ToDo: update docstring format.
+"""
+function fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences)
+end
+
+function fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
+    fmi2GetDerivateValueReferencesAndNames(fmu.modelDescription)
+end
 
 """
 Returns names of derivatives
 
 ToDo: update docstring format.
 """
-function fmi2GetDerivateNames(md::fmi2ModelDescription)
-    value_reference_to_name = fmi2GetValueRefenceToName(md)
-    derivative_names = []
-    for i in md.derivativeValueReferences
-        for j in value_reference_to_name[i]
-            if startswith(j, "der(")
-                push!(derivative_names, j)
-            end
-        end
-    end
-    derivative_names
+function fmi2GetDerivativeNames(md::fmi2ModelDescription; kwargs...)
+    fmi2GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
 end
 
-function fmi2GetDerivateNames(fmu::FMU2)
-    fmi2GetDerivateNames(fmu.modelDescription)
+function fmi2GetDerivativeNames(fmu::FMU2; kwargs...)
+    fmi2GetDerivativeNames(fmu.modelDescription; kwargs...)
 end
-
 
 """
 Returns a dictionary of variables with their descriptions
 
 ToDo: update docstring format.
 """
-function fmi2GetVariableDescriptions(md::fmi2ModelDescription)
+function fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
 end
 
-function fmi2GetVariableDescriptions(fmu::FMU2)
-    fmi2GetVariableDescriptions(fmu.modelDescription)
+function fmi2GetNamesAndDescriptions(fmu::FMU2)
+    fmi2GetNamesAndDescriptions(fmu.modelDescription)
 end
-
 
 """
 Returns a dictionary of variables with their units
 
 ToDo: update docstring format.
 """
-function fmi2GetVariableUnits(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => md.modelVariables[i]._Real !== nothing ? md.modelVariables[i]._Real.unit : nothing for i = 1:length(md.modelVariables))
+function fmi2GetNamesAndUnits(md::fmi2ModelDescription)
+    Dict(md.modelVariables[i].name => fmi2GetUnit(md.modelVariables[i]) for i = 1:length(md.modelVariables))
 end
 
-function fmi2GetVariableUnits(fmu::FMU2)
-    fmi2GetVariableUnits(fmu.modelDescription)
+function fmi2GetNamesAndUnits(fmu::FMU2)
+    fmi2GetNamesAndUnits(fmu.modelDescription)
 end
 
+"""
+Returns a dictionary of variables with their initials
+
+ToDo: update docstring format.
+"""
+function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
+    Dict(md.modelVariables[i].name => fmi2GetInitial(md.modelVariables[i]) for i = 1:length(md.modelVariables))
+end
+
+function fmi2GetNamesAndInitials(fmu::FMU2)
+    fmi2GetNamesAndInitials(fmu.modelDescription)
+end
 
 """
 Returns a dictionary of variables with their starting values
 
 ToDo: update docstring format.
 """
-function fmi2GetStartValues(md::fmi2ModelDescription)
+function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
 end
 
-function fmi2GetStartValues(fmu::FMU2)
-    fmi2GetStartValues(fmu.modelDescription)
+function fmi2GetNamesAndInitials(fmu::FMU2)
+    fmi2GetNamesAndInitials(fmu.modelDescription)
 end

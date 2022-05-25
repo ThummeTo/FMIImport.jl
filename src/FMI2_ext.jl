@@ -425,7 +425,8 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           steps::Union{Array{fmi2Real}, Nothing} = nothing)
     
     if steps === nothing 
-        vals = fmi2GetReal(vKnown_ref)
+        vals = fmi2GetReal(c, vKnown_ref)
+        vals = max.(vals, ones(length(vals)))
         steps = abs.(vals) .* eps(fmi2Real)
     end 
 
@@ -661,3 +662,77 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     return retcodes
 end
+
+"""
+Returns the start/default value for a given value reference.
+
+TODO: Add this command in the documentation.
+"""
+function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
+
+    vrs = prepareValueReference(md, vrs)
+
+    starts = []
+
+    for vr in vrs
+        mvs = fmi2ModelVariablesForValueReference(md, vr) 
+
+        if length(mvs) == 0
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
+        end
+    
+        push!(starts, fmi2GetStartValue(mvs[1]) )
+    end
+
+    if length(vrs) == 1
+        return starts[1]
+    else
+        return starts 
+    end
+end 
+
+function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(fmu.modelDescription, vrs)
+end 
+
+function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(c.fmu, vrs)
+end 
+
+function fmi2GetStartValue(mv::fmi2ScalarVariable)
+    if mv._Real != nothing
+        return mv._Real.start
+    elseif mv._Integer != nothing
+        return mv._Integer.start
+    elseif mv._Boolean != nothing
+        return mv._Boolean.start
+    elseif mv._String != nothing
+        return mv._String.start
+    elseif mv._Enumeration != nothing
+        return mv._Enumeration.start
+    else 
+        @assert false "fmi2GetStartValue(...): Variable $(mv) has no data type."
+    end
+end
+
+"""
+Returns the `unit` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetUnit(mv::fmi2ScalarVariable)
+    if mv._Real !== nothing
+        return mv._Real.unit
+    else 
+        return nothing 
+    end 
+end 
+
+"""
+Returns the `inital` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetInitial(mv::fmi2ScalarVariable)
+    return mv..inital
+end 
