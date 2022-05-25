@@ -15,6 +15,7 @@ using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulati
 using FMICore: fmi2ModelDescriptionReal, fmi2ModelDescriptionBoolean, fmi2ModelDescriptionInteger, fmi2ModelDescriptionString, fmi2ModelDescriptionEnumeration
 using FMICore: fmi2ModelDescriptionModelStructure
 using FMICore: fmi2DependencyKind
+using FMICore: FMU2
 
 ######################################
 # [Sec. 1a] fmi2LoadModelDescription #
@@ -761,4 +762,161 @@ Returns true, if the FMU provides directional derivatives
 """
 function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivative) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivative)
+end
+
+
+"""
+Returns a dictionary of names to their value references
+"""
+function fmi2GetNamesToValueReference(md::fmi2ModelDescription)
+    md.stringValueReferences
+end
+
+function fmi2GetNamesToValueReference(fmu::FMU2)
+    fmi2GetNamesToValueReference(fmu.modelDescription)
+end
+
+
+"""
+Returns a dictionary of value references to their names
+"""
+function fmi2GetValueRefenceToName(md::fmi2ModelDescription)
+    value_reference_to_name = Dict()
+    for (key, value) in md.stringValueReferences
+        if haskey(value_reference_to_name, value)
+            push!(value_reference_to_name[value], key)
+        else
+            value_reference_to_name[value] = [key]
+        end
+    end
+    value_reference_to_name 
+end
+
+function fmi2GetValueRefenceToName(fmu::FMU2)
+    fmi2GetValueRefenceToName(fmu.modelDescription)
+end
+
+
+"""
+Returns names of inputs
+"""
+function fmi2GetInputNames(md::fmi2ModelDescription)
+    value_reference_to_name = fmi2GetValueRefenceToName(md)
+    input_names = []
+    for i in md.inputValueReferences
+        append!(input_names, value_reference_to_name[i])
+    end
+    input_names
+end
+
+function fmi2GetInputNames(fmu::FMU2)
+    fmi2GetInputNames(fmu.modelDescription)
+end
+
+
+"""
+Returns names of outputs
+"""
+function fmi2GetOutputNames(md::fmi2ModelDescription)
+    value_reference_to_name = fmi2GetValueRefenceToName(md)
+    output_names = []
+    for i in md.outputValueReferences
+        append!(output_names, value_reference_to_name[i])
+    end
+    output_names
+end
+
+function fmi2GetOutputNames(fmu::FMU2)
+    fmi2GetOutputNames(fmu.modelDescription)
+end
+
+
+"""
+Returns names of parameters
+"""
+function fmi2GetParameterNames(md::fmi2ModelDescription)
+    value_reference_to_name = fmi2GetValueRefenceToName(md)
+    parameter_names = []
+    for i in md.parameterValueReferences
+        append!(parameter_names, value_reference_to_name[i])
+    end
+    parameter_names
+end
+
+function fmi2GetParameterNames(fmu::FMU2)
+    fmi2GetParameterNames(fmu.modelDescription)
+end
+
+"""
+Returns names of states
+"""
+function fmi2GetStateNames(md::fmi2ModelDescription)
+    value_reference_to_name = fmi2GetValueRefenceToName(md)
+    state_names = []
+    for i in md.stateValueReferences
+        append!(state_names, value_reference_to_name[i])
+    end
+    state_names
+end
+
+function fmi2GetStateNames(fmu::FMU2)
+    fmi2GetStateNames(fmu.modelDescription)
+end
+
+
+
+"""
+Returns names of derivatives
+"""
+function fmi2GetDerivateNames(md::fmi2ModelDescription)
+    value_reference_to_name = fmi2GetValueRefenceToName(md)
+    derivative_names = []
+    for i in md.derivativeValueReferences
+        for j in value_reference_to_name[i]
+            if startswith(j, "der(")
+                push!(derivative_names, j)
+            end
+        end
+    end
+    derivative_names
+end
+
+function fmi2GetDerivateNames(fmu::FMU2)
+    fmi2GetDerivateNames(fmu.modelDescription)
+end
+
+
+"""
+Returns a dictionary of variables with their descriptions
+"""
+function fmi2GetVariableDescriptions(md::fmi2ModelDescription)
+    Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
+end
+
+function fmi2GetVariableDescriptions(fmu::FMU2)
+    fmi2GetVariableDescriptions(fmu.modelDescription)
+end
+
+
+"""
+Returns a dictionary of variables with their units
+"""
+function fmi2GetVariableUnits(md::fmi2ModelDescription)
+    Dict(md.modelVariables[i].name => md.modelVariables[i]._Real !== nothing ? md.modelVariables[i]._Real.unit : nothing for i = 1:length(md.modelVariables))
+end
+
+function fmi2GetVariableUnits(fmu::FMU2)
+    fmi2GetVariableUnits(fmu.modelDescription)
+end
+
+
+"""
+Returns a dictionary of variables with their starting values
+"""
+function fmi2GetStartValues(md::fmi2ModelDescription)
+    Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
+end
+
+function fmi2GetStartValues(fmu::FMU2)
+    fmi2GetStartValues(fmu.modelDescription)
 end

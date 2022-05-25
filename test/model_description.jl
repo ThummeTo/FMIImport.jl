@@ -29,4 +29,44 @@ myFMU.executionConfig.assertOnWarning = true
 @test fmi2GetDefaultTolerance(myFMU.modelDescription) ≈ 1e-4
 @test fmi2GetDefaultStepSize(myFMU.modelDescription) === nothing
 
+@test length(fmi2GetNamesToValueReference(myFMU.modelDescription)) == 50
+@test length(fmi2GetNamesToValueReference(myFMU)) == 50
+
+@test length(fmi2GetValueRefenceToName(myFMU.modelDescription)) == 42
+@test length(fmi2GetValueRefenceToName(myFMU)) == 42
+
+@test length(fmi2GetInputNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetInputNames(myFMU)) == 0
+
+@test length(fmi2GetOutputNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetOutputNames(myFMU)) == 0
+
+@test length(fmi2GetParameterNames(myFMU.modelDescription)) == 0
+@test length(fmi2GetParameterNames(myFMU)) == 0
+
+@test length(fmi2GetStateNames(myFMU.modelDescription)) == 3
+@test length(fmi2GetStateNames(myFMU)) == 3
+@test fmi2GetStateNames(myFMU) == ["mass.s", "mass.v", "mass.v_relfric"]
+
+@test length(fmi2GetDerivateNames(myFMU.modelDescription)) == 2
+@test length(fmi2GetDerivateNames(myFMU)) == 2
+@test fmi2GetDerivateNames(myFMU) == ["der(mass.s)", "der(mass.v)"]
+
+@test length(fmi2GetVariableDescriptions(myFMU.modelDescription)) == 50
+@test length(fmi2GetVariableDescriptions(myFMU)) == 50
+
+
+@test length(fmi2GetVariableUnits(myFMU.modelDescription)) == 50
+@test length(fmi2GetVariableUnits(myFMU)) == 50
+@test fmi2GetVariableUnits(myFMU)["der(mass.s)"] == "m/s"
+@test fmi2GetVariableUnits(myFMU)["mass.F_prop"] == "N.s/m"
+@test fmi2GetVariableUnits(myFMU)["mass.fexp"] == "s/m"
+@test fmi2GetVariableUnits(myFMU)["der(mass.v)"] == "m/s2"
+
+@test length(fmi2GetStartValues(myFMU.modelDescription)) == 50
+@test length(fmi2GetStartValues(myFMU)) == 50
+@test fmi2GetStartValues(myFMU)["mass.startForward"] == 0
+@test fmi2GetStartValues(myFMU)["mass.startBackward"] == 0
+@test fmi2GetStartValues(myFMU)["mass.locked"] == 1
+
 fmi2Unload(myFMU)
