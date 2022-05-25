@@ -750,7 +750,7 @@ Returns if the FMU model description contains `dependency` information.
 ToDo: update docstring format.
 """
 function fmi2DependenciesSupported(md::fmi2ModelDescription)
-    if md.modelstructure === nothing 
+    if md.modelStructure === nothing 
         return false
     end
 
