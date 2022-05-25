@@ -23,6 +23,8 @@ using FMICore: FMU2
 
 """
 Extract the FMU variables and meta data from the ModelDescription
+
+ToDo: New docstring format!
 """
 function fmi2LoadModelDescription(pathToModellDescription::String)
     md = fmi2ModelDescription()
@@ -316,6 +318,7 @@ function parseUnknwon(node::EzXML.Node)
     end
 end 
 
+# ToDo: Comment
 function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "Derivatives") "Wrong element name."
     md.modelStructure.derivatives = []
@@ -346,6 +349,7 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
     end
 end
 
+# ToDo: Comment
 function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "InitialUnknowns") "Wrong element name."
     md.modelStructure.initialUnknowns = []
@@ -364,6 +368,7 @@ function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
     end
 end
 
+# ToDo: Comment
 function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "Outputs") "Wrong element name."
     md.modelStructure.outputs = []
@@ -401,6 +406,7 @@ function parseBoolean(s::Union{String, SubString{String}}; onfail=nothing)
     end
 end
 
+# parses node (interpreted as boolean)
 function parseNodeBoolean(node, key; onfail=nothing)
     if haskey(node, key)
         return parseBoolean(node[key]; onfail=onfail)
@@ -422,6 +428,7 @@ function parseInteger(s::Union{String, SubString{String}}; onfail=nothing)
     end
 end
 
+# parses node (interpreted as integer)
 function parseNodeInteger(node, key; onfail=nothing)
     if haskey(node, key)
         return parseInteger(node[key]; onfail=onfail)
@@ -443,6 +450,7 @@ function parseReal(s::Union{String, SubString{String}}; onfail=nothing)
     end
 end
 
+# parses node (interpreted as real)
 function parseNodeReal(node, key; onfail=nothing)
     if haskey(node, key)
         return parseReal(node[key]; onfail=onfail)
@@ -451,6 +459,7 @@ function parseNodeReal(node, key; onfail=nothing)
     end
 end
 
+# parses node (interpreted as string)
 function parseNodeString(node, key; onfail=nothing)
     if haskey(node, key)
         return node[key]
@@ -604,6 +613,8 @@ end
 
 """
 Returns startTime from DefaultExperiment if defined else defaults to nothing.
+
+    ToDo: update docstring format.
 """
 function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing 
@@ -614,6 +625,8 @@ end
 
 """
 Returns stopTime from DefaultExperiment if defined else defaults to nothing.
+
+    ToDo: update docstring format.
 """
 function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing 
@@ -624,6 +637,8 @@ end
 
 """
 Returns tolerance from DefaultExperiment if defined else defaults to nothing.
+
+ToDo: update docstring format.
 """
 function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing 
@@ -634,6 +649,8 @@ end
 
 """
 Returns stepSize from DefaultExperiment if defined else defaults to nothing.
+
+ToDo: update docstring format.
 """
 function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing 
@@ -644,6 +661,8 @@ end
 
 """
 Returns the tag 'modelName' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetModelName(md::fmi2ModelDescription)#, escape::Bool = true)
     md.modelName
@@ -651,6 +670,8 @@ end
 
 """
 Returns the tag 'guid' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetGUID(md::fmi2ModelDescription)
     md.guid
@@ -658,6 +679,8 @@ end
 
 """
 Returns the tag 'generationtool' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetGenerationTool(md::fmi2ModelDescription)
     md.generationTool
@@ -665,6 +688,8 @@ end
 
 """
 Returns the tag 'generationdateandtime' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
     md.generationDateAndTime
@@ -672,6 +697,8 @@ end
 
 """
 Returns the tag 'varaiblenamingconvention' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
     md.variableNamingConvention
@@ -679,6 +706,8 @@ end
 
 """
 Returns the tag 'numberOfEventIndicators' from the model description.
+
+ToDo: update docstring format.
 """
 function fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
     md.numberOfEventIndicators
@@ -686,6 +715,8 @@ end
 
 """
 Returns the number of states of the FMU.
+
+ToDo: update docstring format.
 """
 function fmi2GetNumberOfStates(md::fmi2ModelDescription)
     length(md.stateValueReferences)
@@ -693,6 +724,8 @@ end
 
 """
 Returns true, if the FMU supports co simulation
+
+ToDo: update docstring format.
 """
 function fmi2IsCoSimulation(md::fmi2ModelDescription)
     return (md.coSimulation != nothing)
@@ -700,6 +733,8 @@ end
 
 """
 Returns true, if the FMU supports model exchange
+
+ToDo: update docstring format.
 """
 function fmi2IsModelExchange(md::fmi2ModelDescription)
     return (md.modelExchange != nothing)
@@ -711,20 +746,39 @@ end
 
 """
 Returns if the FMU model description contains `dependency` information.
+
+ToDo: update docstring format.
 """
 function fmi2DependenciesSupported(md::fmi2ModelDescription)
-    der = md.modelStructure.derivatives
+    if md.modelstructure === nothing 
+        return false
+    end
 
-    # checking only if dependencies for derivatives are definied
-    if der !== nothing && length(der) > 0
-        return true
+    return true
+end
+
+"""
+Returns if the FMU model description contains `dependency` information for `derivatives`.
+
+ToDo: update docstring format.
+"""
+function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
+    if !fmi2DependenciesSupported(md) 
+        return false
+    end
+
+    der = md.modelStructure.derivatives
+    if der === nothing || length(der) <= 0
+        return false
     end
     
-    return false
+    return true
 end
 
 """
 Returns the tag 'modelIdentifier' from CS or ME section.
+
+ToDo: update docstring format.
 """
 function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
     
@@ -745,6 +799,8 @@ end
 
 """
 Returns true, if the FMU supports the getting/setting of states
+
+ToDo: update docstring format.
 """
 function fmi2CanGetSetState(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange != nothing && md.modelExchange.canGetAndSetFMUstate)
@@ -752,6 +808,8 @@ end
 
 """
 Returns true, if the FMU state can be serialized
+
+ToDo: update docstring format.
 """
 function fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange != nothing && md.modelExchange.canSerializeFMUstate)
@@ -759,6 +817,8 @@ end
 
 """
 Returns true, if the FMU provides directional derivatives
+
+ToDo: update docstring format.
 """
 function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivative) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivative)
@@ -767,6 +827,8 @@ end
 
 """
 Returns a dictionary of names to their value references
+
+ToDo: update docstring format.
 """
 function fmi2GetNamesToValueReference(md::fmi2ModelDescription)
     md.stringValueReferences
@@ -779,6 +841,8 @@ end
 
 """
 Returns a dictionary of value references to their names
+
+ToDo: update docstring format.
 """
 function fmi2GetValueRefenceToName(md::fmi2ModelDescription)
     value_reference_to_name = Dict()
@@ -799,6 +863,8 @@ end
 
 """
 Returns names of inputs
+
+ToDo: update docstring format.
 """
 function fmi2GetInputNames(md::fmi2ModelDescription)
     value_reference_to_name = fmi2GetValueRefenceToName(md)
@@ -816,6 +882,8 @@ end
 
 """
 Returns names of outputs
+
+ToDo: update docstring format.
 """
 function fmi2GetOutputNames(md::fmi2ModelDescription)
     value_reference_to_name = fmi2GetValueRefenceToName(md)
@@ -833,6 +901,8 @@ end
 
 """
 Returns names of parameters
+
+ToDo: update docstring format.
 """
 function fmi2GetParameterNames(md::fmi2ModelDescription)
     value_reference_to_name = fmi2GetValueRefenceToName(md)
@@ -849,6 +919,8 @@ end
 
 """
 Returns names of states
+
+ToDo: update docstring format.
 """
 function fmi2GetStateNames(md::fmi2ModelDescription)
     value_reference_to_name = fmi2GetValueRefenceToName(md)
@@ -867,6 +939,8 @@ end
 
 """
 Returns names of derivatives
+
+ToDo: update docstring format.
 """
 function fmi2GetDerivateNames(md::fmi2ModelDescription)
     value_reference_to_name = fmi2GetValueRefenceToName(md)
@@ -888,6 +962,8 @@ end
 
 """
 Returns a dictionary of variables with their descriptions
+
+ToDo: update docstring format.
 """
 function fmi2GetVariableDescriptions(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
@@ -900,6 +976,8 @@ end
 
 """
 Returns a dictionary of variables with their units
+
+ToDo: update docstring format.
 """
 function fmi2GetVariableUnits(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i]._Real !== nothing ? md.modelVariables[i]._Real.unit : nothing for i = 1:length(md.modelVariables))
@@ -912,6 +990,8 @@ end
 
 """
 Returns a dictionary of variables with their starting values
+
+ToDo: update docstring format.
 """
 function fmi2GetStartValues(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))

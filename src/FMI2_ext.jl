@@ -425,7 +425,8 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           steps::Union{Array{fmi2Real}, Nothing} = nothing)
     
     if steps === nothing 
-        steps = ones(fmi2Real, length(vKnown_ref)) .* eps(fmi2Real)
+        vals = fmi2GetReal(vKnown_ref)
+        steps = abs.(vals) .* eps(fmi2Real)
     end 
 
     for i in 1:length(vKnown_ref)

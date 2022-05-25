@@ -65,7 +65,7 @@ export fmi2Get, fmi2Get!, fmi2Set
 export fmi2LoadModelDescription
 export fmi2GetDefaultStartTime, fmi2GetDefaultStopTime, fmi2GetDefaultTolerance, fmi2GetDefaultStepSize
 export fmi2GetModelName, fmi2GetGUID, fmi2GetGenerationTool, fmi2GetGenerationDateAndTime, fmi2GetVariableNamingConvention, fmi2GetNumberOfEventIndicators, fmi2GetNumberOfStates, fmi2IsCoSimulation, fmi2IsModelExchange
-export fmi2DependenciesSupported, fmi2GetModelIdentifier, fmi2CanGetSetState, fmi2CanSerializeFMUstate, fmi2ProvidesDirectionalDerivative
+export fmi2DependenciesSupported, fmi2DerivativeDependenciesSupported, fmi2GetModelIdentifier, fmi2CanGetSetState, fmi2CanSerializeFMUstate, fmi2ProvidesDirectionalDerivative
 export fmi2GetNamesToValueReference, fmi2GetValueRefenceToName, fmi2GetInputNames, fmi2GetOutputNames, fmi2GetParameterNames, fmi2GetStateNames, fmi2GetDerivateNames, fmi2GetVariableDescriptions, fmi2GetVariableUnits, fmi2GetStartValues
 
 # FMI2_fmu_to_md.jl
