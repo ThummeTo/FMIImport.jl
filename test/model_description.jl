@@ -23,6 +23,8 @@ myFMU.executionConfig.assertOnWarning = true
 @test fmi2CanGetSetState(myFMU) == true
 @test fmi2CanSerializeFMUstate(myFMU) == true
 @test fmi2ProvidesDirectionalDerivative(myFMU) == true
+@test fmi2DependenciesSupported(myFMU.modelDescription) == true
+@test fmi2DerivativeDependenciesSupported(myFMUmodelDescription) == true
 
 @test fmi2GetDefaultStartTime(myFMU.modelDescription) ≈ 0.0
 @test fmi2GetDefaultStopTime(myFMU.modelDescription) ≈ 1.0
