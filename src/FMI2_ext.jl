@@ -403,7 +403,7 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences).
 """
-function fmi2SampleDirectionalDerivative(c::fmi2Component,
+function fmi2SampleDirectionalDerivative(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Union{Array{fmi2Real}, Nothing} = nothing)
@@ -418,15 +418,14 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
-function fmi2SampleDirectionalDerivative!(c::fmi2Component,
+function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
                                           steps::Union{Array{fmi2Real}, Nothing} = nothing)
     
-    if steps == nothing 
-        steps = fmi2GetReal(c, vKnown)
-        steps = abs.(steps) * eps(fmi2Real)
+    if steps === nothing 
+        steps = ones(fmi2Real, length(vKnown_ref)) .* eps(fmi2Real)
     end 
 
     for i in 1:length(vKnown_ref)

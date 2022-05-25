@@ -712,12 +712,13 @@ end
 Returns if the FMU model description contains `dependency` information.
 """
 function fmi2DependenciesSupported(md::fmi2ModelDescription)
-    for mv in md.modelVariables
-        if mv.dependencies != nothing && length(mv.dependencies) > 0
-            return true
-        end
-    end 
+    der = md.modelStructure.derivatives
 
+    # checking only if dependencies for derivatives are definied
+    if der !== nothing && length(der) > 0
+        return true
+    end
+    
     return false
 end
 
