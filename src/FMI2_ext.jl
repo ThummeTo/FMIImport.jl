@@ -296,7 +296,7 @@ For more information call ?fmi2Instantiate
 - `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = false, externalCallbacks::Bool = false, 
+function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -403,7 +403,7 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences).
 """
-function fmi2SampleDirectionalDerivative(c::fmi2Component,
+function fmi2SampleDirectionalDerivative(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Union{Array{fmi2Real}, Nothing} = nothing)
@@ -418,33 +418,37 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
-function fmi2SampleDirectionalDerivative!(c::fmi2Component,
+function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
                                           steps::Union{Array{fmi2Real}, Nothing} = nothing)
-    
-    if steps == nothing 
-        steps = fmi2GetReal(c, vKnown)
-        steps = abs.(steps) * eps(fmi2Real)
-    end 
+
+    step = 0.0
 
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
-        fmi2SetReal(c, vKnown, origValue - steps[i])
+        if steps === nothing 
+            # smaller than 1e-6 leads to issues
+            step = max(2.0 * eps(Float32(origValue)), 1e-6)
+        else
+            step = steps[i]
+        end 
+
+        fmi2SetReal(c, vKnown, origValue - step)
         negValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + steps[i])
+        fmi2SetReal(c, vKnown, origValue + step)
         posValues = fmi2GetReal(c, vUnknown_ref)
 
         fmi2SetReal(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[1,i] = (posValues-negValues) ./ (step * 2.0)
         else
-            dvUnknown[:,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[:,i] = (posValues-negValues) ./ (step * 2.0)
         end
     end
 
@@ -661,3 +665,77 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     return retcodes
 end
+
+"""
+Returns the start/default value for a given value reference.
+
+TODO: Add this command in the documentation.
+"""
+function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
+
+    vrs = prepareValueReference(md, vrs)
+
+    starts = []
+
+    for vr in vrs
+        mvs = fmi2ModelVariablesForValueReference(md, vr) 
+
+        if length(mvs) == 0
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
+        end
+    
+        push!(starts, fmi2GetStartValue(mvs[1]) )
+    end
+
+    if length(vrs) == 1
+        return starts[1]
+    else
+        return starts 
+    end
+end 
+
+function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(fmu.modelDescription, vrs)
+end 
+
+function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(c.fmu, vrs)
+end 
+
+function fmi2GetStartValue(mv::fmi2ScalarVariable)
+    if mv._Real != nothing
+        return mv._Real.start
+    elseif mv._Integer != nothing
+        return mv._Integer.start
+    elseif mv._Boolean != nothing
+        return mv._Boolean.start
+    elseif mv._String != nothing
+        return mv._String.start
+    elseif mv._Enumeration != nothing
+        return mv._Enumeration.start
+    else 
+        @assert false "fmi2GetStartValue(...): Variable $(mv) has no data type."
+    end
+end
+
+"""
+Returns the `unit` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetUnit(mv::fmi2ScalarVariable)
+    if mv._Real !== nothing
+        return mv._Real.unit
+    else 
+        return nothing 
+    end 
+end 
+
+"""
+Returns the `inital` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetInitial(mv::fmi2ScalarVariable)
+    return mv.inital
+end 

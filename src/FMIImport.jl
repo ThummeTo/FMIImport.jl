@@ -53,19 +53,23 @@ export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
 export fmi2GetReal, fmi2GetInteger, fmi2GetString, fmi2GetBoolean
 export fmi2GetFMUstate, fmi2SerializedFMUstateSize, fmi2SerializeFMUstate, fmi2DeSerializeFMUstate
 export fmi2GetDirectionalDerivative
-export fmi2GetStartValue, fmi2SampleDirectionalDerivative, fmi2CompletedIntegratorStep
+export fmi2CompletedIntegratorStep
 
 # FMI2_ext.jl
 export fmi2Unzip, fmi2Load, loadBinary, fmi2Reload, fmi2Unload, fmi2Instantiate!
 export fmi2SampleDirectionalDerivative!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
 export fmi2Get, fmi2Get!, fmi2Set 
+export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleDirectionalDerivative
 
 # FMI2_md.jl
 export fmi2LoadModelDescription
 export fmi2GetDefaultStartTime, fmi2GetDefaultStopTime, fmi2GetDefaultTolerance, fmi2GetDefaultStepSize
 export fmi2GetModelName, fmi2GetGUID, fmi2GetGenerationTool, fmi2GetGenerationDateAndTime, fmi2GetVariableNamingConvention, fmi2GetNumberOfEventIndicators, fmi2GetNumberOfStates, fmi2IsCoSimulation, fmi2IsModelExchange
-export fmi2DependenciesSupported, fmi2GetModelIdentifier, fmi2CanGetSetState, fmi2CanSerializeFMUstate, fmi2ProvidesDirectionalDerivative
+export fmi2DependenciesSupported, fmi2DerivativeDependenciesSupported, fmi2GetModelIdentifier, fmi2CanGetSetState, fmi2CanSerializeFMUstate, fmi2ProvidesDirectionalDerivative
+export fmi2GetInputValueReferencesAndNames, fmi2GetOutputValueReferencesAndNames, fmi2GetParameterValueReferencesAndNames, fmi2GetStateValueReferencesAndNames, fmi2GetDerivativeValueReferencesAndNames
+export fmi2GetInputNames, fmi2GetOutputNames, fmi2GetParameterNames, fmi2GetStateNames, fmi2GetDerivativeNames
+export fmi2GetValueReferencesAndNames, fmi2GetNamesAndDescriptions, fmi2GetNamesAndUnits, fmi2GetNamesAndInitials
 
 # FMI2_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`
