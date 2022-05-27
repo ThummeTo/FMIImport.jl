@@ -849,7 +849,7 @@ If there are multiple names per value reference, availabel modes are `:first` (d
 ToDo: update docstring format.
 """
 function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-    names = []
+    names = String[]
     for vr in vrs
         ns = fmi2ValueReferenceToString(md, vr)
 
@@ -1036,14 +1036,16 @@ function fmi2GetNamesAndInitials(fmu::FMU2)
 end
 
 """
-Returns a dictionary of variables with their starting values
+Returns a dictionary of input variables with their starting values
 
 ToDo: update docstring format.
 """
-function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
+function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
+    inputIndices = [md.modelVariables[i].valueReference in md.inputValueReferences ? i : nothing for i = 1:length(md.modelVariables)]
+    inputIndices = inputIndices[inputIndices.!=nothing]
+    Dict(md.modelVariables[i].name => fmi2GetStartValue(md.modelVariables[i]) for i in inputIndices)
 end
 
-function fmi2GetNamesAndInitials(fmu::FMU2)
-    fmi2GetNamesAndInitials(fmu.modelDescription)
+function fmi2GetInputNamesAndStarts(fmu::FMU2)
+    fmi2GetNamesAndStarts(fmu.modelDescription)
 end
