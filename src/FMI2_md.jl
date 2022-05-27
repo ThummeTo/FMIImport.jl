@@ -849,7 +849,11 @@ If there are multiple names per value reference, availabel modes are `:first` (d
 ToDo: update docstring format.
 """
 function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-    names = String[]
+    if mode == :first || mode == :flat
+        names = String[]
+    else
+        names = []
+    end
     for vr in vrs
         ns = fmi2ValueReferenceToString(md, vr)
 
