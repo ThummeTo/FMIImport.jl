@@ -105,7 +105,7 @@ Get the values of an array of fmi2Real variables.
 
 For more information call ?fmi2GetReal!
 """
-function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Array{fmi2Real})
+function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -127,7 +127,7 @@ Set the values of an array of fmi2Real variables.
 
 For more information call ?fmi2SetReal
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{Array{<:Real}, <:Real})
+function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -617,7 +617,7 @@ For more information call ?fmi2GetDerivatives
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
     if status == fmi2StatusOK
-        c.ẋ = derivatives
+        c.ẋ = derivatives
     end 
     return status
 end
