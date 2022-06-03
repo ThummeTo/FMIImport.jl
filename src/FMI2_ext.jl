@@ -404,9 +404,9 @@ end
 This function samples the directional derivative by manipulating corresponding values (central differences).
 """
 function fmi2SampleDirectionalDerivative(c::FMU2Component,
-                                       vUnknown_ref::Array{fmi2ValueReference},
-                                       vKnown_ref::Array{fmi2ValueReference},
-                                       steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                       vKnown_ref::AbstractArray{fmi2ValueReference},
+                                       steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
@@ -419,10 +419,10 @@ end
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
-                                          vUnknown_ref::Array{fmi2ValueReference},
-                                          vKnown_ref::Array{fmi2ValueReference},
-                                          dvUnknown::AbstractArray,
-                                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                                          vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                          vKnown_ref::AbstractArray{fmi2ValueReference},
+                                          dvUnknown::AbstractArray, # ToDo: datatype
+                                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     step = 0.0
 
@@ -465,9 +465,9 @@ For optimization, if the FMU's model description has the optional entry 'depende
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi2GetJacobian(comp::FMU2Component, 
-                         rdx::Array{fmi2ValueReference}, 
-                         rx::Array{fmi2ValueReference}; 
-                         steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                         rdx::AbstractArray{fmi2ValueReference}, 
+                         rx::AbstractArray{fmi2ValueReference}; 
+                         steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -482,11 +482,11 @@ For optimization, if the FMU's model description has the optional entry 'depende
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetJacobian!(jac::Matrix{fmi2Real}, 
+function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real}, 
                           comp::FMU2Component, 
-                          rdx::Array{fmi2ValueReference}, 
-                          rx::Array{fmi2ValueReference}; 
-                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                          rdx::AbstractArray{fmi2ValueReference}, 
+                          rx::AbstractArray{fmi2ValueReference}; 
+                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
 
@@ -549,9 +549,9 @@ No performance optimization, for an optimized version use `fmi2GetJacobian`.
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi2GetFullJacobian(comp::FMU2Component, 
-                             rdx::Array{fmi2ValueReference}, 
-                             rx::Array{fmi2ValueReference}; 
-                             steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                             rdx::AbstractArray{fmi2ValueReference}, 
+                             rx::AbstractArray{fmi2ValueReference}; 
+                             steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -566,11 +566,11 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetFullJacobian!(jac::Matrix{fmi2Real}, 
+function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real}, 
                               comp::FMU2Component, 
-                              rdx::Array{fmi2ValueReference}, 
-                              rx::Array{fmi2ValueReference}; 
-                              steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                              rdx::AbstractArray{fmi2ValueReference}, 
+                              rx::AbstractArray{fmi2ValueReference}; 
+                              steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     @assert size(jac) == (length(rdx),length(rx)) "fmi2GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
 
     @warn "`fmi2GetFullJacobian!` is for benchmarking only, please use `fmi2GetJacobian`."
@@ -591,7 +591,7 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
     return nothing
 end
 
-function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::Array)
+function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
@@ -632,7 +632,7 @@ function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     return dstArray
 end
 
-function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::Array)
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
@@ -724,7 +724,7 @@ Returns the `unit` entry of the corresponding model variable.
 ToDo: update docstring format.
 """
 function fmi2GetUnit(mv::fmi2ScalarVariable)
-    if mv._Real !== nothing
+    if mv._Real != nothing
         return mv._Real.unit
     else 
         return nothing 
@@ -737,5 +737,5 @@ Returns the `inital` entry of the corresponding model variable.
 ToDo: update docstring format.
 """
 function fmi2GetInitial(mv::fmi2ScalarVariable)
-    return mv.inital
+    return mv.initial
 end 

@@ -19,8 +19,8 @@ end
 export prepareValue, prepareValueReference
 
 # wildcards for how a user can pass a fmi[X]ValueReference
-fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol} 
-fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}} 
+fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
+fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
 ### FMI2 ###
