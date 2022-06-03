@@ -724,7 +724,7 @@ Returns the `unit` entry of the corresponding model variable.
 ToDo: update docstring format.
 """
 function fmi2GetUnit(mv::fmi2ScalarVariable)
-    if mv._Real !== nothing
+    if mv._Real != nothing
         return mv._Real.unit
     else 
         return nothing 
@@ -737,5 +737,5 @@ Returns the `inital` entry of the corresponding model variable.
 ToDo: update docstring format.
 """
 function fmi2GetInitial(mv::fmi2ScalarVariable)
-    return mv.inital
+    return mv.initial
 end 
