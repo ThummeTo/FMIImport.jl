@@ -8,6 +8,7 @@
 
 using Libdl
 using ZipFile
+import Downloads
 
 """
 Create a copy of the .fmu file as a .zip folder and unzips it.
@@ -79,6 +80,7 @@ end
 
 # Checks with dlsym for available function in library.
 # Prints an info text and returns C_NULL if not (soft-check).
+# TODO used in FMI3_ext.jl too other spot to put it?
 function dlsym_opt(libHandle, symbol)
     addr = dlsym(libHandle, symbol; throw_error=false)
     if addr == nothing
@@ -102,7 +104,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     if startswith(pathToFMU, "http")
         @info "Downloading FMU from `$(pathToFMU)`."
-        pathToFMU = download(pathToFMU)
+        pathToFMU = Downloads.download(pathToFMU)
     end
 
     pathToFMU = normpath(pathToFMU)
@@ -116,9 +118,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
-    fmu.modelName = fmu.modelDescription.modelName
-    fmu.instanceName = fmu.modelDescription.modelName
-
+    
     if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS) 
         fmu.type = fmi2TypeCoSimulation::fmi2Type
     elseif (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
@@ -333,7 +333,7 @@ function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool 
 
     guidStr = "$(fmu.modelDescription.guid)"
 
-    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(fmu.instanceName), fmu.type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
+    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), fmu.type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi2Instantiate!(...): Instantiation failed!"
