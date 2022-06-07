@@ -296,7 +296,7 @@ For more information call ?fmi2Instantiate
 - `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = false, instanceName::String=fmu.modelDescription.modelName,
+function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -403,10 +403,10 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences).
 """
-function fmi2SampleDirectionalDerivative(c::fmi2Component,
-                                       vUnknown_ref::Array{fmi2ValueReference},
-                                       vKnown_ref::Array{fmi2ValueReference},
-                                       steps::Union{Array{fmi2Real}, Nothing} = nothing)
+function fmi2SampleDirectionalDerivative(c::FMU2Component,
+                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                       vKnown_ref::AbstractArray{fmi2ValueReference},
+                                       steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
@@ -418,33 +418,37 @@ end
 """
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
-function fmi2SampleDirectionalDerivative!(c::fmi2Component,
-                                          vUnknown_ref::Array{fmi2ValueReference},
-                                          vKnown_ref::Array{fmi2ValueReference},
-                                          dvUnknown::AbstractArray,
-                                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
-    
-    if steps == nothing 
-        steps = fmi2GetReal(c, vKnown)
-        steps = abs.(steps) * eps(fmi2Real)
-    end 
+function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+                                          vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                          vKnown_ref::AbstractArray{fmi2ValueReference},
+                                          dvUnknown::AbstractArray, # ToDo: datatype
+                                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
+    step = 0.0
 
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
-        fmi2SetReal(c, vKnown, origValue - steps[i])
+        if steps === nothing 
+            # smaller than 1e-6 leads to issues
+            step = max(2.0 * eps(Float32(origValue)), 1e-6)
+        else
+            step = steps[i]
+        end 
+
+        fmi2SetReal(c, vKnown, origValue - step)
         negValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + steps[i])
+        fmi2SetReal(c, vKnown, origValue + step)
         posValues = fmi2GetReal(c, vUnknown_ref)
 
         fmi2SetReal(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[1,i] = (posValues-negValues) ./ (step * 2.0)
         else
-            dvUnknown[:,i] = (posValues-negValues) ./ (steps[i] * 2.0)
+            dvUnknown[:,i] = (posValues-negValues) ./ (step * 2.0)
         end
     end
 
@@ -461,9 +465,9 @@ For optimization, if the FMU's model description has the optional entry 'depende
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi2GetJacobian(comp::FMU2Component, 
-                         rdx::Array{fmi2ValueReference}, 
-                         rx::Array{fmi2ValueReference}; 
-                         steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                         rdx::AbstractArray{fmi2ValueReference}, 
+                         rx::AbstractArray{fmi2ValueReference}; 
+                         steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -478,11 +482,11 @@ For optimization, if the FMU's model description has the optional entry 'depende
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetJacobian!(jac::Matrix{fmi2Real}, 
+function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real}, 
                           comp::FMU2Component, 
-                          rdx::Array{fmi2ValueReference}, 
-                          rx::Array{fmi2ValueReference}; 
-                          steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                          rdx::AbstractArray{fmi2ValueReference}, 
+                          rx::AbstractArray{fmi2ValueReference}; 
+                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
 
@@ -545,9 +549,9 @@ No performance optimization, for an optimized version use `fmi2GetJacobian`.
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi2GetFullJacobian(comp::FMU2Component, 
-                             rdx::Array{fmi2ValueReference}, 
-                             rx::Array{fmi2ValueReference}; 
-                             steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                             rdx::AbstractArray{fmi2ValueReference}, 
+                             rx::AbstractArray{fmi2ValueReference}; 
+                             steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
     return mat
@@ -562,11 +566,11 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetFullJacobian!(jac::Matrix{fmi2Real}, 
+function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real}, 
                               comp::FMU2Component, 
-                              rdx::Array{fmi2ValueReference}, 
-                              rx::Array{fmi2ValueReference}; 
-                              steps::Union{Array{fmi2Real}, Nothing} = nothing)
+                              rdx::AbstractArray{fmi2ValueReference}, 
+                              rx::AbstractArray{fmi2ValueReference}; 
+                              steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     @assert size(jac) == (length(rdx),length(rx)) "fmi2GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
 
     @warn "`fmi2GetFullJacobian!` is for benchmarking only, please use `fmi2GetJacobian`."
@@ -587,7 +591,7 @@ function fmi2GetFullJacobian!(jac::Matrix{fmi2Real},
     return nothing
 end
 
-function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::Array)
+function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
@@ -628,7 +632,7 @@ function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     return dstArray
 end
 
-function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::Array)
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
@@ -661,3 +665,77 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     return retcodes
 end
+
+"""
+Returns the start/default value for a given value reference.
+
+TODO: Add this command in the documentation.
+"""
+function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
+
+    vrs = prepareValueReference(md, vrs)
+
+    starts = []
+
+    for vr in vrs
+        mvs = fmi2ModelVariablesForValueReference(md, vr) 
+
+        if length(mvs) == 0
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
+        end
+    
+        push!(starts, fmi2GetStartValue(mvs[1]) )
+    end
+
+    if length(vrs) == 1
+        return starts[1]
+    else
+        return starts 
+    end
+end 
+
+function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(fmu.modelDescription, vrs)
+end 
+
+function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(c.fmu, vrs)
+end 
+
+function fmi2GetStartValue(mv::fmi2ScalarVariable)
+    if mv._Real != nothing
+        return mv._Real.start
+    elseif mv._Integer != nothing
+        return mv._Integer.start
+    elseif mv._Boolean != nothing
+        return mv._Boolean.start
+    elseif mv._String != nothing
+        return mv._String.start
+    elseif mv._Enumeration != nothing
+        return mv._Enumeration.start
+    else 
+        @assert false "fmi2GetStartValue(...): Variable $(mv) has no data type."
+    end
+end
+
+"""
+Returns the `unit` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetUnit(mv::fmi2ScalarVariable)
+    if mv._Real != nothing
+        return mv._Real.unit
+    else 
+        return nothing 
+    end 
+end 
+
+"""
+Returns the `inital` entry of the corresponding model variable.
+
+ToDo: update docstring format.
+"""
+function fmi2GetInitial(mv::fmi2ScalarVariable)
+    return mv.initial
+end 

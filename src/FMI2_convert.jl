@@ -8,17 +8,17 @@ using ChainRulesCore: ignore_derivatives
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
 function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceFormat)
     tvr = typeof(vr)
-    if tvr == Array{fmi2ValueReference,1}
+    if isa(vr, AbstractArray{fmi2ValueReference,1})
         return vr
     elseif tvr == fmi2ValueReference
         return [vr]
     elseif tvr == String
         return [fmi2StringToValueReference(md, vr)]
-    elseif tvr == Array{String,1}
+    elseif isa(vr, AbstractArray{String,1})
         return fmi2StringToValueReference(md, vr)
     elseif tvr == Int64
         return [fmi2ValueReference(vr)]
-    elseif tvr == Array{Int64,1}
+    elseif isa(vr, AbstractArray{Int64,1})
         return fmi2ValueReference.(vr)
     elseif tvr == Nothing
         return Array{fmi2ValueReference,1}()
@@ -52,7 +52,7 @@ end
 """
 Returns an array of ValueReferences coresponding to the variable names.
 """
-function fmi2StringToValueReference(md::fmi2ModelDescription, names::Array{String})
+function fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
     vr = Array{fmi2ValueReference}(undef,0)
     for name in names
         reference = fmi2StringToValueReference(md, name)
@@ -91,7 +91,7 @@ function fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
     reference
 end
 
-function fmi2StringToValueReference(fmu::FMU2, name::Union{String, Array{String}})
+function fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
     fmi2StringToValueReference(fmu.modelDescription, name)
 end
 

@@ -306,7 +306,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2GetReal!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Real})
+function fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
    
     status = fmi2GetReal!(c.fmu.cGetReal,
           c.compAddr, vr, nvr, value)
@@ -319,7 +319,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2SetReal(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Real})
+function fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
     
     status = fmi2SetReal(c.fmu.cSetReal,
                 c.compAddr, vr, nvr, value)
@@ -332,7 +332,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2GetInteger!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Integer})
+function fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
    
     status = fmi2GetInteger!(c.fmu.cGetInteger,
                 c.compAddr, vr, nvr, value)
@@ -345,7 +345,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2SetInteger(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Integer})
+function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
    
     status = fmi2SetInteger(c.fmu.cSetInteger,
                 c.compAddr, vr, nvr, value)
@@ -358,7 +358,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2GetBoolean!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Boolean})
+function fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
     
     status = fmi2GetBoolean!(c.fmu.cGetBoolean,
                 c.compAddr, vr, nvr, value)
@@ -371,7 +371,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2SetBoolean(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Array{fmi2Boolean})
+function fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
    
     status = fmi2SetBoolean(c.fmu.cSetBoolean,
                 c.compAddr, vr, nvr, value)
@@ -384,7 +384,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2GetString!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Vector{Ptr{Cchar}})
+function fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
    
     status = fmi2GetString!(c.fmu.cGetString,
                 c.compAddr, vr, nvr, value)
@@ -397,7 +397,7 @@ Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
 Functions to get and set values of variables idetified by their valueReference
 """
-function fmi2SetString(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, value::Union{Array{Ptr{Cchar}}, Array{Ptr{UInt8}}})
+function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
     
     status = fmi2SetString(c.fmu.cSetString,
                 c.compAddr, vr, nvr, value)
@@ -462,7 +462,7 @@ Source: FMISpec2.0.2[p.26]: 2.1.8 Getting and Setting the Complete FMU State
 
 fmi2SerializeFMUstate serializes the data which is referenced by pointer FMUstate and copies this data in to the byte vector serializedState of length size
 """
-function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::Array{fmi2Byte}, size::Csize_t)
+function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
   
     status = fmi2SerializeFMUstate!(c.fmu.cSerializeFMUstate,
                 c.compAddr, FMUstate, serialzedState, size)
@@ -475,7 +475,7 @@ Source: FMISpec2.0.2[p.26]: 2.1.8 Getting and Setting the Complete FMU State
 
 fmi2DeSerializeFMUstate deserializes the byte vector serializedState of length size, constructs a copy of the FMU state and returns FMUstate, the pointer to this copy.
 """
-function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::Array{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
+function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
   
     status = fmi2DeSerializeFMUstate!(c.fmu.cDeSerializeFMUstate,
                 c.compAddr, serializedState, size, FMUstate)
@@ -489,12 +489,12 @@ Source: FMISpec2.0.2[p.26]: 2.1.9 Getting Partial Derivatives
 This function computes the directional derivatives of an FMU.
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
-                                       vUnknown_ref::Array{fmi2ValueReference},
+                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        nUnknown::Csize_t,
-                                       vKnown_ref::Array{fmi2ValueReference},
+                                       vKnown_ref::AbstractArray{fmi2ValueReference},
                                        nKnown::Csize_t,
-                                       dvKnown::Array{fmi2Real},
-                                       dvUnknown::AbstractArray)
+                                       dvKnown::AbstractArray{fmi2Real},
+                                       dvUnknown::AbstractArray) # ToDo: Datatype for AbstractArray
     @assert fmi2ProvidesDirectionalDerivative(c.fmu) ["fmi2GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!"]
    
     status = fmi2GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
@@ -511,7 +511,7 @@ Sets the n-th time derivative of real input variables.
 vr defines the value references of the variables
 the array order specifies the corresponding order of derivation of the variables
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
+function fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
     
     status = fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives,
                 c.compAddr, vr, nvr, order, value)
@@ -526,7 +526,7 @@ Retrieves the n-th derivative of output values.
 vr defines the value references of the variables
 the array order specifies the corresponding order of derivation of the variables
 """
-function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
+function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
    
     status = fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
                 c.compAddr, vr, nvr, order, value)
@@ -659,7 +659,7 @@ Source: FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initial
 Set a new (continuous) state vector and re-initialize caching of variables that depend on the states. Argument nx is the length of vector x and is provided for checking purposes
 """
 function fmi2SetContinuousStates(c::FMU2Component,
-                                 x::Array{fmi2Real},
+                                 x::AbstractArray{fmi2Real},
                                  nx::Csize_t)
  
     status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x, nx)
@@ -763,7 +763,7 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 Compute state derivatives at the current time instant and for the current states.
 """
 function fmi2GetDerivatives!(c::FMU2Component,
-                            derivatives::Array{fmi2Real},
+                            derivatives::AbstractArray{fmi2Real},
                             nx::Csize_t)
                     
     status = fmi2GetDerivatives!(c.fmu.cGetDerivatives,
@@ -777,7 +777,7 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Compute event indicators at the current time instant and for the current states.
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::SubArray{fmi2Real}, ni::Csize_t)
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
     status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
                     c.compAddr, eventIndicators, ni)
@@ -791,7 +791,7 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 Return the new (continuous) state vector x.
 """
 function fmi2GetContinuousStates!(c::FMU2Component,
-                                 x::Array{fmi2Real},
+                                 x::AbstractArray{fmi2Real},
                                  nx::Csize_t)
                        
     status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
@@ -805,7 +805,7 @@ Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
 Return the nominal values of the continuous states.
 """
-function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
+function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
  
     status = fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
