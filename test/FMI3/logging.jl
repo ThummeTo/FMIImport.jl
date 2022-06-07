@@ -42,8 +42,11 @@ open(joinpath(pwd(), "stdout"), "w") do out
 end
 output = read(joinpath(pwd(), "stdout"), String)
 @test output == ""
-output = read(joinpath(pwd(), "stderr"), String)
-@test output == ""
+
+if VERSION >= v"1.7.0"
+    output = read(joinpath(pwd(), "stderr"), String)
+    @test startswith(output, "┌ Warning: fmi3ExitInitializationMode(...): Needs to be called in state `fmi3InstanceStateInitializationMode`.\n")
+end 
 
 ### CASE C: Disable Log ###
 
