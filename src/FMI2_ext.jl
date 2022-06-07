@@ -118,6 +118,8 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
 
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
+    fmu.modelName = fmu.modelDescription.modelName
+    fmu.instanceName = fmu.modelDescription.modelName
     
     if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS) 
         fmu.type = fmi2TypeCoSimulation::fmi2Type
