@@ -297,7 +297,8 @@ For more information call ?fmi2Instantiate
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
 function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-                          logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+                          logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true,
+                          instanceName::String=fmu.modelName)
 
     compEnv = FMU2ComponentEnvironment()
     compEnv.logStatusOK = logStatusOK
