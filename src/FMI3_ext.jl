@@ -514,7 +514,7 @@ function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
         fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
         posValues = fmi3GetFloat64(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue)
+        fmi3SetFloat64(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
             dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
@@ -569,7 +569,7 @@ function fmi3GetJacobian!(jac::Matrix{fmi3Float64},
     ddsupported = fmi3ProvidesDirectionalDerivatives(inst.fmu)
 
     # ToDo: Pick entries based on dependency matrix!
-    #depMtx = fmi2GetDependencies(fmu)
+    #depMtx = fmi3GetDependencies(fmu)
     rdx_inds = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
     rx_inds  = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
     
@@ -579,10 +579,10 @@ function fmi3GetJacobian!(jac::Matrix{fmi3Float64},
         sensitive_rdx = rdx
 
         # sensitive_rdx_inds = Int64[]
-        # sensitive_rdx = fmi2ValueReference[]
+        # sensitive_rdx = fmi3ValueReference[]
 
         # for j in 1:length(rdx)
-        #     if depMtx[rdx_inds[j], rx_inds[i]] != fmi2DependencyIndependent
+        #     if depMtx[rdx_inds[j], rx_inds[i]] != fmi3DependencyIndependent
         #         push!(sensitive_rdx_inds, j)
         #         push!(sensitive_rdx, rdx[j])
         #     end
@@ -592,11 +592,11 @@ function fmi3GetJacobian!(jac::Matrix{fmi3Float64},
             if ddsupported
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
                 fmi3GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                # jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]])
+                # jac[sensitive_rdx_inds, i] = fmi3GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]])
             else 
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
                 # fmi3SampleDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i)) TODO not implemented
-                # jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(inst, sensitive_rdx, [rx[i]], steps)
+                # jac[sensitive_rdx_inds, i] = fmi3SampleDirectionalDerivative(inst, sensitive_rdx, [rx[i]], steps)
             end
         end
     end

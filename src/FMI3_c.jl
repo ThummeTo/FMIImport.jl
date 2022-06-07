@@ -42,7 +42,7 @@ function fmi3CallbackLogger(_instanceEnvironment::Ptr{Cvoid},
 
 message = unsafe_string(_message)
 category = unsafe_string(_category)
-status = fmi2StatusToString(_status)
+status = fmi3StatusToString(_status)
 instanceEnvironment = unsafe_load(_instanceEnvironment)
 
 if status == fmi3StatusOK && instanceEnvironment.logStatusOK

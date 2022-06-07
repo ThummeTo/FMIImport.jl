@@ -1354,7 +1354,7 @@ function fmi3SampleDirectionalDerivative(c::FMU3Instance,
                                        vKnown_ref::Array{fmi3ValueReference},
                                        steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
 
-    dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
+    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
 
     fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
 
