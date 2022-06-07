@@ -7,7 +7,7 @@
 # Prepare FMU #
 ###############
 
-myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("Feedthrough", "ModelicaReferenceFMUs", "0.0.14")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 

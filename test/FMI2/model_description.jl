@@ -16,9 +16,9 @@ myFMU.executionConfig.assertOnWarning = true
 @test fmi2IsCoSimulation(myFMU) == true
 @test fmi2IsModelExchange(myFMU) == true
 
-@test fmi2GetGUID(myFMU) == "{2e178ad3-5e9b-48ec-a7b2-baa5669efc0c}"
+@test fmi2GetGUID(myFMU) == "{df491d8d-0598-4495-913e-5b025e54d7f2}"
 @test fmi2GetGenerationTool(myFMU) == "Dymola Version 2022x (64-bit), 2021-10-08"
-@test fmi2GetGenerationDateAndTime(myFMU) == "2022-05-19T06:54:12Z"
+@test fmi2GetGenerationDateAndTime(myFMU) == "2022-03-03T15:09:18Z"
 @test fmi2GetNumberOfEventIndicators(myFMU) == 24
 @test fmi2CanGetSetState(myFMU) == true
 @test fmi2CanSerializeFMUstate(myFMU) == true
