@@ -5,7 +5,7 @@
 
 import FMIImport: fmi3StatusError
 
-myFMU = fmi3Load("FeedThrough", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 
 ### CASE A: Print log ###
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
