@@ -10,207 +10,6 @@ using Libdl
 using ZipFile
 
 """
-Sets the properties of the fmu by reading the modelDescription.xml.
-Retrieves all the pointers of binary functions.
-Returns the instance of the FMU struct.
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
-"""
-function fmi3Load(pathToFMU::String; unpackPath=nothing)
-    # Create uninitialized FMU
-    fmu = FMU3()
-    fmu.components = []
-
-    pathToFMU = normpath(pathToFMU)
-
-    # set paths for fmu handling
-    (fmu.path, fmu.zipPath) = fmi3Unzip(pathToFMU; unpackPath=unpackPath) # TODO
-
-    # set paths for modelExchangeScripting and binary
-    tmpName = splitpath(fmu.path)
-    pathToModelDescription = joinpath(fmu.path, "modelDescription.xml")
-
-    # parse modelDescription.xml
-    fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
-    fmu.modelName = fmu.modelDescription.modelName
-    fmu.instanceName = fmu.modelDescription.modelName
-    fmuName = fmi3GetModelIdentifier(fmu.modelDescription) # tmpName[length(tmpName)] TODO
-
-    directoryBinary = ""
-    pathToBinary = ""
-
-    if Sys.iswindows()
-        directories = [joinpath("binaries", "win64"), joinpath("binaries", "x86_64-windows")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).dll")
-                break
-            end
-        end
-        @assert isfile(pathToBinary) "Target platform is Windows, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
-    elseif Sys.islinux()
-        directories = [joinpath("binaries", "linux64"), joinpath("binaries", "x86_64-linux")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).so")
-                break
-            end
-        end
-        @assert isfile(pathToBinary) "Target platform is Linux, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
-    elseif Sys.isapple()
-        directories = [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
-        for directory in directories
-            directoryBinary = joinpath(fmu.path, directory)
-            if isdir(directoryBinary)
-                pathToBinary = joinpath(directoryBinary, "$(fmuName).dylib")
-                break
-            end
-        end
-        @assert isfile(pathToBinary) "Target platform is macOS, but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
-    else
-        @assert false "Unsupported target platform. Supporting Windows64, Linux64 and Mac64."
-    end
-
-    lastDirectory = pwd()
-    cd(directoryBinary)
-
-    # set FMU binary handler
-    fmu.libHandle = dlopen(pathToBinary)
-
-    cd(lastDirectory)
-
-    if fmi3IsCoSimulation(fmu) 
-        fmu.type = fmi3TypeCoSimulation
-    elseif fmi3IsModelExchange(fmu) 
-        fmu.type = fmi3TypeModelExchange
-    elseif fmi3IsScheduledExecution(fmu) 
-        fmu.type = fmi3TypeScheduledExecution
-    else
-        error(unknownFMUType)
-    end
-
-    if fmi3IsCoSimulation(fmu) && fmi3IsModelExchange(fmu) 
-        @info "fmi3Load(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
-    end
-
-    # make URI ressource location
-    tmpResourceLocation = string("file:///", fmu.path)
-    tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
-    fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") # URIs.escapeuri(tmpResourceLocation)
-
-    @info "fmi3Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
-
-    # # retrieve functions 
-    fmu.cInstantiateModelExchange                  = dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
-    fmu.cInstantiateCoSimulation                   = dlsym(fmu.libHandle, :fmi3InstantiateCoSimulation)
-    fmu.cInstantiateScheduledExecution             = dlsym(fmu.libHandle, :fmi3InstantiateScheduledExecution)
-    fmu.cGetVersion                                = dlsym(fmu.libHandle, :fmi3GetVersion)
-    fmu.cFreeInstance                              = dlsym(fmu.libHandle, :fmi3FreeInstance)
-    fmu.cSetDebugLogging                           = dlsym(fmu.libHandle, :fmi3SetDebugLogging)
-    fmu.cEnterConfigurationMode                    = dlsym(fmu.libHandle, :fmi3EnterConfigurationMode)
-    fmu.cExitConfigurationMode                     = dlsym(fmu.libHandle, :fmi3ExitConfigurationMode)
-    fmu.cEnterInitializationMode                   = dlsym(fmu.libHandle, :fmi3EnterInitializationMode)
-    fmu.cExitInitializationMode                    = dlsym(fmu.libHandle, :fmi3ExitInitializationMode)
-    fmu.cTerminate                                 = dlsym(fmu.libHandle, :fmi3Terminate)
-    fmu.cReset                                     = dlsym(fmu.libHandle, :fmi3Reset)
-    fmu.cEvaluateDiscreteStates                    = dlsym(fmu.libHandle, :fmi3EvaluateDiscreteStates)
-    fmu.cGetNumberOfVariableDependencies           = dlsym(fmu.libHandle, :fmi3GetNumberOfVariableDependencies)
-    fmu.cGetVariableDependencies                   = dlsym(fmu.libHandle, :fmi3GetVariableDependencies)
-
-    fmu.cGetFloat32                                = dlsym(fmu.libHandle, :fmi3GetFloat32)
-    fmu.cSetFloat32                                = dlsym(fmu.libHandle, :fmi3SetFloat32)
-    fmu.cGetFloat64                                = dlsym(fmu.libHandle, :fmi3GetFloat64)
-    fmu.cSetFloat64                                = dlsym(fmu.libHandle, :fmi3SetFloat64)
-    fmu.cGetInt8                                   = dlsym(fmu.libHandle, :fmi3GetInt8)
-    fmu.cSetInt8                                   = dlsym(fmu.libHandle, :fmi3SetInt8)
-    fmu.cGetUInt8                                  = dlsym(fmu.libHandle, :fmi3GetUInt8)
-    fmu.cSetUInt8                                  = dlsym(fmu.libHandle, :fmi3SetUInt8)
-    fmu.cGetInt16                                  = dlsym(fmu.libHandle, :fmi3GetInt16)
-    fmu.cSetInt16                                  = dlsym(fmu.libHandle, :fmi3SetInt16)
-    fmu.cGetUInt16                                 = dlsym(fmu.libHandle, :fmi3GetUInt16)
-    fmu.cSetUInt16                                 = dlsym(fmu.libHandle, :fmi3SetUInt16)
-    fmu.cGetInt32                                  = dlsym(fmu.libHandle, :fmi3GetInt32)
-    fmu.cSetInt32                                  = dlsym(fmu.libHandle, :fmi3SetInt32)
-    fmu.cGetUInt32                                 = dlsym(fmu.libHandle, :fmi3GetUInt32)
-    fmu.cSetUInt32                                 = dlsym(fmu.libHandle, :fmi3SetUInt32)
-    fmu.cGetInt64                                  = dlsym(fmu.libHandle, :fmi3GetInt64)
-    fmu.cSetInt64                                  = dlsym(fmu.libHandle, :fmi3SetInt64)
-    fmu.cGetUInt64                                 = dlsym(fmu.libHandle, :fmi3GetUInt64)
-    fmu.cSetUInt64                                 = dlsym(fmu.libHandle, :fmi3SetUInt64)
-    fmu.cGetBoolean                                = dlsym(fmu.libHandle, :fmi3GetBoolean)
-    fmu.cSetBoolean                                = dlsym(fmu.libHandle, :fmi3SetBoolean)
-
-    fmu.cGetString                                 = dlsym_opt(fmu.libHandle, :fmi3GetString)
-    fmu.cSetString                                 = dlsym_opt(fmu.libHandle, :fmi3SetString)
-    fmu.cGetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3GetBinary)
-    fmu.cSetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3SetBinary)
-
-    if fmi3CanGetSetState(fmu)
-        fmu.cGetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3GetFMUState)
-        fmu.cSetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3SetFMUState)
-        fmu.cFreeFMUState                          = dlsym_opt(fmu.libHandle, :fmi3FreeFMUState)
-    end
-
-    if fmi3CanSerializeFMUstate(fmu)
-        fmu.cSerializedFMUStateSize                = dlsym_opt(fmu.libHandle, :fmi3SerializedFMUStateSize)
-        fmu.cSerializeFMUState                     = dlsym_opt(fmu.libHandle, :fmi3SerializeFMUState)
-        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu.libHandle, :fmi3DeSerializeFMUState)
-    end
-
-    if fmi3ProvidesDirectionalDerivatives(fmu)
-        fmu.cGetDirectionalDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetDirectionalDerivative)
-    end
-
-    if fmi3ProvidesAdjointDerivatives(fmu)
-        fmu.cGetAdjointDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetAdjointDerivative)
-    end
-
-    # CS specific function calls
-    if fmi3IsCoSimulation(fmu)
-        fmu.cGetOutputDerivatives                  = dlsym(fmu.libHandle, :fmi3GetOutputDerivatives)
-        fmu.cEnterStepMode                         = dlsym(fmu.libHandle, :fmi3EnterStepMode)
-        fmu.cDoStep                                = dlsym(fmu.libHandle, :fmi3DoStep)
-    end
-
-    # ME specific function calls
-    if fmi3IsModelExchange(fmu)
-        fmu.cGetNumberOfContinuousStates           = dlsym(fmu.libHandle, :fmi3GetNumberOfContinuousStates)
-        fmu.cGetNumberOfEventIndicators            = dlsym(fmu.libHandle, :fmi3GetNumberOfEventIndicators)
-        fmu.cGetContinuousStates                   = dlsym(fmu.libHandle, :fmi3GetContinuousStates)
-        fmu.cGetNominalsOfContinuousStates         = dlsym(fmu.libHandle, :fmi3GetNominalsOfContinuousStates)
-        fmu.cEnterContinuousTimeMode               = dlsym(fmu.libHandle, :fmi3EnterContinuousTimeMode)
-        fmu.cSetTime                               = dlsym(fmu.libHandle, :fmi3SetTime)
-        fmu.cSetContinuousStates                   = dlsym(fmu.libHandle, :fmi3SetContinuousStates)
-        fmu.cGetContinuousStateDerivatives         = dlsym(fmu.libHandle, :fmi3GetContinuousStateDerivatives) 
-        fmu.cGetEventIndicators                    = dlsym(fmu.libHandle, :fmi3GetEventIndicators)
-        fmu.cCompletedIntegratorStep               = dlsym(fmu.libHandle, :fmi3CompletedIntegratorStep)
-        fmu.cEnterEventMode                        = dlsym(fmu.libHandle, :fmi3EnterEventMode)        
-        fmu.cUpdateDiscreteStates                  = dlsym(fmu.libHandle, :fmi3UpdateDiscreteStates)
-    end
-
-    if fmi3IsScheduledExecution(fmu)
-        fmu.cSetIntervalDecimal                    = dlsym(fmu.libHandle, :fmi3SetIntervalDecimal)
-        fmu.cSetIntervalFraction                   = dlsym(fmu.libHandle, :fmi3SetIntervalFraction)
-        fmu.cGetIntervalDecimal                    = dlsym(fmu.libHandle, :fmi3GetIntervalDecimal)
-        fmu.cGetIntervalFraction                   = dlsym(fmu.libHandle, :fmi3GetIntervalFraction)
-        fmu.cGetShiftDecimal                       = dlsym(fmu.libHandle, :fmi3GetShiftDecimal)
-        fmu.cGetShiftFraction                      = dlsym(fmu.libHandle, :fmi3GetShiftFraction)
-        fmu.cActivateModelPartition                = dlsym(fmu.libHandle, :fmi3ActivateModelPartition)
-    end
-    # initialize further variables TODO check if needed
-    fmu.jac_x = zeros(Float64, fmu.modelDescription.numberOfContinuousStates)
-    fmu.jac_t = -1.0
-    fmu.jac_dxy_x = zeros(fmi2Real,0,0)
-    fmu.jac_dxy_u = zeros(fmi2Real,0,0)
-   
-    # dependency matrix 
-    # fmu.dependencies
-
-    fmu
-end
-
-"""
 Create a copy of the .fmu file as a .zip folder and unzips it.
 Returns the paths to the zipped and unzipped folders.
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
@@ -278,19 +77,398 @@ function fmi3Unzip(pathToFMU::String; unpackPath=nothing)
 end
 
 """
+Sets the properties of the fmu by reading the modelDescription.xml.
+Retrieves all the pointers of binary functions.
+Returns the instance of the FMU struct.
+Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+"""
+function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing)
+    # Create uninitialized FMU
+    fmu = FMU3()
+
+    if startswith(pathToFMU, "http")
+        @info "Downloading FMU from `$(pathToFMU)`."
+        pathToFMU = download(pathToFMU)
+    end
+
+    fmu.instances = []
+
+    pathToFMU = normpath(pathToFMU)
+
+    # set paths for fmu handling
+    (fmu.path, fmu.zipPath) = fmi3Unzip(pathToFMU; unpackPath=unpackPath) # TODO
+
+    # set paths for modelExchangeScripting and binary
+    tmpName = splitpath(fmu.path)
+    pathToModelDescription = joinpath(fmu.path, "modelDescription.xml")
+
+    # parse modelDescription.xml
+    fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
+    fmu.modelName = fmu.modelDescription.modelName
+    fmu.instanceName = fmu.modelDescription.modelName
+
+    # TODO special use case?
+    if (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:CS) 
+        fmu.type = fmi3TypeCoSimulation::fmi3Type
+    elseif (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:ME)
+        fmu.type = fmi3TypeModelExchange::fmi3Type
+    elseif fmi3IsScheduledExecution(fmu.modelDescription) && type==:SE
+        fmu.type = fmi3TypeScheduledExecution::fmi3Type
+    elseif fmi3IsCoSimulation(fmu.modelDescription) && (type===nothing || type==:CS)
+        fmu.type = fmi3TypeCoSimulation::fmi3Type
+    elseif fmi3IsModelExchange(fmu.modelDescription) && (type===nothing || type==:ME)
+        fmu.type = fmi3TypeModelExchange::fmi3Type
+    elseif fmi3IsScheduledExecution(fmu.modelDescription) && (type === nothing || type ==:SE)
+        fmu.type = fmi3TypeScheduledExecution::Fmi3Type
+    else
+        error(unknownFMUType)
+    end
+
+    fmuName = fmi3GetModelIdentifier(fmu.modelDescription) # tmpName[length(tmpName)] TODO
+
+    directoryBinary = ""
+    pathToBinary = ""
+
+    juliaArch = Sys.WORD_SIZE
+    @assert (juliaArch == 64 || juliaArch == 32) "fmi3Load(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
+    
+    if Sys.iswindows()
+        if juliaArch == 64
+            directories = [joinpath("binaries", "win64"), joinpath("binaries","x86_64-windows")]
+        else 
+            directories = [joinpath("binaries", "win32"), joinpath("binaries","i686-windows")]
+        end
+        osStr = "Windows"
+        fmuExt = "dll"
+    elseif Sys.islinux()
+        if juliaArch == 64
+            directories = [joinpath("binaries", "linux64"), joinpath("binaries", "x86_64-linux")]
+        else 
+            directories = []
+        end
+        osStr = "Linux"
+        fmuExt = "so"
+    elseif Sys.isapple()
+        if juliaArch == 64
+            directories = [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+        else 
+            directories = []
+        end
+        osStr = "Mac"
+        fmuExt = "dylib"
+    else
+        @assert false "fmi3Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS."
+    end
+
+    @assert (length(directories) > 0) "fmi3Load(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
+    for directory in directories
+        directoryBinary = joinpath(fmu.path, directory)
+        if isdir(directoryBinary)
+            pathToBinary = joinpath(directoryBinary, "$(fmuName).$(fmuExt)")
+            break
+        end
+    end
+    @assert isfile(pathToBinary) "fmi3Load(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+
+    # make URI ressource location
+    tmpResourceLocation = string("file:///", fmu.path)
+    tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
+    fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") # URIs.escapeuri(tmpResourceLocation)
+
+    @info "fmi3Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
+
+    if fmi3IsCoSimulation(fmu) && fmi3IsModelExchange(fmu) 
+        @info "fmi3Load(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
+    end
+
+    fmu.binaryPath = pathToBinary
+    loadBinary(fmu)
+   
+    # dependency matrix 
+    # fmu.dependencies
+
+    fmu
+end
+
+function loadBinary(fmu::FMU3)
+    lastDirectory = pwd()
+    cd(dirname(fmu.binaryPath))
+
+    # set FMU binary handler
+    fmu.libHandle = dlopen(fmu.binaryPath)
+
+    cd(lastDirectory)
+
+    # retrieve functions 
+    fmu.cInstantiateModelExchange                  = dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
+    fmu.cInstantiateCoSimulation                   = dlsym(fmu.libHandle, :fmi3InstantiateCoSimulation)
+    fmu.cInstantiateScheduledExecution             = dlsym(fmu.libHandle, :fmi3InstantiateScheduledExecution)
+    fmu.cGetVersion                                = dlsym(fmu.libHandle, :fmi3GetVersion)
+    fmu.cFreeInstance                              = dlsym(fmu.libHandle, :fmi3FreeInstance)
+    fmu.cSetDebugLogging                           = dlsym(fmu.libHandle, :fmi3SetDebugLogging)
+    fmu.cEnterConfigurationMode                    = dlsym(fmu.libHandle, :fmi3EnterConfigurationMode)
+    fmu.cExitConfigurationMode                     = dlsym(fmu.libHandle, :fmi3ExitConfigurationMode)
+    fmu.cEnterInitializationMode                   = dlsym(fmu.libHandle, :fmi3EnterInitializationMode)
+    fmu.cExitInitializationMode                    = dlsym(fmu.libHandle, :fmi3ExitInitializationMode)
+    fmu.cTerminate                                 = dlsym(fmu.libHandle, :fmi3Terminate)
+    fmu.cReset                                     = dlsym(fmu.libHandle, :fmi3Reset)
+    fmu.cEvaluateDiscreteStates                    = dlsym(fmu.libHandle, :fmi3EvaluateDiscreteStates)
+    fmu.cGetNumberOfVariableDependencies           = dlsym(fmu.libHandle, :fmi3GetNumberOfVariableDependencies)
+    fmu.cGetVariableDependencies                   = dlsym(fmu.libHandle, :fmi3GetVariableDependencies)
+
+    fmu.cGetFloat32                                = dlsym(fmu.libHandle, :fmi3GetFloat32)
+    fmu.cSetFloat32                                = dlsym(fmu.libHandle, :fmi3SetFloat32)
+    fmu.cGetFloat64                                = dlsym(fmu.libHandle, :fmi3GetFloat64)
+    fmu.cSetFloat64                                = dlsym(fmu.libHandle, :fmi3SetFloat64)
+    fmu.cGetInt8                                   = dlsym(fmu.libHandle, :fmi3GetInt8)
+    fmu.cSetInt8                                   = dlsym(fmu.libHandle, :fmi3SetInt8)
+    fmu.cGetUInt8                                  = dlsym(fmu.libHandle, :fmi3GetUInt8)
+    fmu.cSetUInt8                                  = dlsym(fmu.libHandle, :fmi3SetUInt8)
+    fmu.cGetInt16                                  = dlsym(fmu.libHandle, :fmi3GetInt16)
+    fmu.cSetInt16                                  = dlsym(fmu.libHandle, :fmi3SetInt16)
+    fmu.cGetUInt16                                 = dlsym(fmu.libHandle, :fmi3GetUInt16)
+    fmu.cSetUInt16                                 = dlsym(fmu.libHandle, :fmi3SetUInt16)
+    fmu.cGetInt32                                  = dlsym(fmu.libHandle, :fmi3GetInt32)
+    fmu.cSetInt32                                  = dlsym(fmu.libHandle, :fmi3SetInt32)
+    fmu.cGetUInt32                                 = dlsym(fmu.libHandle, :fmi3GetUInt32)
+    fmu.cSetUInt32                                 = dlsym(fmu.libHandle, :fmi3SetUInt32)
+    fmu.cGetInt64                                  = dlsym(fmu.libHandle, :fmi3GetInt64)
+    fmu.cSetInt64                                  = dlsym(fmu.libHandle, :fmi3SetInt64)
+    fmu.cGetUInt64                                 = dlsym(fmu.libHandle, :fmi3GetUInt64)
+    fmu.cSetUInt64                                 = dlsym(fmu.libHandle, :fmi3SetUInt64)
+    fmu.cGetBoolean                                = dlsym(fmu.libHandle, :fmi3GetBoolean)
+    fmu.cSetBoolean                                = dlsym(fmu.libHandle, :fmi3SetBoolean)
+
+    fmu.cGetString                                 = dlsym_opt(fmu.libHandle, :fmi3GetString)
+    fmu.cSetString                                 = dlsym_opt(fmu.libHandle, :fmi3SetString)
+    fmu.cGetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3GetBinary)
+    fmu.cSetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3SetBinary)
+
+    if fmi3CanGetSetState(fmu)
+        fmu.cGetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3GetFMUState)
+        fmu.cSetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3SetFMUState)
+        fmu.cFreeFMUState                          = dlsym_opt(fmu.libHandle, :fmi3FreeFMUState)
+    end
+
+    if fmi3CanSerializeFMUState(fmu)
+        fmu.cSerializedFMUStateSize                = dlsym_opt(fmu.libHandle, :fmi3SerializedFMUStateSize)
+        fmu.cSerializeFMUState                     = dlsym_opt(fmu.libHandle, :fmi3SerializeFMUState)
+        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu.libHandle, :fmi3DeserializeFMUState)
+    end
+
+    if fmi3ProvidesDirectionalDerivatives(fmu)
+        fmu.cGetDirectionalDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetDirectionalDerivative)
+    end
+
+    if fmi3ProvidesAdjointDerivatives(fmu)
+        fmu.cGetAdjointDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetAdjointDerivative)
+    end
+
+    # CS specific function calls
+    if fmi3IsCoSimulation(fmu)
+        fmu.cGetOutputDerivatives                  = dlsym(fmu.libHandle, :fmi3GetOutputDerivatives)
+        fmu.cEnterStepMode                         = dlsym(fmu.libHandle, :fmi3EnterStepMode)
+        fmu.cDoStep                                = dlsym(fmu.libHandle, :fmi3DoStep)
+    end
+
+    # ME specific function calls
+    if fmi3IsModelExchange(fmu)
+        fmu.cGetNumberOfContinuousStates           = dlsym(fmu.libHandle, :fmi3GetNumberOfContinuousStates)
+        fmu.cGetNumberOfEventIndicators            = dlsym(fmu.libHandle, :fmi3GetNumberOfEventIndicators)
+        fmu.cGetContinuousStates                   = dlsym(fmu.libHandle, :fmi3GetContinuousStates)
+        fmu.cGetNominalsOfContinuousStates         = dlsym(fmu.libHandle, :fmi3GetNominalsOfContinuousStates)
+        fmu.cEnterContinuousTimeMode               = dlsym(fmu.libHandle, :fmi3EnterContinuousTimeMode)
+        fmu.cSetTime                               = dlsym(fmu.libHandle, :fmi3SetTime)
+        fmu.cSetContinuousStates                   = dlsym(fmu.libHandle, :fmi3SetContinuousStates)
+        fmu.cGetContinuousStateDerivatives         = dlsym(fmu.libHandle, :fmi3GetContinuousStateDerivatives) 
+        fmu.cGetEventIndicators                    = dlsym(fmu.libHandle, :fmi3GetEventIndicators)
+        fmu.cCompletedIntegratorStep               = dlsym(fmu.libHandle, :fmi3CompletedIntegratorStep)
+        fmu.cEnterEventMode                        = dlsym(fmu.libHandle, :fmi3EnterEventMode)        
+        fmu.cUpdateDiscreteStates                  = dlsym(fmu.libHandle, :fmi3UpdateDiscreteStates)
+    end
+
+    if fmi3IsScheduledExecution(fmu)
+        fmu.cSetIntervalDecimal                    = dlsym(fmu.libHandle, :fmi3SetIntervalDecimal)
+        fmu.cSetIntervalFraction                   = dlsym(fmu.libHandle, :fmi3SetIntervalFraction)
+        fmu.cGetIntervalDecimal                    = dlsym(fmu.libHandle, :fmi3GetIntervalDecimal)
+        fmu.cGetIntervalFraction                   = dlsym(fmu.libHandle, :fmi3GetIntervalFraction)
+        fmu.cGetShiftDecimal                       = dlsym(fmu.libHandle, :fmi3GetShiftDecimal)
+        fmu.cGetShiftFraction                      = dlsym(fmu.libHandle, :fmi3GetShiftFraction)
+        fmu.cActivateModelPartition                = dlsym(fmu.libHandle, :fmi3ActivateModelPartition)
+    end
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
+Create a new instance of the given fmu, adds a logger if logginOn == true.
+Returns the instance of a new FMU component.
+For more information call ?fmi3InstantiateModelExchange
+"""
+function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false,
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+
+    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
+
+    if compAddr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateModelExchange!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        
+        instance = FMU3Instance(compAddr, fmu)
+        instance.z_prev  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
+        instance.rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
+        instance.stateEvent  = fmi3False
+        instance.timeEvent   = fmi3False
+        instance.stepEvent   = fmi3False
+        push!(fmu.instances, instance)
+    end 
+
+    instance
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
+Create a new instance of the given fmu, adds a logger if logginOn == true.
+Returns the instance of a new FMU component.
+For more information call ?fmi3InstantiateCoSimulation
+"""
+function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false, eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    if ptrIntermediateUpdate === nothing
+        ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
+    end
+    if fmu.modelDescription.coSimulation.hasEventMode !== nothing
+        mode = eventModeUsed
+    else
+        mode = false
+    end
+
+    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
+                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !== nothing), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), fmu.instanceEnvironment, ptrLogger, ptrIntermediateUpdate)
+
+    if compAddr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateCoSimulation!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateCoSimulation!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(compAddr, fmu)
+        push!(fmu.instances, instance)
+    end 
+
+    instance
+end
+
+# TODO not tested
+"""
+Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
+Create a new instance of the given fmu, adds a logger if logginOn == true.
+Returns the instance of a new FMU component.
+For more information call ?fmi3InstantiateScheduledExecution
+"""
+function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}; visible::Bool = false, loggingOn::Bool = false, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
+
+    compAddr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
+
+    if compAddr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateScheduledExecution!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.compAddr == compAddr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateScheduledExecution!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(compAddr, fmu)
+        push!(fmu.instances, instance)
+    end 
+
+    instance
+end
+
+"""
+Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
+"""
+function fmi3Reload(fmu::FMU3)
+    dlclose(fmu.libHandle)
+    loadBinary(fmu)
+end
+
+
+"""
 Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
 """
 function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
 
-    while length(fmu.components) > 0
-        fmi3FreeInstance!(fmu.components[end])
+    while length(fmu.instances) > 0
+        fmi3FreeInstance!(fmu.instances[end])
     end
 
     dlclose(fmu.libHandle)
 
-    # the components are removed from the component list via call to fmi3FreeInstance!
-    @assert length(fmu.components) == 0 "fmi3Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
+    # the instances are removed from the instances list via call to fmi3FreeInstance!
+    @assert length(fmu.instances) == 0 "fmi3Unload(...): Failure during deleting instances, $(length(fmu.instances)) remaining in stack."
 
     if cleanUp
         try
@@ -303,82 +481,305 @@ function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateModelExchange
+This function samples the directional derivative by manipulating corresponding values (central differences).
 """
-function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false)
+function fmi3SampleDirectionalDerivative(c::fmi3Instance,
+                                       vUnknown_ref::Array{fmi3ValueReference},
+                                       vKnown_ref::Array{fmi3ValueReference},
+                                       steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
+    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
 
-    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
+    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
 
-    if compAddr == Ptr{Cvoid}(C_NULL)
-        @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
-        return nothing
-    end
-    previous_z  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
-    rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
-    stateEvent  = fmi3False
-    timeEvent   = fmi3False
-    stepEvent   = fmi3False
-    component = fmi3Component(compAddr, fmu, previous_z, rootsFound, stateEvent, timeEvent, stepEvent)
-    push!(fmu.components, component)
-    component
+    dvUnknown
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateCoSimulation
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
-function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingOn::Bool = false, eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing)
+function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
+                                          vUnknown_ref::Array{fmi3ValueReference},
+                                          vKnown_ref::Array{fmi3ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+    
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi3GetFloat64(c, vKnown)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
-    if ptrIntermediateUpdate === nothing
-        ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
+        fmi3SetFloat64(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
     end
-    if fmu.modelDescription.CShasEventMode 
-        mode = eventModeUsed
+
+    nothing
+end
+
+"""
+Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetJacobian(inst::FMU3Instance, 
+                         rdx::Array{fmi3ValueReference}, 
+                         rx::Array{fmi3ValueReference}; 
+                         steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    mat = zeros(fmi3Float64, length(rdx), length(rx))
+    fmi3GetJacobian!(mat, inst, rdx, rx; steps=steps)
+    return mat
+end
+
+"""
+Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetJacobian!(jac::Matrix{fmi3Float64}, 
+                          inst::FMU3Instance, 
+                          rdx::Array{fmi3ValueReference}, 
+                          rx::Array{fmi3ValueReference}; 
+                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+
+    @assert size(jac) == (length(rdx), length(rx)) ["fmi3GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
+
+    if length(rdx) == 0 || length(rx) == 0
+        jac = zeros(length(rdx), length(rx))
+        return nothing
+    end 
+
+    ddsupported = fmi3ProvidesDirectionalDerivatives(inst.fmu)
+
+    # ToDo: Pick entries based on dependency matrix!
+    #depMtx = fmi3GetDependencies(fmu)
+    rdx_inds = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
+    rx_inds  = collect(inst.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
+    
+    for i in 1:length(rx)
+
+        sensitive_rdx_inds = 1:length(rdx)
+        sensitive_rdx = rdx
+
+        # sensitive_rdx_inds = Int64[]
+        # sensitive_rdx = fmi3ValueReference[]
+
+        # for j in 1:length(rdx)
+        #     if depMtx[rdx_inds[j], rx_inds[i]] != fmi3DependencyIndependent
+        #         push!(sensitive_rdx_inds, j)
+        #         push!(sensitive_rdx, rdx[j])
+        #     end
+        # end
+
+        if length(sensitive_rdx) > 0
+            if ddsupported
+                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
+                fmi3GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+                # jac[sensitive_rdx_inds, i] = fmi3GetDirectionalDerivative!(inst, sensitive_rdx, [rx[i]])
+            else 
+                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
+                # fmi3SampleDirectionalDerivative!(inst, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i)) TODO not implemented
+                # jac[sensitive_rdx_inds, i] = fmi3SampleDirectionalDerivative(inst, sensitive_rdx, [rx[i]], steps)
+            end
+        end
+    end
+     
+    return nothing
+end
+
+"""
+Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+No performance optimization, for an optimized version use `fmi3GetJacobian`.
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetFullJacobian(inst::FMU3Instance, 
+                             rdx::Array{fmi3ValueReference}, 
+                             rx::Array{fmi3ValueReference}; 
+                             steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    mat = zeros(fmi3Float64, length(rdx), length(rx))
+    fmi3GetFullJacobian!(mat, inst, rdx, rx; steps=steps)
+    return mat
+end
+
+"""
+Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+If FMI built-in directional derivatives are supported, they are used.
+As fallback, directional derivatives will be sampled with central differences.
+No performance optimization, for an optimized version use `fmi3GetJacobian!`.
+
+If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+"""
+function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64}, 
+                              inst::FMU3Instance, 
+                              rdx::Array{fmi3ValueReference}, 
+                              rx::Array{fmi3ValueReference}; 
+                              steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+    @assert size(jac) == (length(rdx),length(rx)) "fmi3GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
+
+    @warn "`fmi3GetFullJacobian!` is for benchmarking only, please use `fmi3GetJacobian`."
+
+    if length(rdx) == 0 || length(rx) == 0
+        jac = zeros(length(rdx), length(rx))
+        return nothing
+    end 
+
+    if fmi3ProvidesDirectionalDerivative(inst.fmu)
+        for i in 1:length(rx)
+            jac[:,i] = fmi3GetDirectionalDerivative(inst, rdx, [rx[i]])
+        end
     else
-        mode = false
+        # jac = fmi3SampleDirectionalDerivative(inst, rdx, rx) TODO not implemented
     end
 
-    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), 
-                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.CScanReturnEarlyAfterIntermediateUpdate), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), fmu.instanceEnvironment, ptrLogger, ptrIntermediateUpdate)
-
-    if compAddr == Ptr{Cvoid}(C_NULL)
-        @error "fmi3InstantiateCoSimulation!(...): Instantiation failed!"
-        return nothing
-    end
-
-    component = fmi3Component(compAddr, fmu)
-    push!(fmu.components, component)
-    component
+    return nothing
 end
 
-# TODO not tested
-"""
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateScheduledExecution
-"""
-function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}; visible::Bool = false, loggingOn::Bool = false)
+function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
+    vrs = prepareValueReference(inst, vrs)
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Ptr{Cchar}, Cuint, Ptr{Cchar}))
-    ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
+    @assert length(vrs) == length(dstArray) "fmi3Get!(...): Number of value references doesn't match number of `dstArray` elements."
 
-    compAddr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
+        mv = mv[1]
 
-    if compAddr == Ptr{Cvoid}(C_NULL)
-        @error "fmi3InstantiateScheduledExecution!(...): Instantiation failed!"
-        return nothing
+        if mv.datatype.datatype == fmi3Float32 
+            #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetFloat32(inst, vr)
+        elseif mv.datatype.datatype == fmi3Float64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetFloat64(inst, vr)
+        elseif mv.datatype.datatype == fmi3Int8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt8(inst, vr)
+        elseif mv.datatype.datatype == fmi3Int16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt16(inst, vr)
+        elseif mv.datatype.datatype == fmi3Int32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt32(inst, vr)
+        elseif mv.datatype.datatype == fmi3GetInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetInt64(inst, vr)
+        elseif mv.datatype.datatype == fmi3UInt8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt8(inst, vr)
+        elseif mv.datatype.datatype == fmi3UInt16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt16(inst, vr)
+        elseif mv.datatype.datatype == fmi3UInt32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt32(inst, vr)
+        elseif mv.datatype.datatype == fmi3GetUInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetUInt64(inst, vr)
+        elseif mv.datatype.datatype == fmi3Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetBoolean(inst, vr)
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetString(inst, vr)
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetString(inst, vr)
+        elseif mv.datatype.datatype == fmi3Binary 
+            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            dstArray[i] = fmi3GetBinary(inst, vr)
+        elseif mv.datatype.datatype == fmi3Enum 
+            @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
     end
 
-    component = fmi3Component(compAddr, fmu)
-    push!(fmu.components, component)
-    component
+    return nothing
+end
+
+function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
+    vrs = prepareValueReference(inst, vrs)
+    dstArray = Array{Any,1}(undef, length(vrs))
+    fmi3Get!(inst, vrs, dstArray)
+    return dstArray
+end
+
+function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array)
+    vrs = prepareValueReference(inst, vrs)
+
+    @assert length(vrs) == length(srcArray) "fmi3Set(...): Number of value references doesn't match number of `srcArray` elements."
+
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
+        mv = mv[1]
+        # TODO future refactor
+        if mv.datatype.datatype == fmi3Float32 
+            #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
+            fmi3SetFloat32(inst, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Float64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetFloat64(inst, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Int8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetInt8(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Int16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetInt16(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Int32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetInt32(inst, vr, Int32(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3SetInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetInt64(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt8 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetUInt8(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt16 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetUInt16(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3UInt32 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetUInt32(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3SetUInt64 
+            #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
+            fmi3SetUInt64(inst, vr, Integer(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3Boolean 
+            #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
+            fmi3SetBoolean(inst, vr, Bool(srcArray[i]))
+        elseif mv.datatype.datatype == fmi3String 
+            #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            fmi3SetString(inst, vr, srcArray[i])
+        elseif mv.datatype.datatype == fmi3Binary 
+            #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
+            fmi3SetBinary(inst, vr, Csize_t(length(srcArray[i])), pointer(srcArray[i])) # TODO fix this
+        elseif mv.datatype.datatype == fmi3Enum 
+            @warn "fmi3Set!(...): Currently not implemented for fmi3Enum."
+        else 
+            @assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        end
+    end
+    
+    return nothing
 end
