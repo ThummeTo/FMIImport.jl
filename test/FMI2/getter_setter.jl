@@ -7,9 +7,9 @@
 # Prepare FMU #
 ###############
 
-pathToFMU = "https://github.com/ThummeTo/FMI.jl/raw/main/model/" * ENV["EXPORTINGTOOL"] * "/IO.fmu"
+myFMU = fmi2Load("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
 
-myFMU = fmi2Load(pathToFMU)
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
@@ -54,14 +54,12 @@ cacheString = ""
 @test fmi2SetString(comp, stringValueReferences[1], rndString) == 0
 @test fmi2GetString(comp, stringValueReferences[1]) == rndString
 
-if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
-    fmi2Set(comp, 
-            [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]], 
-            [rndReal,                rndInteger,                rndBoolean,                rndString])
-    @test fmi2Get(comp, 
-                  [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]]) == 
-                  [rndReal,                rndInteger,                rndBoolean,                rndString]
-end 
+fmi2Set(comp, 
+        [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]], 
+        [rndReal,                rndInteger,                rndBoolean,                rndString])
+@test fmi2Get(comp, 
+                [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]]) == 
+                [rndReal,                rndInteger,                rndBoolean,                rndString]
 
 ##################
 # Testing Arrays #
@@ -111,22 +109,16 @@ fmi2GetBoolean!(comp, booleanValueReferences, cacheBoolean)
 fmi2GetString!(comp, stringValueReferences, cacheString)
 @test unsafe_string.(cacheString) == rndString
 
-# this is not suppoerted by OMEdit-FMUs in the repository
-if ENV["EXPORTINGTOOL"] != "OpenModelica/v1.17.0"
-    # Testing input/output derivatives
-    dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(Int, 1))
-    @test dirs == -Inf # at this point, derivative is undefined
-    @test fmi2SetRealInputDerivatives(comp, ["u_real"], ones(Int, 1), zeros(1)) == 0
+# Testing input/output derivatives
+dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(fmi2Integer, 1))
+@test dirs == -Inf # at this point, derivative is undefined
+@test fmi2SetRealInputDerivatives(comp, ["u_real"], ones(fmi2Integer, 1), zeros(1)) == 0
 
-    @test fmi2ExitInitializationMode(comp) == 0
-    @test fmi2DoStep(comp, 0.1) == 0
+@test fmi2ExitInitializationMode(comp) == 0
+@test fmi2DoStep(comp, 0.1) == 0
 
-    dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(Int, 1))
-    @test dirs == 0.0
-else 
-    @test fmi2ExitInitializationMode(comp) == 0
-    @test fmi2DoStep(comp, 0.1) == 0
-end
+dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(fmi2Integer, 1))
+@test dirs == 0.0
 
 ############
 # Clean up #

@@ -9,9 +9,8 @@
 
 using FMIImport.FMICore: fmi2FMUstate
 
-pathToFMU = "https://github.com/ThummeTo/FMI.jl/raw/main/model/" * ENV["EXPORTINGTOOL"] * "/SpringPendulum1D.fmu"
-
-myFMU = fmi2Load(pathToFMU)
+myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU.executionConfig.assertOnWarning = true
 
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test comp != 0
