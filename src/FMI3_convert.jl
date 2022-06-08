@@ -5,17 +5,17 @@
 
 function prepareValueReference(md::fmi3ModelDescription, vr::fmi3ValueReferenceFormat)
     tvr = typeof(vr)
-    if tvr == Array{fmi3ValueReference,1}
+    if isa(vr, AbstractArray{fmi3ValueReference,1})
         return vr
     elseif tvr == fmi3ValueReference
         return [vr]
     elseif tvr == String
         return [fmi3StringToValueReference(md, vr)]
-    elseif tvr == Array{String,1}
+    elseif isa(vr, AbstractArray{String,1})
         return fmi3StringToValueReference(md, vr)
     elseif tvr == Int64
         return [fmi3ValueReference(vr)]
-    elseif tvr == Array{Int64,1}
+    elseif isa(vr, AbstractArray{Int64,1})
         return fmi3ValueReference.(vr)
     elseif tvr == Nothing
         return Array{fmi3ValueReference,1}()
@@ -33,7 +33,7 @@ end
 """
 Returns an array of ValueReferences coresponding to the variable names.
 """
-function fmi3StringToValueReference(md::fmi3ModelDescription, names::Array{String})
+function fmi3StringToValueReference(md::fmi3ModelDescription, names::AbstractArray{String})
     vr = Array{fmi3ValueReference}(undef,0)
     for name in names
         reference = fmi3StringToValueReference(md, name)
@@ -72,7 +72,7 @@ function fmi3StringToValueReference(md::fmi3ModelDescription, name::String)
     reference
 end
 
-function fmi3StringToValueReference(fmu::FMU3, name::Union{String, Array{String}})
+function fmi3StringToValueReference(fmu::FMU3, name::Union{String, AbstractArray{String}})
     fmi3StringToValueReference(fmu.modelDescription, name)
 end
 
