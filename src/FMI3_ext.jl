@@ -484,9 +484,9 @@ end
 This function samples the directional derivative by manipulating corresponding values (central differences).
 """
 function fmi3SampleDirectionalDerivative(c::fmi3Instance,
-                                       vUnknown_ref::Array{fmi3ValueReference},
-                                       vKnown_ref::Array{fmi3ValueReference},
-                                       steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+                                       vUnknown_ref::AbstractArray{fmi3ValueReference},
+                                       vKnown_ref::AbstractArray{fmi3ValueReference},
+                                       steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
 
     dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
 
@@ -499,10 +499,10 @@ end
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
 """
 function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
-                                          vUnknown_ref::Array{fmi3ValueReference},
-                                          vKnown_ref::Array{fmi3ValueReference},
+                                          vUnknown_ref::AbstractArray{fmi3ValueReference},
+                                          vKnown_ref::AbstractArray{fmi3ValueReference},
                                           dvUnknown::AbstractArray,
-                                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
+                                          steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*DEFAULT_SAMPLE_STEP)
     
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
@@ -536,9 +536,9 @@ For optimization, if the FMU's model description has the optional entry 'depende
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi3GetJacobian(inst::FMU3Instance, 
-                         rdx::Array{fmi3ValueReference}, 
-                         rx::Array{fmi3ValueReference}; 
-                         steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+                         rdx::AbstractArray{fmi3ValueReference}, 
+                         rx::AbstractArray{fmi3ValueReference}; 
+                         steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
     mat = zeros(fmi3Float64, length(rdx), length(rx))
     fmi3GetJacobian!(mat, inst, rdx, rx; steps=steps)
     return mat
@@ -555,9 +555,9 @@ If sampling is used, sampling step size can be set (for each direction individua
 """
 function fmi3GetJacobian!(jac::Matrix{fmi3Float64}, 
                           inst::FMU3Instance, 
-                          rdx::Array{fmi3ValueReference}, 
-                          rx::Array{fmi3ValueReference}; 
-                          steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+                          rdx::AbstractArray{fmi3ValueReference}, 
+                          rx::AbstractArray{fmi3ValueReference}; 
+                          steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
 
     @assert size(jac) == (length(rdx), length(rx)) ["fmi3GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
 
@@ -614,9 +614,9 @@ No performance optimization, for an optimized version use `fmi3GetJacobian`.
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
 function fmi3GetFullJacobian(inst::FMU3Instance, 
-                             rdx::Array{fmi3ValueReference}, 
-                             rx::Array{fmi3ValueReference}; 
-                             steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+                             rdx::AbstractArray{fmi3ValueReference}, 
+                             rx::AbstractArray{fmi3ValueReference}; 
+                             steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
     mat = zeros(fmi3Float64, length(rdx), length(rx))
     fmi3GetFullJacobian!(mat, inst, rdx, rx; steps=steps)
     return mat
@@ -633,9 +633,9 @@ If sampling is used, sampling step size can be set (for each direction individua
 """
 function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64}, 
                               inst::FMU3Instance, 
-                              rdx::Array{fmi3ValueReference}, 
-                              rx::Array{fmi3ValueReference}; 
-                              steps::Array{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
+                              rdx::AbstractArray{fmi3ValueReference}, 
+                              rx::AbstractArray{fmi3ValueReference}; 
+                              steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(rdx)).*1e-5)
     @assert size(jac) == (length(rdx),length(rx)) "fmi3GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
 
     @warn "`fmi3GetFullJacobian!` is for benchmarking only, please use `fmi3GetJacobian`."
