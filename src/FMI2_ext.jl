@@ -635,7 +635,7 @@ function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     return dstArray
 end
 
-function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray)
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
@@ -647,22 +647,26 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
 
-        if mv._Real != nothing
-            @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
-        elseif mv._Integer != nothing
-            @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
-        elseif mv._Boolean != nothing
-            @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
-        elseif mv._String != nothing
-            @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
-        elseif mv._Enumeration != nothing
-            @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
-        else 
-            @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        if filter === nothing || filter(mv)
+
+            if mv._Real != nothing
+                @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
+            elseif mv._Integer != nothing
+                @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+            elseif mv._Boolean != nothing
+                @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+            elseif mv._String != nothing
+                @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
+            elseif mv._Enumeration != nothing
+                @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+            else 
+                @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+            end
+
         end
     end
 
