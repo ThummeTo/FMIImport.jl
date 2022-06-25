@@ -16,14 +16,14 @@ Returns the paths to the zipped and unzipped folders.
 
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
 """
-function fmi2Unzip(pathToFMU::String; unpackPath=nothing)
+function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
     fileNameExt = basename(pathToFMU)
     (fileName, fileExt) = splitext(fileNameExt)
         
     if unpackPath == nothing
         # cleanup=true leads to issues with automatic testing on linux server.
-        unpackPath = mktempdir(; prefix="fmijl_", cleanup=false)
+        unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
     end
 
     zipPath = joinpath(unpackPath, fileName * ".zip")
@@ -98,7 +98,7 @@ Returns the instance of the FMU struct.
 
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
 """
-function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
+function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
     # Create uninitialized FMU
     fmu = FMU2()
 
@@ -110,7 +110,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     pathToFMU = normpath(pathToFMU)
 
     # set paths for fmu handling
-    (fmu.path, fmu.zipPath) = fmi2Unzip(pathToFMU; unpackPath=unpackPath)
+    (fmu.path, fmu.zipPath) = fmi2Unzip(pathToFMU; unpackPath=unpackPath, cleanup=cleanup)
 
     # set paths for modelExchangeScripting and binary
     tmpName = splitpath(fmu.path)
