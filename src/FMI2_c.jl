@@ -1198,7 +1198,7 @@ end
 
 """
 Todo
-   fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value) #todo value type
+   fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) #todo value type
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1210,7 +1210,7 @@ The following status information can be retrieved from a slave:
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
-- `value::` #todo
+- `value::Ref{fmi2Status}`: The `value` argument points to a status flag that was requested.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1248,7 +1248,7 @@ end
 
 """
 
-   fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Real)
+   fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Real})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1260,7 +1260,7 @@ The following status information can be retrieved from a slave:
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
-- `value::` #todo
+- `value::Ref{fmi2Real}`: Argument `value` points to the return value (fmi2Real) which was requested. `fmi2Real` is a alias type for `Real` data type.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1288,7 +1288,7 @@ end
 
 """
 
-   fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Integer)
+   fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Integer})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1300,7 +1300,7 @@ The following status information can be retrieved from a slave:
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
-- `value::` #todo
+- `value::Ref{fmi2Integer}`: Argument `value` points to the return value (fmi2Integer) which was requested. `fmi2Integer` is a alias type for `Integer` data type.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1328,7 +1328,7 @@ end
 
 """
 
-   function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Boolean)
+   function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Boolean})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1340,7 +1340,7 @@ The following status information can be retrieved from a slave:
  - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
  - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
  - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
-- `value::` #todo
+- `value::Ref{fmi2Boolean}`: Argument `value` points to the return value (fmi2Boolean) which was requested. `fmi2Boolean` is a alias type for `Boolean` data type.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1368,7 +1368,7 @@ end
 
 """
 
-   function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2String)
+   function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1380,7 +1380,7 @@ The following status information can be retrieved from a slave:
 - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
 - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
 - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
-- `value::` #todo
+- `value:Ref{fmi2String}:` Argument `value` points to the return value (fmi2String) which was requested. `fmi2String` is a alias type for `String` data type.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1460,6 +1460,14 @@ Set a new (continuous) state vector and re-initialize caching of variables that 
 - `nx::Csize_t`: Argument `nx` defines the length of vector `x` and is provided for checking purposes
 
 # Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+ - `fmi2OK`: all well
+ - `fmi2Warning`: things are not quite right, but the computation can continue
+ - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+ - `fmi2Error`: the communication step could not be carried out at all
+ - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+ - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1633,17 +1641,16 @@ end
 
    fmi2CompletedIntegratorStep!(c::FMU2Component,
                                       noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                      enterEventMode::fmi2Boolean,
-                                      terminateSimulation::fmi2Boolean)
+                                      enterEventMode::Ref{fmi2Boolean},
+                                      terminateSimulation::Ref{fmi2Boolean})
 
 This function must be called by the environment after every completed step of the integrator provided the capability flag completedIntegratorStepNotNeeded = false.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `noSetFMUStatePriorToCurrentPoint::fmi2Boolean`: Argument `noSetFMUStatePriorToCurrentPoint = fmi2True` if `fmi2SetFMUState`  will no longer be called for time instants prior to current time in this simulation run.
-- `enterEventMode::fmi2Boolean`: If `enterEventMode == fmi2True`, the event mode must be entered
-- `terminateSimulation::fmi2Boolean`: If terminateSimulation == fmi2True, the simulation shall be terminated
-
+- `enterEventMode::Ref{fmi2Boolean}`: Argument `enterEventMode` points to the return value (fmi2Boolean) which signals to the environment if the FMU shall call `fmi2EnterEventMode`. `fmi2Boolean` is an alias type for `Boolean` data type.
+- `terminateSimulation::Ref{fmi2Boolean}`: Argument `terminateSimulation` points to the return value (fmi2Boolean) which signals signal if the simulation shall be terminated. `fmi2Boolean` is an alias type for `Boolean` data type.
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
 More detailed:
@@ -1653,8 +1660,6 @@ More detailed:
   - `fmi2Error`: the communication step could not be carried out at all
   - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
   - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
-- `enterEventMode::Array{fmi2Boolean, 1}`: Returns `enterEventMode[1]` to signal to the environment if the FMU shall call `fmi2EnterEventMode`
-- `terminateSimulation::Array{fmi2Boolean, 1}`: Returns `terminateSimulation[1]` to signal if the simulation shall be terminated.
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
@@ -1675,10 +1680,34 @@ end
 
 """
 
+   fmi2GetDerivatives!(c::FMU2Component,
+                       derivatives::AbstractArray{fmi2Real},
+                       nx::Csize_t)
 
-Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
+Compute state derivatives at the current time instant and for the current states.                       
 
-Compute state derivatives at the current time instant and for the current states.
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `derivatives::AbstractArray{fmi2Real}`: Argument `derivatives` contains values of type `fmi2Real` which is a alias type for `Real` data type.`derivatives` is the `AbstractArray` which contains the `Real` values of the vector that represent the derivatives. The ordering of the elements of the derivatives vector is identical to the ordering of the state vector.
+- `nx::Csize_t`: Argument `nx` defines the length of vector `derivatives` and is provided for checking purposes
+
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
+See also [`fmi2GetDerivatives!`](@ref).
+
 """
 function fmi2GetDerivatives!(c::FMU2Component,
                             derivatives::AbstractArray{fmi2Real},
@@ -1691,9 +1720,31 @@ function fmi2GetDerivatives!(c::FMU2Component,
 end
 
 """
-Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
+
+   fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
 Compute event indicators at the current time instant and for the current states.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `eventIndicators::AbstractArray{fmi2Real}`: Argument `eventIndicators` contains values of type `fmi2Real` which is a alias type for `Real` data type.`eventIndicators` is the `AbstractArray` which contains the `Real` values of the vector that represent the event indicators.
+- `ni::Csize_t`: Argument `ni` defines the length of vector `eventIndicators` and is provided for checking purposes
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
@@ -1704,9 +1755,33 @@ function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArra
 end
 
 """
-Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
-Return the new (continuous) state vector x.
+   fmi2GetContinuousStates!(c::FMU2Component,
+                                 x::AbstractArray{fmi2Real},
+                                 nx::Csize_t)
+
+Stores the new (continuous) state vector in x.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `x::AbstractArray{fmi2Real}`: Argument `x` contains values of type `fmi2Real` which is a alias type for `Real` data type.`x` is the `AbstractArray` which contains the `Real` values of the vector that represent the new state vector.
+- `nx::Csize_t`: Argument `nx` defines the length of vector `x` and is provided for checking purposes
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetContinuousStates!(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
@@ -1719,9 +1794,31 @@ function fmi2GetContinuousStates!(c::FMU2Component,
 end
 
 """
-Source: FMISpec2.0.2[p.86]: 3.2.2 Evaluation of Model Equations
 
-Return the nominal values of the continuous states.
+   fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
+
+Stores the nominal values of the continuous states in x_nominal.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `x_nominal::AbstractArray{fmi2Real}`: Argument `x_nominal` contains values of type `fmi2Real` which is a alias type for `Real` data type.`x_nominal` is the `AbstractArray` which contains the `Real` values of the vector that represent the nominal values of the continuous states.
+- `nx::Csize_t`: Argument `nx` defines the length of vector `x` and is provided for checking purposes
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
 
