@@ -1571,7 +1571,7 @@ See also [`fmi2NewDiscreteStates`](@ref).
 function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
 
     if c.state != fmi2ComponentStateEventMode
-        @warn "fmi2NewDiscreteStates(...): Needs to be called in state `fmi2ComponentStateEventMode`."
+        @warn "fmi2NewDiscreteStates(...): Needs to be called in state `fmi2ComponentStateEventMode` [$(fmi2ComponentStateEventMode)], is in [$(c.state)]."
     end
 
     status = fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
@@ -1669,11 +1669,11 @@ See also [`fmi2CompletedIntegratorStep`](@ref), [`fmi2SetFMUState`](@ref).
 """
 function fmi2CompletedIntegratorStep!(c::FMU2Component,
                                       noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                      enterEventMode::fmi2Boolean,
-                                      terminateSimulation::fmi2Boolean)
-
+                                      enterEventMode::Ptr{fmi2Boolean},
+                                      terminateSimulation::Ptr{fmi2Boolean})
+ 
     status = fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
-          c.compAddr, noSetFMUStatePriorToCurrentPoint, Ref(enterEventMode), Ref(terminateSimulation))
+          c.compAddr, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation)
     checkStatus(c, status)
     return status
 end

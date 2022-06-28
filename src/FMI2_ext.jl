@@ -16,14 +16,14 @@ Returns the paths to the zipped and unzipped folders.
 
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
 """
-function fmi2Unzip(pathToFMU::String; unpackPath=nothing)
+function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
     fileNameExt = basename(pathToFMU)
     (fileName, fileExt) = splitext(fileNameExt)
         
     if unpackPath == nothing
         # cleanup=true leads to issues with automatic testing on linux server.
-        unpackPath = mktempdir(; prefix="fmijl_", cleanup=false)
+        unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
     end
 
     zipPath = joinpath(unpackPath, fileName * ".zip")
@@ -98,7 +98,7 @@ Returns the instance of the FMU struct.
 
 Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
 """
-function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
+function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
     # Create uninitialized FMU
     fmu = FMU2()
 
@@ -110,7 +110,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     pathToFMU = normpath(pathToFMU)
 
     # set paths for fmu handling
-    (fmu.path, fmu.zipPath) = fmi2Unzip(pathToFMU; unpackPath=unpackPath)
+    (fmu.path, fmu.zipPath) = fmi2Unzip(pathToFMU; unpackPath=unpackPath, cleanup=cleanup)
 
     # set paths for modelExchangeScripting and binary
     tmpName = splitpath(fmu.path)
@@ -130,7 +130,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing)
     elseif fmi2IsModelExchange(fmu.modelDescription) && (type===nothing || type==:ME)
         fmu.type = fmi2TypeModelExchange::fmi2Type
     else
-        error(unknownFMUType)
+        @assert false "Unknown FMU type `$type`."
     end
 
     fmuName = fmi2GetModelIdentifier(fmu.modelDescription; type=fmu.type) # tmpName[length(tmpName)]
@@ -298,9 +298,8 @@ For more information call ?fmi2Instantiate
 - `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
 - `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-                          logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true,
-                          instanceName::String=fmu.modelName)
+function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+                          logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
     compEnv.logStatusOK = logStatusOK
@@ -336,7 +335,7 @@ function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool 
 
     guidStr = "$(fmu.modelDescription.guid)"
 
-    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), fmu.type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
+    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi2Instantiate!(...): Instantiation failed!"
@@ -360,6 +359,7 @@ function fmi2Instantiate!(fmu::FMU2; pushComponents::Bool = true, visible::Bool 
         component.jacobianUpdate! = fmi2GetJacobian!
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
+        component.instanceName = instanceName
 
         if pushComponents
             push!(fmu.components, component)
@@ -635,7 +635,7 @@ function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     return dstArray
 end
 
-function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray)
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
@@ -647,22 +647,26 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
 
-        if mv._Real != nothing
-            @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
-        elseif mv._Integer != nothing
-            @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
-        elseif mv._Boolean != nothing
-            @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
-        elseif mv._String != nothing
-            @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
-            retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
-        elseif mv._Enumeration != nothing
-            @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
-        else 
-            @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+        if filter === nothing || filter(mv)
+
+            if mv._Real != nothing
+                @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
+            elseif mv._Integer != nothing
+                @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+            elseif mv._Boolean != nothing
+                @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+            elseif mv._String != nothing
+                @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
+            elseif mv._Enumeration != nothing
+                @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+            else 
+                @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+            end
+
         end
     end
 
