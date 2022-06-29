@@ -75,4 +75,9 @@ dict = fmi2GetNamesAndInitials(myFMU)
 @test dict["mass.startBackward"] == 0
 @test dict["mass.locked"] == 1
 
+# ToDo: Improve test, use another FMU
+@test length(fmi2GetInputNamesAndStarts(myFMU.modelDescription)) == 0
+dict = fmi2GetInputNamesAndStarts(myFMU)
+@test length(dict) == 0
+
 fmi2Unload(myFMU)

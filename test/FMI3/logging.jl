@@ -11,6 +11,7 @@ myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
 @test inst != 0
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
@@ -31,6 +32,7 @@ end
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true, logStatusError=false)
 @test inst != 0
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
@@ -53,6 +55,7 @@ end
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
