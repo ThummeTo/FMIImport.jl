@@ -6,6 +6,9 @@
 # What is included in the file `FMI2_int.jl` (internal functions)?
 # - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
 
+# Best practices:
+# - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
+
 """
 TODO: FMI specification reference.
 
@@ -32,7 +35,7 @@ TODO: FMI specification reference.
 Set the DebugLogger for the FMU.
 """
 function fmi2SetDebugLogging(c::FMU2Component)
-    fmi2SetDebugLogging(c.fmu, c.compAddr, fmi2False, Unsigned(0), C_NULL)
+    fmi2SetDebugLogging(c, fmi2False, Unsigned(0), C_NULL)
 end
 
 """
@@ -89,7 +92,7 @@ function fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
     nvr = Csize_t(length(vr))
     values = zeros(fmi2Real, nvr)
-    fmi2GetReal!(c.fmu.cGetReal, c.compAddr, vr, nvr, values)
+    fmi2GetReal!(c, vr, nvr, values)
 
     if length(values) == 1
         return values[1]
@@ -105,7 +108,7 @@ Get the values of an array of fmi2Real variables.
 
 For more information call ?fmi2GetReal!
 """
-function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Array{fmi2Real})
+function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -113,7 +116,7 @@ function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Ar
 
     nvr = Csize_t(length(values))
     # values[:] = fmi2Real.(values)
-    fmi2GetReal!(c.fmu.cGetReal, c.compAddr, vr, nvr, values)
+    fmi2GetReal!(c, vr, nvr, values)
     nothing
 end
 function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real)
@@ -127,14 +130,14 @@ Set the values of an array of fmi2Real variables.
 
 For more information call ?fmi2SetReal
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{Array{<:Real}, <:Real})
+function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
     @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi2SetReal(c.fmu.cSetReal, c.compAddr, vr, nvr, Array{fmi2Real}(values))
+    fmi2SetReal(c, vr, nvr, Array{fmi2Real}(values))
 end
 
 """
@@ -150,7 +153,7 @@ function fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
     nvr = Csize_t(length(vr))
     values = zeros(fmi2Integer, nvr)
-    fmi2GetInteger!(c.fmu.cGetInteger, c.compAddr, vr, nvr, values)
+    fmi2GetInteger!(c, vr, nvr, values)
 
     if length(values) == 1
         return values[1]
@@ -166,14 +169,14 @@ Get the values of an array of fmi2Integer variables.
 
 For more information call ?fmi2GetInteger!
 """
-function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Array{fmi2Integer})
+function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
     @assert length(vr) == length(values) "fmi2GetInteger!(...): `vr` and `values` need to be the same length."
 
     nvr = Csize_t(length(values))
-    fmi2GetInteger!(c.fmu.cGetInteger, c.compAddr, vr, nvr, values)
+    fmi2GetInteger!(c, vr, nvr, values)
     nothing
 end
 function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Integer)
@@ -187,14 +190,14 @@ Set the values of an array of fmi2Integer variables.
 
 For more information call ?fmi2SetInteger
 """
-function fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{Array{<:Integer}, <:Integer})
+function fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
     @assert length(vr) == length(values) "fmi2SetInteger(...): `vr` and `values` need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi2SetInteger(c.fmu.cSetInteger, c.compAddr, vr, nvr, Array{fmi2Integer}(values))
+    fmi2SetInteger(c, vr, nvr, Array{fmi2Integer}(values))
 end
 
 """
@@ -210,7 +213,7 @@ function fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
     nvr = Csize_t(length(vr))
     values = Array{fmi2Boolean}(undef, nvr)
-    fmi2GetBoolean!(c.fmu.cGetBoolean, c.compAddr, vr, nvr, values)
+    fmi2GetBoolean!(c, vr, nvr, values)
 
     if length(values) == 1
         return values[1]
@@ -226,7 +229,7 @@ Get the values of an array of fmi2Boolean variables.
 
 For more information call ?fmi2GetBoolean!
 """
-function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Array{fmi2Boolean})
+function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -234,7 +237,7 @@ function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 
     nvr = Csize_t(length(values))
     #values = fmi2Boolean.(values)
-    fmi2GetBoolean!(c.fmu.cGetBoolean, c.compAddr, vr, nvr, values)
+    fmi2GetBoolean!(c, vr, nvr, values)
 
     nothing
 end
@@ -249,14 +252,14 @@ Set the values of an array of fmi2Boolean variables.
 
 For more information call ?fmi2SetBoolean
 """
-function fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{Array{Bool}, Bool})
+function fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
     @assert length(vr) == length(values) "fmi2SetBoolean(...): `vr` and `values` need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi2SetBoolean(c.fmu.cSetBoolean, c.compAddr, vr, nvr, Array{fmi2Boolean}(values))
+    fmi2SetBoolean(c, vr, nvr, Array{fmi2Boolean}(values))
 end
 
 """
@@ -273,7 +276,7 @@ function fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
     nvr = Csize_t(length(vr))
     vars = Vector{fmi2String}(undef, nvr)
     values = string.(zeros(nvr))
-    fmi2GetString!(c.fmu.cGetString, c.compAddr, vr, nvr, vars)
+    fmi2GetString!(c, vr, nvr, vars)
     values[:] = unsafe_string.(vars)
 
     if length(values) == 1
@@ -290,13 +293,13 @@ Get the values of an array of fmi2String variables.
 
 For more information call ?fmi2GetString!
 """
-function fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Array{fmi2String})
+function fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi2GetString!(...): `vr` and `values` need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi2GetString!(c.fmu.cGetString, c.compAddr, vr, nvr, values)
+    fmi2GetString!(c, vr, nvr, values)
     
     nothing
 end
@@ -311,7 +314,7 @@ Set the values of an array of fmi2String variables.
 
 For more information call ?fmi2SetString
 """
-function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{Array{String}, String})
+function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -319,7 +322,7 @@ function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::U
 
     nvr = Csize_t(length(vr))
     ptrs = pointer.(values)
-    fmi2SetString(c.fmu.cSetString, c.compAddr, vr, nvr, ptrs)
+    fmi2SetString(c, vr, nvr, ptrs)
 end
 
 """
@@ -332,7 +335,7 @@ For more information call ?fmi2GetFMUstate
 function fmi2GetFMUstate(c::FMU2Component)
     state = fmi2FMUstate()
     stateRef = Ref(state)
-    fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.compAddr, stateRef)
+    fmi2GetFMUstate!(c, stateRef)
     state = stateRef[]
     state
 end
@@ -346,7 +349,7 @@ For more information call ?fmi2FreeFMUstate
 """
 function fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
     stateRef = Ref(state)
-    fmi2FreeFMUstate!(c.fmu.cFreeFMUstate, c.compAddr, stateRef)
+    fmi2FreeFMUstate!(c, stateRef)
     state = stateRef[]
     return nothing 
 end
@@ -361,7 +364,7 @@ For more information call ?fmi2SerzializedFMUstateSize
 function fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
     size = 0
     sizeRef = Ref(Csize_t(size))
-    fmi2SerializedFMUstateSize!(c.fmu.cSerializedFMUstateSize, c.compAddr, state, sizeRef)
+    fmi2SerializedFMUstateSize!(c, state, sizeRef)
     size = sizeRef[]
 end
 
@@ -375,7 +378,7 @@ For more information call ?fmi2SerzializeFMUstate
 function fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
     size = fmi2SerializedFMUstateSize(c, state)
     serializedState = Array{fmi2Byte}(undef, size)
-    status = fmi2SerializeFMUstate!(c.fmu.cSerializeFMUstate, c.compAddr, state, serializedState, size)
+    status = fmi2SerializeFMUstate!(c, state, serializedState, size)
     @assert status == Int(fmi2StatusOK) ["Failed with status `$status`."]
     serializedState
 end
@@ -387,12 +390,12 @@ Deserialize the data in the serializedState fmi2Byte field.
 
 For more information call ?fmi2DeSerzializeFMUstate
 """
-function fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::Array{fmi2Byte})
+function fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArray{fmi2Byte})
     size = length(serializedState)
     state = fmi2FMUstate()
     stateRef = Ref(state)
 
-    status = fmi2DeSerializeFMUstate!(c.fmu.cDeSerializeFMUstate, c.compAddr, serializedState, Csize_t(size), stateRef)
+    status = fmi2DeSerializeFMUstate!(c, serializedState, Csize_t(size), stateRef)
     @assert status == Int(fmi2StatusOK) "Failed with status `$status`."
 
     state = stateRef[]
@@ -406,9 +409,9 @@ Computes directional derivatives.
 For more information call ?fmi2GetDirectionalDerivatives
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
-                                      vUnknown_ref::Array{fmi2ValueReference},
-                                      vKnown_ref::Array{fmi2ValueReference},
-                                      dvKnown::Union{Array{fmi2Real}, Nothing} = nothing)
+                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                      vKnown_ref::AbstractArray{fmi2ValueReference},
+                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
                                       
     nUnknown = Csize_t(length(vUnknown_ref))     
 
@@ -427,10 +430,10 @@ Computes directional derivatives.
 For more information call ?fmi2GetDirectionalDerivatives
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
-                                      vUnknown_ref::Array{fmi2ValueReference},
-                                      vKnown_ref::Array{fmi2ValueReference},
-                                      dvUnknown::AbstractArray, 
-                                      dvKnown::Union{Array{fmi2Real}, Nothing} = nothing)
+                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                      vKnown_ref::AbstractArray{fmi2ValueReference},
+                                      dvUnknown::AbstractArray, # ToDo: Data-type 
+                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     nKnown = Csize_t(length(vKnown_ref))
     nUnknown = Csize_t(length(vUnknown_ref))
@@ -439,7 +442,7 @@ function fmi2GetDirectionalDerivative!(c::FMU2Component,
         dvKnown = ones(fmi2Real, nKnown)
     end
 
-    status = fmi2GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative, c.compAddr, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
+    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
 
     return status
 end
@@ -467,12 +470,12 @@ Sets the n-th time derivative of real input variables.
 vr defines the value references of the variables
 the array order specifies the corresponding order of derivation of the variables
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order, values)
+function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
     vr = prepareValueReference(c, vr)
     order = prepareValue(order)
     values = prepareValue(values)
     nvr = Csize_t(length(vr))
-    fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives, c.compAddr, vr, nvr, Array{fmi2Integer}(order), Array{fmi2Real}(values))
+    fmi2SetRealInputDerivatives(c, vr, nvr, order, values)
 end
 
 """
@@ -483,12 +486,12 @@ the array order specifies the corresponding order of derivation of the variables
 
 For more information call ?fmi2GetRealOutputDerivatives
 """
-function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order)
+function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
     vr = prepareValueReference(c, vr)
     order = prepareValue(order)
     nvr = Csize_t(length(vr))
     values = zeros(fmi2Real, nvr)
-    fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives, c.compAddr, vr, nvr, Array{fmi2Integer}(order), values)
+    fmi2GetRealOutputDerivatives!(c, vr, nvr, order, values)
     
     if length(values) == 1
         return values[1]
@@ -524,7 +527,7 @@ function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing
     end
 
     c.t = currentCommunicationPoint
-    status = fmi2DoStep(c.fmu.cDoStep, c.compAddr, fmi2Real(currentCommunicationPoint), fmi2Real(communicationStepSize), fmi2Boolean(noSetFMUStatePriorToCurrentPoint))
+    status = fmi2DoStep(c, fmi2Real(currentCommunicationPoint), fmi2Real(communicationStepSize), fmi2Boolean(noSetFMUStatePriorToCurrentPoint))
     c.t += communicationStepSize
 
     return status
@@ -534,7 +537,7 @@ end
 TODO: FMI specification reference.
 """
 function fmi2SetTime(c::FMU2Component, t::Real)
-    status = fmi2SetTime(c.fmu.cSetTime, c.compAddr, fmi2Real(t))
+    status = fmi2SetTime(c, fmi2Real(t))
     c.t = t 
     return status
 end 
@@ -548,9 +551,9 @@ Set a new (continuous) state vector and reinitialize chaching of variables that 
 
 For more information call ?fmi2SetContinuousStates
 """
-function fmi2SetContinuousStates(c::FMU2Component, x::Union{Array{Float32}, Array{Float64}})
+function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
     nx = Csize_t(length(x))
-    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx)
     if status == fmi2StatusOK
         c.x = x
     end 
@@ -584,8 +587,7 @@ function fmi2CompletedIntegratorStep(c::FMU2Component,
     enterEventMode = zeros(fmi2Boolean, 1)
     terminateSimulation = zeros(fmi2Boolean, 1)
 
-    status = fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
-                                          c.compAddr, 
+    status = fmi2CompletedIntegratorStep!(c, 
                                           noSetFMUStatePriorToCurrentPoint,
                                           pointer(enterEventMode),
                                           pointer(terminateSimulation))
@@ -614,10 +616,10 @@ Compute state derivatives at the current time instant and for the current states
 
 For more information call ?fmi2GetDerivatives
 """
-function fmi2GetDerivatives!(c::FMU2Component, derivatives::Array{fmi2Real})
+function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
     if status == fmi2StatusOK
-        c.ẋ = derivatives
+        c.ẋ = derivatives
     end 
     return status
 end
@@ -632,7 +634,7 @@ For more information call ?fmi2GetEventIndicators
 function fmi2GetEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     eventIndicators = zeros(fmi2Real, ni)
-    fmi2GetEventIndicators!(c, eventIndicators)
+    fmi2GetEventIndicators!(c, eventIndicators, ni)
     return eventIndicators
 end
 
@@ -643,9 +645,9 @@ Returns the event indicators of the FMU.
 
 For more information call ?fmi2GetEventIndicators
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::Union{SubArray{fmi2Real}, Vector{fmi2Real}})
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
     ni = Csize_t(length(eventIndicators))
-    fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.compAddr, eventIndicators, ni)
+    fmi2GetEventIndicators!(c, eventIndicators, ni)
 end
 
 """
@@ -658,7 +660,7 @@ For more information call ?fmi2GetContinuousStates
 function fmi2GetContinuousStates(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
     x = zeros(fmi2Real, nx)
-    fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.compAddr, x, nx)
+    fmi2GetContinuousStates!(c, x, nx)
     x
 end
 
@@ -672,7 +674,7 @@ For more information call ?fmi2GetNominalsOfContinuousStates
 function fmi2GetNominalsOfContinuousStates(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
     x = zeros(fmi2Real, nx)
-    fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates, c.compAddr, x, nx)
+    fmi2GetNominalsOfContinuousStates!(c, x, nx)
     x
 end
 
@@ -690,8 +692,98 @@ function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
 
     status = fmi2Error
     if rtype == fmi2Boolean
-        status = fmi2GetStatus!(c.fmu.cGetStatus, c.compAddr, s, value)
+        status = fmi2GetStatus!(c, s, value)
     end 
 
     status, value[1]
 end
+
+"""
+Returns the start/default value for a given value reference.
+
+TODO: Add this command in the documentation.
+"""
+function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat)
+
+    vrs = prepareValueReference(c, vrs)
+
+    starts = []
+
+    for vr in vrs
+        mvs = fmi2ModelVariablesForValueReference(c.fmu.modelDescription, vr) 
+
+        if length(mvs) == 0
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
+        end
+    
+        if mvs[1]._Real != nothing
+            push!(starts, mvs[1]._Real.start)
+        elseif mvs[1]._Integer != nothing
+            push!(starts, mvs[1]._Integer.start)
+        elseif mvs[1]._Boolean != nothing
+            push!(starts, mvs[1]._Boolean.start)
+        elseif mvs[1]._String != nothing
+            push!(starts, mvs[1]._String.start)
+        elseif mvs[1]._Enumeration != nothing
+            push!(starts, mvs[1]._Enumeration.start)
+        else 
+            @assert false "fmi2GetStartValue(...): Value reference $(vr) has no data type."
+        end
+    end
+
+    if length(vrs) == 1
+        return starts[1]
+    else
+        return starts 
+    end
+end 
+
+# further functions 
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences).
+"""
+function fmi2SampleDirectionalDerivative(c::FMU2Component,
+                                       vUnknown_ref::Array{fmi2ValueReference},
+                                       vKnown_ref::Array{fmi2ValueReference},
+                                       steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+
+    dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi2SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+# TODO should probably in FMI2_ext.jl
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+"""
+function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+                                          vUnknown_ref::Array{fmi2ValueReference},
+                                          vKnown_ref::Array{fmi2ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+    
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi2GetReal(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi2GetReal(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
+end
+

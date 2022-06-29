@@ -3,20 +3,19 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMIImport: fmi2StatusError, fmi2StatusOK
+import FMIImport: fmi3StatusError
 
-myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU.executionConfig.assertOnWarning = true
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 
 ### CASE A: Print log ###
-comp = fmi2Instantiate!(myFMU; loggingOn=true)
-@test comp != 0
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2SetupExperiment(comp) == fmi2StatusOK
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
@@ -29,41 +28,36 @@ end
 
 ### CASE B: Print log, but catch infos ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=true, logStatusError=false)
-@test comp != 0
-
-# # deactivate errors to capture them
-# assertOnError = myFMU.executionConfig.assertOnError
-# myFMU.executionConfig.assertOnError = false
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true, logStatusError=false)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2SetupExperiment(comp) == fmi2StatusOK
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
 end
+output = read(joinpath(pwd(), "stdout"), String)
+@test output == ""
 
-# # reenable errors 
-# myFMU.executionConfig.assertOnError = assertOnError
-
-# output = read(joinpath(pwd(), "stdout"), String)
-# @test output == ""
-# output = read(joinpath(pwd(), "stderr"), String)
-# @test output == ""
+if VERSION >= v"1.7.0"
+    output = read(joinpath(pwd(), "stderr"), String)
+    @test startswith(output, "┌ Warning: fmi3ExitInitializationMode(...): Needs to be called in state `fmi3InstanceStateInitializationMode`.\n")
+end 
 
 ### CASE C: Disable Log ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=false)
-@test comp != 0
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
+@test inst != 0
 
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
             redirect_stderr(err) do
-                @test fmi2SetupExperiment(comp) == fmi2StatusOK
+                @test fmi3ExitInitializationMode(inst) == fmi3StatusError
             end
         end
     end 
@@ -75,4 +69,4 @@ end
 #@test output == ""
 
 # cleanup
-fmi2Unload(myFMU)
+fmi3Unload(myFMU)

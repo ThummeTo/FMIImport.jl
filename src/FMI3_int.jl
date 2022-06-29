@@ -13,14 +13,21 @@ FMU enters Initialization mode.
 
 For more information call ?fmi3EnterInitializationMode
 """
-function fmi3EnterInitializationMode(c::fmi3Instance, startTime::Real = 0.0, stopTime::Real = startTime; tolerance::Real = 0.0)
-    c.fmu.t = startTime
+function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Real = 0.0, stopTime::Real = startTime; tolerance::Real = 0.0)
+    if c.state != fmi3InstanceStateInstantiated
+        @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
+    end
+    c.t = startTime
 
     toleranceDefined = (tolerance > 0.0)
     stopTimeDefined = (stopTime > startTime)
 
-    fmi3EnterInitializationMode(c, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
-
+    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
+    checkStatus(c, status)
+    if status == fmi3StatusOK
+        c.state = fmi3InstanceStateInitializationMode
+    end
+    return status
 end
 
 """
@@ -28,7 +35,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
 
 Set the DebugLogger for the FMU.
 """
-function fmi3SetDebugLogging(c::fmi3Instance)
+function fmi3SetDebugLogging(c::FMU3Instance)
     fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
 end
 
@@ -39,7 +46,7 @@ Get the values of an array of fmi3Float32 variables.
 
 For more information call ?fmi3GetFloat32
 """
-function fmi3GetFloat32(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -61,7 +68,7 @@ Get the values of an array of fmi3Float32 variables.
 
 For more information call ?fmi3GetFloat32!
 """
-function fmi3GetFloat32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Float32})
+function fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float32})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetFloat32!(...): `vr` and `values` need to be the same length."
@@ -70,7 +77,7 @@ function fmi3GetFloat32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::
     fmi3GetFloat32!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetFloat32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Float32)
+function fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Float32)
     @assert false "fmi3GetFloat32! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -81,7 +88,7 @@ Set the values of an array of fmi3Float32 variables.
 
 For more information call ?fmi3SetFloat32
 """
-function fmi3SetFloat32(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Float32}, fmi3Float32})
+function fmi3SetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float32}, fmi3Float32})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -98,7 +105,7 @@ Get the values of an array of fmi3Float64 variables.
 
 For more information call ?fmi3GetFloat64
 """
-function fmi3GetFloat64(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -120,7 +127,7 @@ Get the values of an array of fmi3Float64 variables.
 
 For more information call ?fmi3GetFloat64!
 """
-function fmi3GetFloat64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Float64})
+function fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float64})
 
     vr = prepareValueReference(c, vr)
 
@@ -130,7 +137,7 @@ function fmi3GetFloat64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::
     fmi3GetFloat64!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetFloat64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Float64)
+function fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Float64)
     @assert false "fmi3GetFloat64! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -141,7 +148,7 @@ Set the values of an array of fmi3Float64 variables.
 
 For more information call ?fmi3SetFloat64
 """
-function fmi3SetFloat64(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Float64}, fmi3Float64})
+function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -158,7 +165,7 @@ Get the values of an array of fmi3Int8 variables.
 
 For more information call ?fmi3GetInt8
 """
-function fmi3GetInt8(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -180,7 +187,7 @@ Get the values of an array of fmi3Int8 variables.
 
 For more information call ?fmi3GetInt8!
 """
-function fmi3GetInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Int8})
+function fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int8})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt8!(...): `vr` and `values` need to be the same length."
@@ -189,7 +196,7 @@ function fmi3GetInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Arr
     fmi3GetInt8!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int8)
+function fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int8)
     @assert false "fmi3GetInt8! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -200,7 +207,7 @@ Set the values of an array of fmi3Int8 variables.
 
 For more information call ?fmi3SetInt8
 """
-function fmi3SetInt8(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Int8}, fmi3Int8})
+function fmi3SetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int8}, fmi3Int8})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -217,7 +224,7 @@ Get the values of an array of fmi3UInt8 variables.
 
 For more information call ?fmi3GetUInt8
 """
-function fmi3GetUInt8(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -239,7 +246,7 @@ Get the values of an array of fmi3UInt8 variables.
 
 For more information call ?fmi3GetUInt8!
 """
-function fmi3GetUInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3UInt8})
+function fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt8})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt8!(...): `vr` and `values` need to be the same length."
@@ -248,7 +255,7 @@ function fmi3GetUInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Ar
     fmi3GetUInt8!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetUInt8!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt8)
+function fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt8)
     @assert false "fmi3GetUInt8! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -259,7 +266,7 @@ Set the values of an array of fmi3UInt8 variables.
 
 For more information call ?fmi3SetUInt8
 """
-function fmi3SetUInt8(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3UInt8}, fmi3UInt8})
+function fmi3SetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt8}, fmi3UInt8})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -276,7 +283,7 @@ Get the values of an array of fmi3Int16 variables.
 
 For more information call ?fmi3GetInt16
 """
-function fmi3GetInt16(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -298,7 +305,7 @@ Get the values of an array of fmi3Int16 variables.
 
 For more information call ?fmi3GetInt16!
 """
-function fmi3GetInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Int16})
+function fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int16})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt16!(...): `vr` and `values` need to be the same length."
@@ -307,7 +314,7 @@ function fmi3GetInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Ar
     fmi3GetInt16!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int16)
+function fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int16)
     @assert false "fmi3GetInt16! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -318,7 +325,7 @@ Set the values of an array of fmi3Int16 variables.
 
 For more information call ?fmi3SetInt16
 """
-function fmi3SetInt16(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Int16}, fmi3Int16})
+function fmi3SetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int16}, fmi3Int16})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -335,7 +342,7 @@ Get the values of an array of fmi3UInt16 variables.
 
 For more information call ?fmi3GetUInt16
 """
-function fmi3GetUInt16(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -357,7 +364,7 @@ Get the values of an array of fmi3UInt16 variables.
 
 For more information call ?fmi3GetUInt16!
 """
-function fmi3GetUInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3UInt16})
+function fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt16})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt16!(...): `vr` and `values` need to be the same length."
@@ -366,7 +373,7 @@ function fmi3GetUInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::A
     fmi3GetUInt16!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetUInt16!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt16)
+function fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt16)
     @assert false "fmi3GetUInt16! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -377,7 +384,7 @@ Set the values of an array of fmi3UInt16 variables.
 
 For more information call ?fmi3SetUInt16
 """
-function fmi3SetUInt16(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3UInt16}, fmi3UInt16})
+function fmi3SetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt16}, fmi3UInt16})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -394,7 +401,7 @@ Get the values of an array of fmi3Int32 variables.
 
 For more information call ?fmi3GetInt32
 """
-function fmi3GetInt32(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -416,7 +423,7 @@ Get the values of an array of fmi3Int32 variables.
 
 For more information call ?fmi3GetInt32!
 """
-function fmi3GetInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Int32})
+function fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int32})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt32!(...): `vr` and `values` need to be the same length."
@@ -425,7 +432,7 @@ function fmi3GetInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Ar
     fmi3GetInt32!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int32)
+function fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int32)
     @assert false "fmi3GetInt32! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -436,7 +443,7 @@ Set the values of an array of fmi3Int32 variables.
 
 For more information call ?fmi3SetInt32
 """
-function fmi3SetInt32(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Int32}, fmi3Int32})
+function fmi3SetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int32}, fmi3Int32})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -453,7 +460,7 @@ Get the values of an array of fmi3UInt32 variables.
 
 For more information call ?fmi3GetUInt32
 """
-function fmi3GetUInt32(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -475,7 +482,7 @@ Get the values of an array of fmi3UInt32 variables.
 
 For more information call ?fmi3GetUInt32!
 """
-function fmi3GetUInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3UInt32})
+function fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt32})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt32!(...): `vr` and `values` need to be the same length."
@@ -484,7 +491,7 @@ function fmi3GetUInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::A
     fmi3GetUInt32!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetUInt32!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt32)
+function fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt32)
     @assert false "fmi3GetUInt32! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -495,7 +502,7 @@ Set the values of an array of fmi3UInt32 variables.
 
 For more information call ?fmi3SetUInt32
 """
-function fmi3SetUInt32(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3UInt32}, fmi3UInt32})
+function fmi3SetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt32}, fmi3UInt32})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -512,7 +519,7 @@ Get the values of an array of fmi3Int64 variables.
 
 For more information call ?fmi3GetInt64
 """
-function fmi3GetInt64(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -534,7 +541,7 @@ Get the values of an array of fmi3Int64 variables.
 
 For more information call ?fmi3GetInt64!
 """
-function fmi3GetInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Int64})
+function fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int64})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt64!(...): `vr` and `values` need to be the same length."
@@ -543,7 +550,7 @@ function fmi3GetInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Ar
     fmi3GetInt64!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int64)
+function fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Int64)
     @assert false "fmi3GetInt64! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -554,7 +561,7 @@ Set the values of an array of fmi3Int64 variables.
 
 For more information call ?fmi3SetInt64
 """
-function fmi3SetInt64(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Int64}, fmi3Int64})
+function fmi3SetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int64}, fmi3Int64})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -571,7 +578,7 @@ Get the values of an array of fmi3UInt64 variables.
 
 For more information call ?fmi3GetUInt64
 """
-function fmi3GetUInt64(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -593,7 +600,7 @@ Get the values of an array of fmi3UInt64 variables.
 
 For more information call ?fmi3GetUInt64!
 """
-function fmi3GetUInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3UInt64})
+function fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt64})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt64!(...): `vr` and `values` need to be the same length."
@@ -602,7 +609,7 @@ function fmi3GetUInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::A
     fmi3GetUInt64!(c, vr, nvr, values, nvr)
     nothing
 end
-function fmi3GetUInt64!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt64)
+function fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3UInt64)
     @assert false "fmi3GetUInt64! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -613,7 +620,7 @@ Set the values of an array of fmi3UInt64 variables.
 
 For more information call ?fmi3SetUInt64
 """
-function fmi3SetUInt64(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3UInt64}, fmi3UInt64})
+function fmi3SetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt64}, fmi3UInt64})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -630,7 +637,7 @@ Get the values of an array of fmi3Boolean variables.
 
 For more information call ?fmi3GetBoolean
 """
-function fmi3GetBoolean(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -652,7 +659,7 @@ Get the values of an array of fmi3Boolean variables.
 
 For more information call ?fmi3GetBoolean!
 """
-function fmi3GetBoolean!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Boolean})
+function fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Boolean})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetBoolean!(...): `vr` and `values` need to be the same length."
@@ -662,7 +669,7 @@ function fmi3GetBoolean!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::
 
     nothing
 end
-function fmi3GetBoolean!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Bool)
+function fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Bool)
     @assert false "fmi3GetBoolean! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -673,7 +680,7 @@ Set the values of an array of fmi3Boolean variables.
 
 For more information call ?fmi3SetBoolean
 """
-function fmi3SetBoolean(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{Bool}, Bool})
+function fmi3SetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -690,7 +697,7 @@ Get the values of an array of fmi3String variables.
 
 For more information call ?fmi3GetString
 """
-function fmi3GetString(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -714,7 +721,7 @@ Get the values of an array of fmi3String variables.
 
 For more information call ?fmi3GetString!
 """
-function fmi3GetString!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3String})
+function fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3String})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetString!(...): `vr` and `values` need to be the same length."
@@ -726,7 +733,7 @@ function fmi3GetString!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::A
     values[:] = unsafe_string.(vars)
     nothing
 end
-function fmi3GetString!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::String)
+function fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::String)
     @assert false "fmi3GetString! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -737,7 +744,7 @@ Set the values of an array of fmi3String variables.
 
 For more information call ?fmi3SetString
 """
-function fmi3SetString(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{String}, String})
+function fmi3SetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -755,7 +762,7 @@ Get the values of an array of fmi3Binary variables.
 
 For more information call ?fmi3GetBinary
 """
-function fmi3GetBinary(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -777,7 +784,7 @@ Get the values of an array of fmi3Binary variables.
 
 For more information call ?fmi3GetBinary!
 """
-function fmi3GetBinary!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Binary})
+function fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Binary})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetBinary!(...): `vr` and `values` need to be the same length."
@@ -786,7 +793,7 @@ function fmi3GetBinary!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::A
     valueSizes = Array{Csize_t}(undef, nvr)
     fmi3GetBinary!(c, vr, nvr, valueSizes, values, nvr)
 end
-function fmi3GetBinary!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Binary)
+function fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Binary)
     @assert false "fmi3GetBinary! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -797,7 +804,7 @@ Set the values of an array of fmi3Binary variables.
 
 For more information call ?fmi3SetBinary
 """
-function fmi3SetBinary(c::fmi3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{Array{Csize_t}, Csize_t}, values::Union{Array{fmi3Binary}, fmi3Binary})
+function fmi3SetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{AbstractArray{Csize_t}, Csize_t}, values::Union{AbstractArray{fmi3Binary}, fmi3Binary})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -815,7 +822,7 @@ Get the values of an array of fmi3Clock variables.
 
 For more information call ?fmi3GetClock
 """
-function fmi3GetClock(c::fmi3Instance, vr::fmi3ValueReferenceFormat)
+function fmi3GetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
     vr = prepareValueReference(c, vr)
 
@@ -837,7 +844,7 @@ Get the values of an array of fmi3Clock variables.
 
 For more information call ?fmi3GetClock!
 """
-function fmi3GetClock!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Array{fmi3Clock})
+function fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Clock})
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetClock!(...): `vr` and `values` need to be the same length."
@@ -846,7 +853,7 @@ function fmi3GetClock!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Ar
     fmi3GetClock!(c, vr, nvr, values)
     nothing
 end
-function fmi3GetClock!(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Clock)
+function fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi3Clock)
     @assert false "fmi3GetClock! is only possible for arrays of values, please use an array instead of a scalar."
 end
 
@@ -857,7 +864,7 @@ Set the values of an array of fmi3Clock variables.
 
 For more information call ?fmi3SetClock
 """
-function fmi3SetClock(c::fmi3Instance, vr::fmi3ValueReferenceFormat, values::Union{Array{fmi3Clock}, fmi3Clock})
+function fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Clock}, fmi3Clock})
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -874,7 +881,7 @@ Get the pointer to the current FMU state.
 
 For more information call ?fmi3GetFMUstate
 """
-function fmi3GetFMUState(c::fmi3Instance)
+function fmi3GetFMUState(c::FMU3Instance)
     state = fmi3FMUState()
     stateRef = Ref(state)
     fmi3GetFMUState!(c, stateRef)
@@ -883,13 +890,13 @@ function fmi3GetFMUState(c::fmi3Instance)
 end
 
 """
-function fmi3FreeFMUState(c::fmi3Instance, FMUstate::Ref{fmi3FMUState})
+function fmi3FreeFMUState(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
 
 Free the allocated memory for the FMU state.
 
 For more information call ?fmi3FreeFMUstate
 """
-function fmi3FreeFMUState!(c::fmi3Instance, state::fmi3FMUState)
+function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
     stateRef = Ref(state)
     fmi3FreeFMUState!(c, stateRef)
     state = stateRef[]
@@ -902,7 +909,7 @@ Returns the size of a byte vector the FMU can be stored in.
 
 For more information call ?fmi3SerzializedFMUstateSize
 """
-function fmi3SerializedFMUStateSize(c::fmi3Instance, state::fmi3FMUState)
+function fmi3SerializedFMUStateSize(c::FMU3Instance, state::fmi3FMUState)
     size = 0
     sizeRef = Ref(Csize_t(size))
     fmi3SerializedFMUStateSize!(c, state, sizeRef)
@@ -916,7 +923,7 @@ Serialize the data in the FMU state pointer.
 
 For more information call ?fmi3SerzializeFMUstate
 """
-function fmi3SerializeFMUState(c::fmi3Instance, state::fmi3FMUState)
+function fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
     size = fmi3SerializedFMUStateSize(c, state)
     serializedState = Array{fmi3Byte}(undef, size)
     fmi3SerializeFMUState!(c, state, serializedState, size)
@@ -930,7 +937,7 @@ Deserialize the data in the serializedState fmi3Byte field.
 
 For more information call ?fmi3DeSerzializeFMUstate
 """
-function fmi3DeSerializeFMUState(c::fmi3Instance, serializedState::Array{fmi3Byte})
+function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray{fmi3Byte})
     size = length(serializedState)
     state = fmi3FMUState()
     stateRef = Ref(state)
@@ -945,10 +952,10 @@ Computes directional derivatives.
 
 For more information call ?fmi3GetDirectionalDerivative
 """
-function fmi3GetDirectionalDerivative(c::fmi3Instance,
-                                      unknowns::Array{fmi3ValueReference},
-                                      knowns::Array{fmi3ValueReference},
-                                      seed::Array{fmi3Float64} = Array{fmi3Float64}([]))
+function fmi3GetDirectionalDerivative(c::FMU3Instance,
+                                      unknowns::AbstractArray{fmi3ValueReference},
+                                      knowns::AbstractArray{fmi3ValueReference},
+                                      seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
     sensitivity = zeros(fmi3Float64, length(unknowns))
 
     fmi3GetDirectionalDerivative!(c, unknowns, knowns, sensitivity, seed)
@@ -963,11 +970,11 @@ Computes directional derivatives.
 
 For more information call ?fmi3GetDirectionalDerivative
 """
-function fmi3GetDirectionalDerivative!(c::fmi3Instance,
-                                      unknowns::Array{fmi3ValueReference},
-                                      knowns::Array{fmi3ValueReference},
+function fmi3GetDirectionalDerivative!(c::FMU3Instance,
+                                      unknowns::AbstractArray{fmi3ValueReference},
+                                      knowns::AbstractArray{fmi3ValueReference},
                                       sensitivity::AbstractArray,
-                                      seed::Array{fmi3Float64}= Array{fmi3Float64}([]))
+                                      seed::AbstractArray{fmi3Float64}= Array{fmi3Float64}([]))
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
@@ -991,7 +998,7 @@ Computes directional derivatives.
 
 For more information call ?fmi3GetDirectionalDerivative
 """
-function fmi3GetDirectionalDerivative(c::fmi3Instance,
+function fmi3GetDirectionalDerivative(c::FMU3Instance,
                                       unknown::fmi3ValueReference,
                                       known::fmi3ValueReference,
                                       seed::fmi3Float64 = 1.0)
@@ -1006,7 +1013,7 @@ Computes adjoint derivatives.
 
 For more information call ?fmi3GetAdjointDerivative
 """
-function fmi3GetAdjointDerivative(c::fmi3Instance,
+function fmi3GetAdjointDerivative(c::FMU3Instance,
                                       unknowns::fmi3ValueReference,
                                       knowns::fmi3ValueReference,
                                       seed::fmi3Float64 = 1.0)
@@ -1021,10 +1028,10 @@ Computes adjoint derivatives.
 
 For more information call ?fmi3GetAdjointDerivative
 """
-function fmi3GetAdjointDerivative(c::fmi3Instance,
-                                      unknowns::Array{fmi3ValueReference},
-                                      knowns::Array{fmi3ValueReference},
-                                      seed::Array{fmi3Float64} = Array{fmi3Float64}([]))
+function fmi3GetAdjointDerivative(c::FMU3Instance,
+                                      unknowns::AbstractArray{fmi3ValueReference},
+                                      knowns::AbstractArray{fmi3ValueReference},
+                                      seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
     sensitivity = zeros(fmi3Float64, length(unknowns))
 
     fmi3GetAdjointDerivative!(c, unknowns, knowns, sensitivity, seed)
@@ -1039,11 +1046,11 @@ Computes adjoint derivatives.
 
 For more information call ?fmi3GetAdjointDerivative
 """
-function fmi3GetAdjointDerivative!(c::fmi3Instance,
-                                      unknowns::Array{fmi3ValueReference},
-                                      knowns::Array{fmi3ValueReference},
+function fmi3GetAdjointDerivative!(c::FMU3Instance,
+                                      unknowns::AbstractArray{fmi3ValueReference},
+                                      knowns::AbstractArray{fmi3ValueReference},
                                       sensitivity::AbstractArray,
-                                      seed::Array{fmi3Float64}= Array{fmi3Float64}([]))
+                                      seed::AbstractArray{fmi3Float64}= Array{fmi3Float64}([]))
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
@@ -1070,11 +1077,11 @@ the array order specifies the corresponding order of derivation of the variables
 
 For more information call ?fmi3GetOutputDerivatives
 """
-function fmi3GetOutputDerivatives(c::fmi3Instance, vr::fmi3ValueReferenceFormat, order::Array{Integer})
+function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat, order::AbstractArray{Integer})
     vr = prepareValueReference(c, vr)
     nvr = Csize_t(length(vr))
     values = Array{fmi3Float64}(undef, nvr)
-    fmi3GetOutputDerivatives!(c, vr, nvr, order, values, nvr)
+    fmi3GetOutputDerivatives!(c, vr, nvr, fmi3Int32.(order), values, nvr)
     values
 end
 
@@ -1088,7 +1095,7 @@ the array order specifies the corresponding order of derivation of the variables
 
 For more information call ?fmi3GetOutputDerivatives
 """
-function fmi3GetOutputDerivatives(c::fmi3Instance, vr::fmi3ValueReference, order::Integer)
+function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReference, order::Integer)
     nvr = Csize_t(1)
     values = Array{fmi3Float64}(undef, nvr)
     fmi3GetOutputDerivatives!(c, [vr], nvr, [order], values, nvr)
@@ -1102,7 +1109,7 @@ This function returns the number of continuous states.
 This function can only be called in Model Exchange. 
 For more information call ?fmi3GetNumberOfContinuousStates
 """
-function fmi3GetNumberOfContinuousStates(c::fmi3Instance)
+function fmi3GetNumberOfContinuousStates(c::FMU3Instance)
     size = 0
     sizeRef = Ref(Csize_t(size))
     fmi3GetNumberOfContinuousStates!(c, sizeRef)
@@ -1117,7 +1124,7 @@ This function returns the number of event indicators.
 This function can only be called in Model Exchange.
 For more information call ?fmi3GetNumberOfEventIndicators
 """
-function fmi3GetNumberOfEventIndicators(c::fmi3Instance)
+function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
     size = 0
     sizeRef = Ref(Csize_t(size))
     fmi3GetNumberOfEventIndicators!(c, sizeRef)
@@ -1131,7 +1138,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.2.10. Dependencies of Variables
 The number of dependencies of a given variable, which may change if structural parameters are changed, can be retrieved by calling the following function:
 For more information call ?fmi3GetNumberOfVariableDependencies
 """
-function fmi3GetNumberOfVariableDependencies(c::fmi3Instance, vr::Union{fmi3ValueReference, String})
+function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
     if typeof(vr) == String
         vr = fmi3String2ValueReference(c.fmu.modelDescription, vr)
     end
@@ -1148,7 +1155,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.2.10. Dependencies of Variables
 The actual dependencies (of type dependenciesKind) can be retrieved by calling the function fmi3GetVariableDependencies:
 For more information call ?fmi3GetVariableDependencies
 """
-function fmi3GetVariableDependencies(c::fmi3Instance, vr::Union{fmi3ValueReference, String})
+function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
     if typeof(vr) == String
         vr = fmi3String2ValueReference(c.fmu.modelDescription, vr)
     end
@@ -1170,7 +1177,7 @@ Return the new (continuous) state vector x.
 
 For more information call ?fmi3GetContinuousStates
 """
-function fmi3GetContinuousStates(c::fmi3Instance)
+function fmi3GetContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     x = zeros(fmi3Float64, nx)
     fmi3GetContinuousStates!(c, x, nx)
@@ -1184,7 +1191,7 @@ Return the new (continuous) state vector x.
 
 For more information call ?fmi3GetNominalsOfContinuousStates
 """
-function fmi3GetNominalsOfContinuousStates(c::fmi3Instance)
+function fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     x = zeros(fmi3Float64, nx)
     fmi3GetNominalsOfContinuousStates!(c, x, nx)
@@ -1198,7 +1205,7 @@ Set independent variable time and reinitialize chaching of variables that depend
 
 For more information call ?fmi3SetTime
 """
-function fmi3SetTime(c::fmi3Instance, time::Real)
+function fmi3SetTime(c::FMU3Instance, time::Real)
     fmi3SetTime(c, fmi3Float64(time))
 end
 
@@ -1209,7 +1216,7 @@ Set a new (continuous) state vector and reinitialize chaching of variables that 
 
 For more information call ?fmi3SetContinuousStates
 """
-function fmi3SetContinuousStates(c::fmi3Instance, x::Union{Array{Float32}, Array{Float64}})
+function fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
     nx = Csize_t(length(x))
     fmi3SetContinuousStates(c, Array{fmi3Float64}(x), nx)
 end
@@ -1221,7 +1228,7 @@ Compute state derivatives at the current time instant and for the current states
 
 For more information call ?fmi3GetContinuousDerivatives
 """
-function  fmi3GetContinuousStateDerivatives(c::fmi3Instance)
+function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     derivatives = zeros(fmi3Float64, nx)
     fmi3GetContinuousStateDerivatives!(c, derivatives, nx)
@@ -1235,7 +1242,7 @@ This function is called to signal a converged solution at the current super-dens
 
 For more information call ?fmi3UpdateDiscreteStates
 """
-function fmi3UpdateDiscreteStates(c::fmi3Instance)
+function fmi3UpdateDiscreteStates(c::FMU3Instance)
     discreteStatesNeedUpdate = fmi3True
     terminateSimulation = fmi3True
     nominalsOfContinuousStatesChanged = fmi3True
@@ -1268,7 +1275,7 @@ Returns the event indicators of the FMU.
 
 For more information call ?fmi3GetEventIndicators
 """
-function fmi3GetEventIndicators(c::fmi3Instance)
+function fmi3GetEventIndicators(c::FMU3Instance)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     eventIndicators = zeros(fmi3Float64, ni)
     fmi3GetEventIndicators!(c, eventIndicators, ni)
@@ -1284,7 +1291,7 @@ If terminateSimulation == fmi3True, the simulation shall be terminated
 
 For more information call ?fmi3CompletedIntegratorStep
 """
-function fmi3CompletedIntegratorStep(c::fmi3Instance,
+function fmi3CompletedIntegratorStep(c::FMU3Instance,
     noSetFMUStatePriorToCurrentPoint::fmi3Boolean)
     enterEventMode = fmi3Boolean(true)
     terminateSimulation = fmi3Boolean(true)
@@ -1307,7 +1314,7 @@ The model enters Event Mode.
 
 For more information call ?fmi3EnterEventMode
 """
-function fmi3EnterEventMode(c::fmi3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::Array{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
+function fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
     fmi3EnterEventMode(c, fmi3Boolean(stepEvent), fmi3Boolean(stateEvent), rootsFound, nEventIndicators, fmi3Boolean(timeEvent))
 end
 
@@ -1316,7 +1323,7 @@ Returns the start/default value for a given value reference.
 
 TODO: Add this command in the documentation.
 """
-function fmi3GetStartValue(c::fmi3Instance, vrs::fmi3ValueReferenceFormat)
+function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat)
 
     vrs = prepareValueReference(c, vrs)
 
@@ -1338,3 +1345,51 @@ function fmi3GetStartValue(c::fmi3Instance, vrs::fmi3ValueReferenceFormat)
         return starts 
     end
 end 
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences).
+"""
+function fmi3SampleDirectionalDerivative(c::FMU3Instance,
+                                       vUnknown_ref::AbstractArray{fmi3ValueReference},
+                                       vKnown_ref::AbstractArray{fmi3ValueReference},
+                                       steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+
+    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+# TODO should probably in FMI3_ext.jl
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+"""
+function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
+                                          vUnknown_ref::AbstractArray{fmi3ValueReference},
+                                          vKnown_ref::AbstractArray{fmi3ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+    
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi3GetFloat64(c, vKnown)
+
+        fmi3SetFloat64(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
+end
+

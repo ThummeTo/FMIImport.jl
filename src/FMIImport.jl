@@ -19,8 +19,8 @@ end
 export prepareValue, prepareValueReference
 
 # wildcards for how a user can pass a fmi[X]ValueReference
-fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol} 
-fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}} 
+fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
+fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
 ### FMI2 ###
@@ -34,7 +34,7 @@ include("FMI2_fmu_to_md.jl")
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
-export fmi2ComponentState, fmi2ComponentStateModelSetableFMUstate, fmi2ComponentStateModelUnderEvaluation, fmi2ComponentStateModelInitialized
+export fmi2ComponentState, fmi2ComponentStateModelSetableFMUstate, fmi2ComponentStateModelUnderEvaluation, fmi2ComponentStateModelInitialized # TODO might be imported from FMICOre
 export fmi2Instantiate, fmi2FreeInstance!, fmi2GetTypesPlatform, fmi2GetVersion
 export fmi2SetDebugLogging, fmi2SetupExperiment, fmi2EnterInitializationMode, fmi2ExitInitializationMode, fmi2Terminate, fmi2Reset
 export fmi2GetReal!, fmi2SetReal, fmi2GetInteger!, fmi2SetInteger, fmi2GetBoolean!, fmi2SetBoolean, fmi2GetString!, fmi2SetString
@@ -61,6 +61,7 @@ export fmi2SampleDirectionalDerivative!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
 export fmi2Get, fmi2Get!, fmi2Set 
 export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleDirectionalDerivative
+export fmi2GetContinuousStates
 
 # FMI2_md.jl
 export fmi2LoadModelDescription
@@ -98,8 +99,8 @@ export fmi3GetFMUState!, fmi3SetFMUState, fmi3FreeFMUState!, fmi3SerializedFMUSt
 export fmi3SetIntervalDecimal, fmi3SetIntervalFraction, fmi3GetIntervalDecimal!, fmi3GetIntervalFraction!, fmi3GetShiftDecimal!, fmi3GetShiftFraction!
 export fmi3ActivateModelPartition
 export fmi3GetNumberOfVariableDependencies!, fmi3GetVariableDependencies!
-export fmi3GetDirectionalDerivative!, fmi3GetAdjointDerivative!, fmi3GetOutputDerivatives!
-export fmi3EnterConfigurationMode, fmi3ExitConfigurationMode, fmi3GetNumberOfContinuousStates!, fmi3GetNumberOfEventIndicators!, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!
+export fmi3GetDirectionalDerivative!, fmi3GetAdjointDerivative!, fmi3GetOutputDerivatives
+export fmi3EnterConfigurationMode, fmi3ExitConfigurationMode, fmi3GetNumberOfContinuousStates, fmi3GetNumberOfEventIndicators, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!
 export fmi3EvaluateDiscreteStates, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3EnterStepMode
 export fmi3SetTime, fmi3SetContinuousStates, fmi3GetContinuousStateDerivatives, fmi3GetEventIndicators!, fmi3CompletedIntegratorStep!, fmi3EnterEventMode, fmi3DoStep!
 
@@ -112,15 +113,21 @@ export fmi3GetInt8, fmi3GetUInt8, fmi3GetInt16, fmi3GetUInt16, fmi3GetInt32, fmi
 export fmi3GetBoolean, fmi3GetString, fmi3GetBinary, fmi3GetClock
 export fmi3GetFMUState, fmi3SerializedFMUStateSize, fmi3SerializeFMUState, fmi3DeSerializeFMUState
 export fmi3GetDirectionalDerivative
+export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegratorStep
+
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
+export fmi3Get, fmi3Get!, fmi3Set 
+export fmi3SampleDirectionalDerivative!
+export fmi3GetJacobian, fmi3GetJacobian!, fmi3GetFullJacobian, fmi3GetFullJacobian!
 
 # FMI3_md.jl
 export fmi3LoadModelDescription
 export fmi3GetModelName, fmi3GetInstantiationToken, fmi3GetGenerationTool, fmi3GetGenerationDateAndTime, fmi3GetVariableNamingConvention
 export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution 
-export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUstate, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
+export fmi3GetDefaultStartTime, fmi3GetDefaultStopTime, fmi3GetDefaultTolerance, fmi3GetDefaultStepSize
+export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
 
 # FMI3_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`
@@ -129,11 +136,11 @@ export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUstate, fmi
 ###
 
 fmi2Struct = Union{FMU2, FMU2Component}
-fmi3Struct = Union{FMU3, FMU3Component}
+fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
 
 fmi2StructMD = Union{FMU2, FMU2Component, fmi2ModelDescription}
-fmi3StructMD = Union{FMU3, FMU3Component, fmi3ModelDescription}
+fmi3StructMD = Union{FMU3, FMU3Instance, fmi3ModelDescription}
 export fmi2StructMD, fmi3StructMD
 
 end # module
