@@ -873,6 +873,23 @@ function fmi2GetNames(fmu::FMU2; kwargs...)
 end
 
 """
+Returns a array of indices corresponding to value references `vrs`
+
+ToDo: update docstring format.
+"""
+function fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
+    indices = []
+
+    for i = 1:length(md.modelVariables)
+        if md.modelVariables[i].valueReference in vrs
+            push!(indices, i)
+        end
+    end
+
+    return indices
+end
+
+"""
 Returns a dict with (vrs, names of inputs)
 
 ToDo: update docstring format.
@@ -1036,7 +1053,7 @@ function fmi2GetNamesAndInitials(fmu::FMU2)
 end
 
 """
-Returns a dictionary of variables with their starting values
+Returns a dictionary of variables with their initial values (please note: initial != start)
 
 ToDo: update docstring format.
 """
@@ -1046,4 +1063,19 @@ end
 
 function fmi2GetNamesAndInitials(fmu::FMU2)
     fmi2GetNamesAndInitials(fmu.modelDescription)
+end
+
+"""
+Returns a dictionary of input variables with their starting values
+
+ToDo: update docstring format.
+"""
+function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
+
+    inputIndices = fmi2GetModelVariableIndices(md; vrs=md.inputValueReferences)
+    Dict(md.modelVariables[i].name => fmi2GetStartValue(md.modelVariables[i]) for i in inputIndices)
+end
+
+function fmi2GetInputNamesAndStarts(fmu::FMU2)
+    fmi2GetInputNamesAndStarts(fmu.modelDescription)
 end

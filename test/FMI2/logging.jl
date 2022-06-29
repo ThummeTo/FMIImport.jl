@@ -12,6 +12,7 @@ myFMU.executionConfig.assertOnWarning = true
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test comp != 0
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
@@ -36,6 +37,7 @@ comp = fmi2Instantiate!(myFMU; loggingOn=true, logStatusError=false)
 # assertOnError = myFMU.executionConfig.assertOnError
 # myFMU.executionConfig.assertOnError = false
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
@@ -60,6 +62,7 @@ end
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
+@info "The following warning is forced and not an issue:"
 open(joinpath(pwd(), "stdout"), "w") do out
     open(joinpath(pwd(), "stderr"), "w") do err
         redirect_stdout(out) do
