@@ -42,8 +42,8 @@ myFMU.executionConfig.assertOnWarning = true
 @test length(fmi2GetOutputNames(myFMU.modelDescription)) == 0
 @test length(fmi2GetOutputNames(myFMU)) == 0
 
-@test length(fmi2GetParameterNames(myFMU.modelDescription)) == 0
-@test length(fmi2GetParameterNames(myFMU)) == 0
+@test length(fmi2GetParameterNames(myFMU.modelDescription)) == 12
+@test fmi2GetParameterNames(myFMU) == ["fricScale", "s0", "v0", "fixed.s0", "spring.c", "spring.s_rel0", "mass.smax", "mass.smin", "mass.v_small", "mass.L", "mass.m", "mass.fexp"]
 
 @test length(fmi2GetStateNames(myFMU.modelDescription)) == 2
 @test length(fmi2GetStateNames(myFMU)) == 2
