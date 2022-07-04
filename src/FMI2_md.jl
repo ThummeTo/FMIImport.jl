@@ -174,7 +174,30 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
         name = node["name"]
         valueReference = parse(fmi2ValueReference, node["valueReference"])
 
-        scalarVariables[index] = fmi2ScalarVariable(name, valueReference)
+        causality = nothing
+        if haskey(node, "causality")
+            causality = fmi2StringToCausality(node["causality"])
+
+            if causality == fmi2CausalityOutput
+                push!(md.outputValueReferences, valueReference)
+            elseif causality == fmi2CausalityInput
+                push!(md.inputValueReferences, valueReference)
+            elseif causality == fmi2CausalityParameter
+                push!(md.parameterValueReferences, valueReference)
+            end
+        end
+
+        variability = nothing
+        if haskey(node, "variability")
+            variability = fmi2StringToVariability(node["variability"])
+        end
+
+        initial = nothing
+        if haskey(node, "initial")
+            initial = fmi2StringToInitial(node["initial"])
+        end
+
+        scalarVariables[index] = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
         
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)
@@ -182,21 +205,6 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
 
         if haskey(node, "description")
             scalarVariables[index].description = node["description"]
-        end
-        if haskey(node, "causality")
-            scalarVariables[index].causality = fmi2StringToCausality(node["causality"])
-
-            if scalarVariables[index].causality == fmi2CausalityOutput
-                push!(md.outputValueReferences, valueReference)
-            elseif scalarVariables[index].causality == fmi2CausalityInput
-                push!(md.inputValueReferences, valueReference)
-            end
-        end
-        if haskey(node, "variability")
-            scalarVariables[index].variability = fmi2StringToVariability(node["variability"])
-        end
-        if haskey(node, "initial")
-            scalarVariables[index].initial = fmi2StringToInitial(node["initial"])
         end
 
         # type node
