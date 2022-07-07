@@ -24,7 +24,7 @@ import FMICore: fmi3EnterConfigurationMode, fmi3ExitConfigurationMode
 import FMICore: fmi3GetNumberOfContinuousStates!, fmi3GetNumberOfEventIndicators!
 import FMICore: fmi3DoStep!, fmi3EnterStepMode
 import FMICore: fmi3SetTime, fmi3SetContinuousStates, fmi3EnterEventMode, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3CompletedIntegratorStep!
-import FMICore: fmi3GetContinuousStateDerivatives, fmi3GetEventIndicators!, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!, fmi3EvaluateDiscreteStates
+import FMICore: fmi3GetContinuousStateDerivatives!, fmi3GetEventIndicators!, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!, fmi3EvaluateDiscreteStates
 
 """
 Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
@@ -187,6 +187,7 @@ function fmi3EnterInitializationMode(c::FMU3Instance, toleranceDefined::fmi3Bool
     return status
 end
 
+# TODO if an FMU supports both ME and CS the next state will most likely be fmi3InstanceStateStepMode
 """
 Source: FMISpec3.0, Version D5ef1c1: 2.3.3. State: Initialization Mode
 
@@ -238,7 +239,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
 
 Is called by the environment to reset the FMU after a simulation run. The FMU goes into the same state as if fmi3InstantiateXXX would have been called.
 """
-function fmi3Reset(c::FMU3Instance)
+function fmi3Reset(c::FMU3Instance; soft::Bool = false)
     if c.state != fmi3InstanceStateTerminated && c.state != fmi3InstanceStateError
         if soft 
             return fmi3StatusOK
@@ -1009,7 +1010,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
 
 If the importer needs to change structural parameters, it must move the FMU into Configuration Mode using fmi3EnterConfigurationMode.
 """
-function fmi3EnterConfigurationMode(c::FMU3Instance) 
+function fmi3EnterConfigurationMode(c::FMU3Instance; soft::Bool=false) 
     if c.state != fmi3InstanceStateInstantiated && (c.state != fmi3InstanceStateStepMode && fmi3IsCoSimulation(c.fmu)) && (c.state != fmi3InstanceEventMode && fmi3IsModelExchange(c.fmu)) 
         if soft 
             return fmi3StatusOK
@@ -1036,7 +1037,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.6. State: Configuration Mode
 
 Exits the Configuration Mode and returns to state Instantiated.
 """
-function fmi3ExitConfigurationMode(c::FMU3Instance)
+function fmi3ExitConfigurationMode(c::FMU3Instance; soft::Bool = false)
     if c.state != fmi3InstanceStateConfigurationMode && c.state != fmi3InstanceStateReconfigurationMode
         if soft 
             return fmi3StatusOK
@@ -1178,7 +1179,7 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.5. State: Event Mode
 
 This function must be called to change from Event Mode into Step Mode in Co-Simulation (see 4.2.).
 """
-function fmi3EnterStepMode(c::FMU3Instance)
+function fmi3EnterStepMode(c::FMU3Instance; soft::Bool = false)
     if c.state != fmi3InstanceStateEventMode
         if soft 
             return fmi3StatusOK
@@ -1229,10 +1230,10 @@ Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 
 Compute first-oder state derivatives at the current time instant and for the current states.
 """
-function fmi3GetContinuousStateDerivatives(c::FMU3Instance,
+function fmi3GetContinuousStateDerivatives!(c::FMU3Instance,
                             derivatives::AbstractArray{fmi3Float64},
                             nx::Csize_t)
-    status = fmi3GetContinuousStateDerivatives(c.fmu.cGetContinuousStateDerivatives,
+    status = fmi3GetContinuousStateDerivatives!(c.fmu.cGetContinuousStateDerivatives,
           c.compAddr, derivatives, nx)
     checkStatus(c, status)
     status

@@ -294,7 +294,6 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
 
         index += 1
     end
-    md.numberOfContinuousStates = length(md.stateValueReferences)
     modelVariables
 end
 
@@ -346,6 +345,7 @@ function parseModelStructure(nodes::EzXML.Node, md::fmi3ModelDescription)
             @warn "Invalid entry for node `$(node.name)` in `ModelStructure`, missing entry `valueReference`."
         end
     end
+    md.numberOfContinuousStates = length(md.stateValueReferences)
 end
 
 function parseDependencies(node::EzXML.Node)

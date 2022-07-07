@@ -26,7 +26,7 @@ function fmi3GetVariableNamingConvention(fmu::FMU3)
     fmi3GetVariableNamingConvention(fmu.modelDescription)
 end
 
-function fmi3GetNumberOfEventIndicators(fmu::FMU3)
+function fmi3GetNumberOfEventIndicatorsMD(fmu::FMU3)
     fmi3GetNumberOfEventIndicators(fmu.modelDescription)
 end
 

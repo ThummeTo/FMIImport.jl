@@ -73,7 +73,7 @@ end
     if Sys.iswindows()
         @info "Automated testing is supported on Windows."
         for exportingTool in exportingToolsWindows
-            runtestsFMI2(exportingTool)
+            # runtestsFMI2(exportingTool)
             runtestsFMI3(exportingTool)
         end
     elseif Sys.islinux()

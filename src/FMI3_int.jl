@@ -1256,7 +1256,7 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance)
     refnETD = Ref(nextEventTimeDefined)
     refnET = Ref(nextEventTime)
 
-    fmi3UpdateDiscreteStates!(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET)
+    fmi3UpdateDiscreteStates(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET)
 
     discreteStatesNeedUpdate = refdS[]
     terminateSimulation = reftS[]

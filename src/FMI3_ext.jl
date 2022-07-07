@@ -337,8 +337,8 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
     else
         
         instance = FMU3Instance(compAddr, fmu)
-        instance.z_prev  = zeros(fmi3Float64, fmi3GetEventIndicators(fmu.modelDescription))
-        instance.rootsFound  = zeros(fmi3Int32, fmi3GetEventIndicators(fmu.modelDescription))
+        instance.z_prev  = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
+        instance.rootsFound  = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
         instance.stateEvent  = fmi3False
         instance.timeEvent   = fmi3False
         instance.stepEvent   = fmi3False

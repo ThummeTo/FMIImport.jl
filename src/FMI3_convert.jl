@@ -89,3 +89,84 @@ end
 function fmi3ValueReferenceToString(fmu::FMU3, reference::Union{fmi3ValueReference, Int64})
     fmi3ValueReferenceToString(fmu.modelDescription, reference)
 end
+
+function fmi3GetSolutionState(solution::FMU3Solution, vr::fmi3ValueReferenceFormat; isIndex::Bool=false)
+ 
+    index = 0
+
+    if isIndex
+        index = vr 
+    else 
+        ignore_derivatives() do
+            vr = prepareValueReference(solution.fmu, vr)[1]
+        
+            if solution.states !== nothing
+                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
+                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
+                end
+            end
+           
+        end # ignore_derivatives
+    end
+
+    if index > 0 
+        return collect(u[index] for u in solution.states.u)
+    end
+
+    return nothing
+end
+
+function fmi3GetSolutionValue(solution::FMU3Solution, vr::fmi3ValueReferenceFormat; isIndex::Bool=false)
+
+    index = 0
+
+    if isIndex
+        index = vr 
+    else 
+        ignore_derivatives() do
+            vr = prepareValueReference(solution.fmu, vr)[1]
+        
+            if solution.states !== nothing
+                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
+                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
+                end
+            end
+
+            if index > 0 
+                return collect(u[index] for u in solution.states.u)
+            end
+        
+            if solution.values !== nothing
+                for i in 1:length(solution.valueReferences)
+                    if solution.valueReferences[i] == vr
+                        index = i 
+                        break 
+                    end
+                end
+            end
+           
+        end # ignore_derivatives
+    end
+
+    if index > 0 
+        return collect(v[index] for v in solution.values.saveval)
+    end
+
+    return nothing
+end
+
+function fmi3GetSolutionTime(solution::FMU3Solution)
+    if solution.states !== nothing 
+        return solution.states.t
+    elseif solution.values !== nothing 
+        return solution.values.t
+    else
+        return nothing
+    end
+end
