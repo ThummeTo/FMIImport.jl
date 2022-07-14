@@ -11,16 +11,28 @@ using ZipFile
 import Downloads
 
 """
+
+   fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
+
 Create a copy of the .fmu file as a .zip folder and unzips it.
 Returns the paths to the zipped and unzipped folders.
 
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+# Arguments
+- `pathToFMU::String`: The folder path to the .zip folder.
+
+# Keywords
+- `unpackPath=nothing`: Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+- `cleanup=true`:
+
+# Returns
+- `unzippedAbsPath::String`: Contains the Path to the uzipped Folder.
+- `zipAbsPath::String`: Contains the Path to the zipped Folder.
 """
 function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
     fileNameExt = basename(pathToFMU)
     (fileName, fileExt) = splitext(fileNameExt)
-        
+
     if unpackPath == nothing
         # cleanup=true leads to issues with automatic testing on linux server.
         unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
@@ -60,7 +72,7 @@ function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
                 mkpath(dirname(fileAbsPath))
 
                 numBytes = write(fileAbsPath, read(f))
-                
+
                 if numBytes == 0
                     @info "fmi2Unzip(...): Written file `$(f.name)`, but file is empty."
                 end
@@ -91,8 +103,17 @@ function dlsym_opt(libHandle, symbol)
 end
 
 """
+
+   fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
+
 Sets the properties of the fmu by reading the modelDescription.xml.
 Retrieves all the pointers of binary functions.
+
+# Arguments
+- `pathToFMU::String`: The folder path to the .fmu file.
+
+# Keywords
+-
 
 Returns the instance of the FMU struct.
 
@@ -120,8 +141,8 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
     fmu.modelName = fmu.modelDescription.modelName
     fmu.instanceName = fmu.modelDescription.modelName
-    
-    if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS) 
+
+    if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS)
         fmu.type = fmi2TypeCoSimulation::fmi2Type
     elseif (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
         fmu.type = fmi2TypeModelExchange::fmi2Type
@@ -139,17 +160,17 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     pathToBinary = ""
 
     directories = []
-    
+
     fmuExt = ""
     osStr = ""
 
     juliaArch = Sys.WORD_SIZE
     @assert (juliaArch == 64 || juliaArch == 32) "fmi2Load(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
-        
+
     if Sys.iswindows()
         if juliaArch == 64
             directories = [joinpath("binaries", "win64"), joinpath("binaries","x86_64-windows")]
-        else 
+        else
             directories = [joinpath("binaries", "win32"), joinpath("binaries","i686-windows")]
         end
         osStr = "Windows"
@@ -157,7 +178,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     elseif Sys.islinux()
         if juliaArch == 64
             directories = [joinpath("binaries", "linux64"), joinpath("binaries", "x86_64-linux")]
-        else 
+        else
             directories = []
         end
         osStr = "Linux"
@@ -165,7 +186,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     elseif Sys.isapple()
         if juliaArch == 64
             directories = [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
-        else 
+        else
             directories = []
         end
         osStr = "Mac"
@@ -197,8 +218,8 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
 
     fmu.binaryPath = pathToBinary
     loadBinary(fmu)
-   
-    # dependency matrix 
+
+    # dependency matrix
     # fmu.dependencies
 
     fmu
@@ -292,13 +313,13 @@ For more information call ?fmi2Instantiate
 - `loggingOn` if the FMU should log and display function calls (default=`false`)
 - `externalCallbacks` if an external DLL should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
 - `logStatusOK` whether to log status of kind `fmi2OK` (default=`true`)
-- `logStatusWarning whether to log status of kind `fmi2Warning` (default=`true`)
-- `logStatusDiscard whether to log status of kind `fmi2Discard` (default=`true`)
-- `logStatusError whether to log status of kind `fmi2Error` (default=`true`)
-- `logStatusFatal whether to log status of kind `fmi2Fatal` (default=`true`)
-- `logStatusPending whether to log status of kind `fmi2Pending` (default=`true`)
+- `logStatusWarning` whether to log status of kind `fmi2Warning` (default=`true`)
+- `logStatusDiscard` whether to log status of kind `fmi2Discard` (default=`true`)
+- `logStatusError` whether to log status of kind `fmi2Error` (default=`true`)
+- `logStatusFatal` whether to log status of kind `fmi2Fatal` (default=`true`)
+- `logStatusPending` whether to log status of kind `fmi2Pending` (default=`true`)
 """
-function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -326,7 +347,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
             fmu.callbackLibHandle = dlopen(cbLibPath)
         end
         ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
-    end 
+    end
     ptrAllocateMemory = @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
     ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
     ptrStepFinished = C_NULL # ToDo
@@ -348,14 +369,14 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
     for c in fmu.components
         if c.compAddr == compAddr
             component = c
-            break 
+            break
         end
     end
 
     if component != nothing
         @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
-        component = FMU2Component(compAddr, fmu) 
+        component = FMU2Component(compAddr, fmu)
         component.jacobianUpdate! = fmi2GetJacobian!
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
@@ -364,7 +385,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         if pushComponents
             push!(fmu.components, component)
         end
-    end 
+    end
 
     component
 end
@@ -433,12 +454,12 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
-        if steps === nothing 
+        if steps === nothing
             # smaller than 1e-6 leads to issues
             step = max(2.0 * eps(Float32(origValue)), 1e-6)
         else
             step = steps[i]
-        end 
+        end
 
         fmi2SetReal(c, vKnown, origValue - step)
         negValues = fmi2GetReal(c, vUnknown_ref)
@@ -463,13 +484,13 @@ Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, 
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD).
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetJacobian(comp::FMU2Component, 
-                         rdx::AbstractArray{fmi2ValueReference}, 
-                         rx::AbstractArray{fmi2ValueReference}; 
+function fmi2GetJacobian(comp::FMU2Component,
+                         rdx::AbstractArray{fmi2ValueReference},
+                         rx::AbstractArray{fmi2ValueReference};
                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetJacobian!(mat, comp, rdx, rx; steps=steps)
@@ -481,14 +502,14 @@ Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, s
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD).
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real}, 
-                          comp::FMU2Component, 
-                          rdx::AbstractArray{fmi2ValueReference}, 
-                          rx::AbstractArray{fmi2ValueReference}; 
+function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
+                          comp::FMU2Component,
+                          rdx::AbstractArray{fmi2ValueReference},
+                          rx::AbstractArray{fmi2ValueReference};
                           steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
@@ -496,7 +517,7 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))
         return nothing
-    end 
+    end
 
     ddsupported = fmi2ProvidesDirectionalDerivative(comp.fmu)
 
@@ -504,7 +525,7 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
     #depMtx = fmi2GetDependencies(fmu)
     rdx_inds = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
     rx_inds  = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
-    
+
     for i in 1:length(rx)
 
         sensitive_rdx_inds = 1:length(rdx)
@@ -523,22 +544,22 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
         if length(sensitive_rdx) > 0
             if ddsupported
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                #try 
+                #try
                     fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
                 #catch e
                 #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
                 #end
-            else 
+            else
                 # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                #try 
+                #try
                     fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                #catch e 
+                #catch e
                 #    jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
                 #end
             end
         end
     end
-     
+
     return nothing
 end
 
@@ -551,9 +572,9 @@ No performance optimization, for an optimized version use `fmi2GetJacobian`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetFullJacobian(comp::FMU2Component, 
-                             rdx::AbstractArray{fmi2ValueReference}, 
-                             rx::AbstractArray{fmi2ValueReference}; 
+function fmi2GetFullJacobian(comp::FMU2Component,
+                             rdx::AbstractArray{fmi2ValueReference},
+                             rx::AbstractArray{fmi2ValueReference};
                              steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     mat = zeros(fmi2Real, length(rdx), length(rx))
     fmi2GetFullJacobian!(mat, comp, rdx, rx; steps=steps)
@@ -569,10 +590,10 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 
 If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 """
-function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real}, 
-                              comp::FMU2Component, 
-                              rdx::AbstractArray{fmi2ValueReference}, 
-                              rx::AbstractArray{fmi2ValueReference}; 
+function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
+                              comp::FMU2Component,
+                              rdx::AbstractArray{fmi2ValueReference},
+                              rx::AbstractArray{fmi2ValueReference};
                               steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
     @assert size(jac) == (length(rdx),length(rx)) "fmi2GetFullJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."
 
@@ -581,7 +602,7 @@ function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))
         return nothing
-    end 
+    end
 
     if fmi2ProvidesDirectionalDerivative(comp.fmu)
         for i in 1:length(rx)
@@ -606,7 +627,7 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
 
-        if mv._Real != nothing 
+        if mv._Real != nothing
             #@assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi2GetReal(comp, vr)
         elseif mv._Integer != nothing
@@ -620,7 +641,7 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
             dstArray[i] = fmi2GetString(comp, vr)
         elseif mv._Enumeration != nothing
             @warn "fmi2Get!(...): Currently not implemented for fmi2Enum."
-        else 
+        else
             @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
     end
@@ -663,7 +684,7 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
                 retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
             elseif mv._Enumeration != nothing
                 @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
-            else 
+            else
                 @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
             end
 
@@ -685,29 +706,29 @@ function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceForm
     starts = []
 
     for vr in vrs
-        mvs = fmi2ModelVariablesForValueReference(md, vr) 
+        mvs = fmi2ModelVariablesForValueReference(md, vr)
 
         if length(mvs) == 0
             @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
         end
-    
+
         push!(starts, fmi2GetStartValue(mvs[1]) )
     end
 
     if length(vrs) == 1
         return starts[1]
     else
-        return starts 
+        return starts
     end
-end 
+end
 
 function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
     fmi2GetStartValue(fmu.modelDescription, vrs)
-end 
+end
 
 function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
     fmi2GetStartValue(c.fmu, vrs)
-end 
+end
 
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
     if mv._Real != nothing
@@ -720,7 +741,7 @@ function fmi2GetStartValue(mv::fmi2ScalarVariable)
         return mv._String.start
     elseif mv._Enumeration != nothing
         return mv._Enumeration.start
-    else 
+    else
         @assert false "fmi2GetStartValue(...): Variable $(mv) has no data type."
     end
 end
@@ -733,10 +754,10 @@ ToDo: update docstring format.
 function fmi2GetUnit(mv::fmi2ScalarVariable)
     if mv._Real != nothing
         return mv._Real.unit
-    else 
-        return nothing 
-    end 
-end 
+    else
+        return nothing
+    end
+end
 
 """
 Returns the `inital` entry of the corresponding model variable.
@@ -745,4 +766,4 @@ ToDo: update docstring format.
 """
 function fmi2GetInitial(mv::fmi2ScalarVariable)
     return mv.initial
-end 
+end
