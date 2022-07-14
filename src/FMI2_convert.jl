@@ -189,7 +189,7 @@ end
 
    fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-???
+Returns the Solution values.
 
 # Arguments
 - `solution::FMU2Solution`:
@@ -197,7 +197,9 @@ end
 - `isIndex::Bool=false`:
 
 # Return
--`nothing`
+- If `isIndex = false` the function returns an array which contains the solution states till the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat.
+- If `isIndex = true` the function return an array which contains the solution values till the spezific solution element ("index").
+- If no solution element ("index = 0") is found `nothing` is returned.
 
 """
 
@@ -234,16 +236,17 @@ end
 
    fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-If `isIndex = false` the function returns an array which contains the solution states till the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat.
-If `isIndex = true`
+Returns the Solution values.
+
 # Arguments
 - `solution::FMU2Solution`:
 - `vr::fmi2ValueReferenceFormat`:
 - `isIndex::Bool=false`:
 
 # Return
-- `::Array{}`
--`nothing`: If no
+- If `isIndex = false` the function returns an array which contains the solution states till the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat.
+- If `isIndex = true` the function return an array which contains the solution values till the spezific solution element ("index").
+- If no solution element ("index = 0") is found `nothing` is returned.
 
 """
 
