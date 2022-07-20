@@ -43,15 +43,15 @@ typedef enum
     fmi2Pending
 } fmi2Status;
 
-void DLL_EXPORT logger(fmi2ComponentEnvironment componentEnvironment,
+DLL_EXPORT void logger(fmi2ComponentEnvironment componentEnvironment,
                        fmi2String instanceName,
                        fmi2Status status,
                        fmi2String category,
                        fmi2String message, ...);
-void* DLL_EXPORT allocateMemory(size_t nobj,
+DLL_EXPORT void* allocateMemory(size_t nobj,
                                 size_t size);
-void DLL_EXPORT freeMemory(void* obj);
-void DLL_EXPORT stepFinished(fmi2ComponentEnvironment componentEnvironment,
+DLL_EXPORT void freeMemory(void* obj);
+DLL_EXPORT void stepFinished(fmi2ComponentEnvironment componentEnvironment,
                              fmi2Status status);
 
 #ifdef __cplusplus
