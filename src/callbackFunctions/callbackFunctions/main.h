@@ -6,18 +6,25 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include <windows.h>
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <stdio.h>
+#endif
 
 /*  To use this exported function of dll, include this header
  *  in your project.
  */
 
-#ifdef BUILD_DLL
-    #define DLL_EXPORT __declspec(dllexport)
+#ifdef _WIN32
+    #ifdef BUILD_DLL
+        #define DLL_EXPORT __declspec(dllexport)
+    #else
+        #define DLL_EXPORT __declspec(dllimport)
+    #endif
 #else
-    #define DLL_EXPORT __declspec(dllimport)
+    #define DLL_EXPORT
 #endif
-
 
 #ifdef __cplusplus
 extern "C"
