@@ -58,3 +58,14 @@ jobs:
         with:
           name: callbackFunctions-mac-binaries
           path: src/callbackFunctions/binaries/darwin64/
+
+  commit-callbackFunctions:
+    needs: build-callbackFunctions
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Auto commit"
+        if: ${{ matrix.os == 'ubuntu-latest'}}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update callbackFunctions
+          push_options: '--force-with-lease'
