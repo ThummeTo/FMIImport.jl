@@ -1,21 +1,43 @@
-![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png "FMI.jl Logo")
+![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png?raw=true  "FMI.jl Logo")
 # FMIImport.jl
 
 ## What is FMIImport.jl?
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) implements the import functionalities of the FMI-standard ([fmi-standard.org](http://fmi-standard.org/)) for the Julia programming language. 
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl).
 
-[![CI Testing](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions)
+
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIImport.jl/dev) 
+[![Run Tests](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml)
+[![Build Docs](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIImport.jl)
+[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
 ## How can I use FMIImport.jl?
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) is part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) might be the right way to go. You can install it via:
-1. open a Julia-Command-Window, activate your preferred environment
-1. goto package manager using ```]```
-1. type ```add FMIImport```
+1. Open a Julia-REPL, activate your preferred environment.
+1. Goto Package-Manager (if not already), install FMIImport.jl.
+    ```julia
+    julia> ]
+
+    (@v1.6) pkg> add FMIImport
+    ```
+
+    If you want to check that everything works correctly, you can run the tests bundled with FMIImport.jl:
+    ```julia
+    julia> using Pkg
+
+    julia> Pkg.test("FMIImport")
+    ```
+
+    Additionally, you can check the version of FMIImport.jl that you have installed with the ```status``` command.
+    ```julia
+    julia> ]
+    (@v1.6) pkg> status FMIImport
+    ```
+1. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
 
 ## What FMI.jl-Library should I use?
-![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png "FMI.jl Family")
+![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
 To keep dependencies nice and clean, the original package [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) had been split into new packages:
 - [*FMI.jl*](https://github.com/ThummeTo/FMI.jl): High level loading, manipulating, saving or building entire FMUs from scratch
 - [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl): Importing FMUs into Julia
