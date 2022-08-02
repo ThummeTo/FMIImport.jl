@@ -1,7 +1,13 @@
-name: callbackFunctions.yml
+name: CallbackFunctions
 
-on: [pull_request, workflow_dispatch]
-
+on: 
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/callbackFunctions/**'
+    
 jobs:
   build-callbackFunctions:
     runs-on: ${{ matrix.os }}
@@ -16,7 +22,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Configure CMake
         run:  cmake -S ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions -B ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
@@ -37,21 +43,18 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: callbackFunctions-win-binaries
-          path: |
-            src/callbackFunctions/binaries/win64/
+          path: src/callbackFunctions/binaries/win64/
 
       - name: Archive production artifacts (linux)
         if: success() && matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v3
         with:
           name: callbackFunctions-linux-binaries
-          path: |
-            src/callbackFunctions/binaries/linux64/
+          path: src/callbackFunctions/binaries/linux64/
 
       - name: Archive production artifacts (darwin)
         if: success() && matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v3
         with:
           name: callbackFunctions-mac-binaries
-          path: |
-            src/callbackFunctions/binaries/darwin64/
+          path: src/callbackFunctions/binaries/darwin64/
