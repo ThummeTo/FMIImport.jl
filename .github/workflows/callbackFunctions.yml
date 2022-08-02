@@ -66,8 +66,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Download all artifacts
+      - name: Download windows binaries
         uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-win-binaries
+          path: ${{ github.workspace }}
+
+      - name: Download linux binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-linux-binaries
+          path: ${{ github.workspace }}
+
+      - name: Download darwin binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-mac-binaries
+          path: ${{ github.workspace }}
 
       - name: "Auto commit"
         if: ${{ matrix.os == 'ubuntu-latest'}}
