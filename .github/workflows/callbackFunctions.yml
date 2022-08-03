@@ -1,0 +1,88 @@
+name: CallbackFunctions
+
+on: 
+  pull_request:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/callbackFunctions/**'
+    
+jobs:
+  build-callbackFunctions:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      BUILD_TYPE: RelWithDebInfo
+      CMAKE_SOURCE_DIR: ${{github.workspace}}/src/callbackFunctions
+      CMAKE_INSTALL_DIR: ${{github.workspace}}/src/callbackFunctions
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Configure CMake
+        run:  cmake -S ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions -B ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build C++ Sources
+        run:  cmake --build ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build --config ${{env.BUILD_TYPE}} --target install
+
+      - name: Test callback function (Windows)
+        if: matrix.os == 'windows-latest'
+        run: ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build/${{env.BUILD_TYPE}}/test.exe
+
+      - name: Test callback function (Unix)
+        if: matrix.os != 'windows-latest'
+        run: ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build/test
+
+      - name: Archive production artifacts (win)
+        if: success() && matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: callbackFunctions-win-binaries
+          path: src/callbackFunctions/binaries/win64/
+
+      - name: Archive production artifacts (linux)
+        if: success() && matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: callbackFunctions-linux-binaries
+          path: src/callbackFunctions/binaries/linux64/
+
+      - name: Archive production artifacts (darwin)
+        if: success() && matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v3
+        with:
+          name: callbackFunctions-mac-binaries
+          path: src/callbackFunctions/binaries/darwin64/
+
+  commit-callbackFunctions:
+    needs: build-callbackFunctions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Download windows binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-win-binaries
+
+      - name: Download linux binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-linux-binaries
+
+      - name: Download darwin binaries
+        uses: actions/download-artifact@v3
+        with:
+          name: callbackFunctions-mac-binaries
+
+      - name: "Auto commit"
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update callbackFunctions
+          push_options: '--force-with-lease'
