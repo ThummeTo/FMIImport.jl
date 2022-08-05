@@ -70,16 +70,19 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: callbackFunctions-win-binaries
+          path: src/callbackFunctions/binaries/win64/
 
       - name: Download linux binaries
         uses: actions/download-artifact@v3
         with:
           name: callbackFunctions-linux-binaries
+          path: src/callbackFunctions/binaries/linux64/
 
       - name: Download darwin binaries
         uses: actions/download-artifact@v3
         with:
           name: callbackFunctions-mac-binaries
+          path: src/callbackFunctions/binaries/darwin64/
 
       - name: "Auto commit"
         uses: stefanzweifel/git-auto-commit-action@v4
