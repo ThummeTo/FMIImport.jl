@@ -311,7 +311,7 @@ For more information call ?fmi2Instantiate
 # Keywords
 - `visible` if the FMU should be started with graphic interface, if supported (default=`false`)
 - `loggingOn` if the FMU should log and display function calls (default=`false`)
-- `externalCallbacks` if an external DLL should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `externalCallbacks` if an external shared library should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
 - `logStatusOK` whether to log status of kind `fmi2OK` (default=`true`)
 - `logStatusWarning` whether to log status of kind `fmi2Warning` (default=`true`)
 - `logStatusDiscard` whether to log status of kind `fmi2Discard` (default=`true`)
@@ -333,9 +333,18 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
     ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{FMU2ComponentEnvironment}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
-            @assert Sys.iswindows() && Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for Windows 64-bit."
+            @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
 
-            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries", "win64", "callbackFunctions.dll")
+            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+            if Sys.iswindows()
+                cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+            elseif Sys.islinux()
+                cbLibPath = joinpath(cbLibPath, "linux64", "libcallbackFunctions.so")
+            elseif Sys.isapple()
+                cbLibPath = joinpath(cbLibPath, "darwin64", "libcallbackFunctions.dylib")
+            else
+                @error "Unsupported OS"
+            end
 
             # check permission to execute the DLL
             perm = filemode(cbLibPath)
