@@ -1,4 +1,4 @@
-#
+ #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -22,11 +22,13 @@ Returns the paths to the zipped and unzipped folders.
 
 # Keywords
 - `unpackPath=nothing`: Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
-- `cleanup=true`:
+- `cleanup=true`: The cleanup option controls whether the temporary directory is automatically deleted when the process exits.
 
 # Returns
 - `unzippedAbsPath::String`: Contains the Path to the uzipped Folder.
 - `zipAbsPath::String`: Contains the Path to the zipped Folder.
+
+See also [`mktempdir`](https://docs.julialang.org/en/v1/base/file/#Base.Filesystem.mktempdir-Tuple{AbstractString}).
 """
 function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
@@ -113,11 +115,14 @@ Retrieves all the pointers of binary functions.
 - `pathToFMU::String`: The folder path to the .fmu file.
 
 # Keywords
--
+- `unpackPath=nothing`: Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+- `type=nothing`: Defines whether a Co-Simulation or Model Exchange is present
+- `cleanup=true`: The cleanup option controls whether the temporary directory is automatically deleted when the process exits.
 
-Returns the instance of the FMU struct.
+# Returns
+- Returns the instance of the FMU struct.
 
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+See also .
 """
 function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
     # Create uninitialized FMU
@@ -302,22 +307,31 @@ end
 """
 TODO: FMI specification reference.
 
+    function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+                          logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+
 Create a new instance of the given fmu, adds a logger if logginOn == true.
-
-Returns the instance of a new FMU component.
-
-For more information call ?fmi2Instantiate
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 
 # Keywords
-- `visible` if the FMU should be started with graphic interface, if supported (default=`false`)
-- `loggingOn` if the FMU should log and display function calls (default=`false`)
-- `externalCallbacks` if an external shared library should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
-- `logStatusOK` whether to log status of kind `fmi2OK` (default=`true`)
-- `logStatusWarning` whether to log status of kind `fmi2Warning` (default=`true`)
-- `logStatusDiscard` whether to log status of kind `fmi2Discard` (default=`true`)
-- `logStatusError` whether to log status of kind `fmi2Error` (default=`true`)
-- `logStatusFatal` whether to log status of kind `fmi2Fatal` (default=`true`)
-- `logStatusPending` whether to log status of kind `fmi2Pending` (default=`true`)
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi2Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushComponents::Bool = true`: Defines if the fmu components should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi2OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi2Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi2Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi2Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi2Fatal` (default=`true`)
+- `logStatusPending::Bool=true` whether to log status of kind `fmi2Pending` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU component.
+
+See also [`fmi2Instantiate`](#@ref).
 """
 function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
@@ -400,7 +414,13 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
 end
 
 """
+
+   fmi2Reload(fmu::FMU2)
+
 Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 """
 function fmi2Reload(fmu::FMU2)
     dlclose(fmu.libHandle)
@@ -408,9 +428,15 @@ function fmi2Reload(fmu::FMU2)
 end
 
 """
-Unload a FMU.
 
+   function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
+
+Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `cleanUp::Bool= true`: Defines if the file, link, or empty directory should be deleted.
 """
 function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 
@@ -434,7 +460,19 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 end
 
 """
+
+    fmi2SampleDirectionalDerivative(c::FMU2Component,
+                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
+                                       vKnown_ref::AbstractArray{fmi2ValueReference},
+                                       steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
 This function samples the directional derivative by manipulating corresponding values (central differences).
+
+# Arguments
+`c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vUnknown_ref::AbstractArray{fmi2ValueReference}`:
+- `vKnown_ref::AbstractArray{fmi2ValueReference}`:
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`:
 """
 function fmi2SampleDirectionalDerivative(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
