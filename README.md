@@ -17,23 +17,24 @@
 
 1\. Open a Julia-REPL, activate your preferred environment.
 
-2\. Goto Package-Manager (if not already), install FMIImport.jl.
+2\. Goto Package-Manager, activate your preferred environment (if not already) and install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
 julia> ]
 
 (@v1.6) pkg> add FMIImport
 ```
 
-(3)\. If you want to check that everything works correctly, you can run the tests bundled with FMIImport.jl:
+(3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
 julia> ]
 
 (@v1.6) pkg> test FMIImport
 ```
 
-(4)\. Additionally, you can check the version of FMIImport.jl that you have installed with the ```status``` command.
+(4)\. Additionally, you can check the version of [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) that you have installed with the ```status``` command.
 ```julia-repl
 julia> ]
+
 (@v1.6) pkg> status FMIImport
 ```
 
