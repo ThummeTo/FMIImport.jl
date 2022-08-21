@@ -17,7 +17,7 @@
 
 1\. Open a Julia-REPL, activate your preferred environment.
 
-2\. Goto Package-Manager, activate your preferred environment (if not already) and install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+2\. Go to Package-Manager (if not already) and install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
 julia> ]
 

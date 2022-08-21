@@ -9,6 +9,7 @@ on:
       - 'src/**'
       - 'test/**'
       - '.github/**'
+      - 'Project.toml'
 
 jobs:
   test:
