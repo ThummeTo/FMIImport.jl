@@ -953,11 +953,11 @@ Returns the start/default value for a given value reference.
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Real.start`: start/default value for a given ScalarVariable. In this case reprsenting a variable of primitive type Real.   
-- `mv._Integer.start`: start/default value for a given ScalarVariable. In this case reprsenting a variable of primitive type Integer.
-- `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case reprsenting a variable of primitive type Boolean.
-- `mv._String.start`: start/default value for a given ScalarVariable. In this case reprsenting a variable of primitive type String.
-- `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case reprsenting a variable of primitive type Enumeration.
+- `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.   
+- `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
+- `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
+- `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
+- `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
