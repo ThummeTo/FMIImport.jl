@@ -22,9 +22,19 @@ using FMICore: FMU2
 ######################################
 
 """
+
+   fmi2LoadModelDescription(pathToModellDescription::String)
+
 Extract the FMU variables and meta data from the ModelDescription
 
-ToDo: New docstring format!
+# Arguments
+- `pathToModellDescription::String`: Contains the path to a file name that is selected to be read and converted to an XML document. In order to better extract the variables and meta data in the further process.
+
+# Returns
+- `md::fmi2ModelDescription`: The “ModelVariables” element of fmiModelDescription is the central part of the model description. It provides the static information of all exposed variables.
+
+# Source
+- [EzXML.jl](https://juliaio.github.io/EzXML.jl/stable/)
 """
 function fmi2LoadModelDescription(pathToModellDescription::String)
     md = fmi2ModelDescription()
@@ -48,7 +58,7 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
     md.fmiVersion = root["fmiVersion"]
     md.modelName = root["modelName"]
     md.guid = root["guid"]
-    
+
     # optional
     md.generationTool           = parseNodeString(root, "generationTool"; onfail="[Unknown generation tool]")
     md.generationDateAndTime    = parseNodeString(root, "generationDateAndTime"; onfail="[Unknown generation date and time]")
@@ -63,10 +73,10 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
     md.coSimulation = nothing
     md.defaultExperiment = nothing
 
-    # additionals 
+    # additionals
     md.valueReferences = []
     md.valueReferenceIndicies = Dict{UInt, UInt}()
-    
+
     for node in eachelement(root)
 
         if node.name == "CoSimulation" || node.name == "ModelExchange"
@@ -98,7 +108,7 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
             md.modelStructure = fmi2ModelDescriptionModelStructure()
 
             for element in eachelement(node)
-                if element.name == "Derivatives" 
+                if element.name == "Derivatives"
                     parseDerivatives(element, md)
                 elseif element.name == "InitialUnknowns"
                     parseInitialUnknowns(element, md)
@@ -121,7 +131,7 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
     # creating an index for value references (fast look-up for dependencies)
     for i in 1:length(md.valueReferences)
         md.valueReferenceIndicies[md.valueReferences[i]] = i
-    end 
+    end
 
     md
 end
@@ -137,8 +147,8 @@ function getDerivativeIndices(node::EzXML.Node)
         if element.name == "Derivatives"
             for derivative in eachelement(element)
                 ind = parse(Int, derivative["index"])
-                der = nothing 
-                derKind = nothing 
+                der = nothing
+                derKind = nothing
 
                 if haskey(derivative, "dependencies")
                     der = split(derivative["dependencies"], " ")
@@ -148,11 +158,11 @@ function getDerivativeIndices(node::EzXML.Node)
                     else
                         der = collect(parse(fmi2Integer, e) for e in der)
                     end
-                end 
+                end
 
                 if haskey(derivative, "dependenciesKind")
                     derKind = split(derivative["dependenciesKind"], " ")
-                end 
+                end
 
                 push!(indices, (ind, der, derKind))
             end
@@ -198,7 +208,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
         end
 
         scalarVariables[index] = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
-        
+
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)
         end
@@ -270,12 +280,12 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
             typenode = scalarVariables[index]._Enumeration
             # ToDo: Save start value
             # ToDo: remaining attributes
-        else 
+        else
             @warn "Unknown data type `$(typename)`."
         end
 
         # generic attributes
-        if typenode != nothing 
+        if typenode != nothing
             if haskey(node.firstelement, "declaredType")
                 typenode.declaredType = node.firstelement["declaredType"]
             end
@@ -285,7 +295,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
 
         index += 1
     end
-   
+
     scalarVariables
 end
 
@@ -302,7 +312,7 @@ function parseUnknwon(node::EzXML.Node)
                     varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
                 end
             end
-        end 
+        end
 
         if haskey(node, "dependenciesKind")
             dependenciesKind = node["dependenciesKind"]
@@ -321,10 +331,10 @@ function parseUnknwon(node::EzXML.Node)
         end
 
         return varDep
-    else 
-        return nothing 
+    else
+        return nothing
     end
-end 
+end
 
 # ToDo: Comment
 function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
@@ -348,12 +358,12 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
                 end
 
                 push!(md.modelStructure.derivatives, varDep)
-            else 
+            else
                 @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
             end
-        else 
+        else
             @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
-        end 
+        end
     end
 end
 
@@ -367,12 +377,12 @@ function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
                 varDep = parseUnknwon(node)
 
                 push!(md.modelStructure.initialUnknowns, varDep)
-            else 
+            else
                 @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
             end
-        else 
+        else
             @warn "Unknown entry in `ModelStructure.InitialUnknowns` named `$(node.name)`."
-        end 
+        end
     end
 end
 
@@ -387,18 +397,18 @@ function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
 
                 # find outputs
                 outVR = md.modelVariables[varDep.index].valueReference
-                
+
                 if outVR ∉ md.outputValueReferences
                     push!(md.outputValueReferences, outVR)
                 end
 
                 push!(md.modelStructure.outputs, varDep)
-            else 
+            else
                 @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
             end
-        else 
+        else
             @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
-        end 
+        end
     end
 end
 
@@ -514,7 +524,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
         type.datatype = fmi2Integer
     elseif typename == "Enumeration"
         type.datatype = fmi2Enum
-    else 
+    else
         @warn "Unknown data type `$(type.datatype)`."
     end
 
@@ -625,7 +635,7 @@ Returns startTime from DefaultExperiment if defined else defaults to nothing.
     ToDo: update docstring format.
 """
 function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment == nothing
         return nothing
     end
     return md.defaultExperiment.startTime
@@ -637,7 +647,7 @@ Returns stopTime from DefaultExperiment if defined else defaults to nothing.
     ToDo: update docstring format.
 """
 function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment == nothing
         return nothing
     end
     return md.defaultExperiment.stopTime
@@ -649,7 +659,7 @@ Returns tolerance from DefaultExperiment if defined else defaults to nothing.
 ToDo: update docstring format.
 """
 function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment == nothing
         return nothing
     end
     return md.defaultExperiment.tolerance
@@ -661,7 +671,7 @@ Returns stepSize from DefaultExperiment if defined else defaults to nothing.
 ToDo: update docstring format.
 """
 function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment == nothing
         return nothing
     end
     return md.defaultExperiment.stepSize
@@ -758,7 +768,7 @@ Returns if the FMU model description contains `dependency` information.
 ToDo: update docstring format.
 """
 function fmi2DependenciesSupported(md::fmi2ModelDescription)
-    if md.modelStructure === nothing 
+    if md.modelStructure === nothing
         return false
     end
 
@@ -771,7 +781,7 @@ Returns if the FMU model description contains `dependency` information for `deri
 ToDo: update docstring format.
 """
 function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
-    if !fmi2DependenciesSupported(md) 
+    if !fmi2DependenciesSupported(md)
         return false
     end
 
@@ -779,7 +789,7 @@ function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
     if der === nothing || length(der) <= 0
         return false
     end
-    
+
     return true
 end
 
@@ -789,7 +799,7 @@ Returns the tag 'modelIdentifier' from CS or ME section.
 ToDo: update docstring format.
 """
 function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
-    
+
     if type === nothing
         if fmi2IsCoSimulation(md)
             return md.coSimulation.modelIdentifier
@@ -865,7 +875,7 @@ function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:fi
             push!(names, ns[1])
         elseif mode == :group
             push!(names, ns)
-        elseif mode == :flat 
+        elseif mode == :flat
             for n in ns
                 push!(names, n)
             end
@@ -911,7 +921,7 @@ function fmi2GetInputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-Returns names of inputs 
+Returns names of inputs
 
 ToDo: update docstring format.
 """
@@ -935,7 +945,7 @@ function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-Returns names of outputs 
+Returns names of outputs
 
 ToDo: update docstring format.
 """
@@ -985,7 +995,7 @@ function fmi2GetStateValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-Returns names of states 
+Returns names of states
 
 ToDo: update docstring format.
 """
