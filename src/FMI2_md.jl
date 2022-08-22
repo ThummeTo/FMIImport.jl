@@ -31,7 +31,7 @@ Extract the FMU variables and meta data from the ModelDescription
 - `pathToModellDescription::String`: Contains the path to a file name that is selected to be read and converted to an XML document. In order to better extract the variables and meta data in the further process.
 
 # Returns
-- `md::fmi2ModelDescription`: The “ModelVariables” element of fmiModelDescription is the central part of the model description. It provides the static information of all exposed variables.
+- `md::fmi2ModelDescription`: Retuns a struct which provides the static information of ModelVariables.
 
 # Source
 - [EzXML.jl](https://juliaio.github.io/EzXML.jl/stable/)
@@ -630,9 +630,16 @@ end
 ################################
 
 """
+
+   fmi2GetDefaultStartTime(md::fmi2ModelDescription)
+
 Returns startTime from DefaultExperiment if defined else defaults to nothing.
 
-    ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.startTime::Union{Real,Nothing}`: Returns a real value `startTime` from the DefaultExperiment if defined else defaults to `nothing`.
 """
 function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing
@@ -642,9 +649,17 @@ function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
 end
 
 """
+
+   fmi2GetDefaultStopTime(md::fmi2ModelDescription)
+
 Returns stopTime from DefaultExperiment if defined else defaults to nothing.
 
-    ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.stopTime::Union{Real,Nothing}`: Returns a real value `stopTime` from the DefaultExperiment if defined else defaults to `nothing`.
+
 """
 function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing
@@ -654,9 +669,17 @@ function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
 end
 
 """
+
+   fmi2GetDefaultTolerance(md::fmi2ModelDescription)
+
 Returns tolerance from DefaultExperiment if defined else defaults to nothing.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.tolerance::Union{Real,Nothing}`: Returns a real value `tolerance` from the DefaultExperiment if defined else defaults to `nothing`.
+
 """
 function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing
@@ -666,9 +689,17 @@ function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
 end
 
 """
+
+   fmi2GetDefaultStepSize(md::fmi2ModelDescription)
+
 Returns stepSize from DefaultExperiment if defined else defaults to nothing.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.stepSize::Union{Real,Nothing}`: Returns a real value `setpSize` from the DefaultExperiment if defined else defaults to `nothing`.
+
 """
 function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
     if md.defaultExperiment == nothing
@@ -678,81 +709,152 @@ function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
 end
 
 """
+
+   function fmi2GetModelName(md::fmi2ModelDescription)
 Returns the tag 'modelName' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.modelName::String`: Returns the tag 'modelName' from the model description.
+
 """
 function fmi2GetModelName(md::fmi2ModelDescription)#, escape::Bool = true)
     md.modelName
 end
 
 """
+
+   fmi2GetGUID(md::fmi2ModelDescription)
+
 Returns the tag 'guid' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.guid::String`: Returns the tag 'guid' from the model description.
+
 """
 function fmi2GetGUID(md::fmi2ModelDescription)
     md.guid
 end
 
 """
+
+   fmi2GetGenerationTool(md::fmi2ModelDescription)
+
 Returns the tag 'generationtool' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.generationTool::Union{String, Nothing}`: Returns the tag 'generationtool' from the model description.
+
 """
 function fmi2GetGenerationTool(md::fmi2ModelDescription)
     md.generationTool
 end
 
 """
+
+   fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
+
 Returns the tag 'generationdateandtime' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.generationDateAndTime::DateTime`: Returns the tag 'generationdateandtime' from the model description.
+
 """
 function fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
     md.generationDateAndTime
 end
 
 """
+
+   fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
+
 Returns the tag 'varaiblenamingconvention' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.variableNamingConvention::Union{fmi2VariableNamingConvention, Nothing}`: Returns the tag 'variableNamingConvention' from the model description.
+
 """
 function fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
     md.variableNamingConvention
 end
 
 """
+
+   fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
+
 Returns the tag 'numberOfEventIndicators' from the model description.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.numberOfEventIndicators::Union{UInt, Nothing}`: Returns the tag 'numberOfEventIndicators' from the model description.
+
 """
 function fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
     md.numberOfEventIndicators
 end
 
 """
+
+   fmi2GetNumberOfStates(md::fmi2ModelDescription)
+
 Returns the number of states of the FMU.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- Returns the length of the `md.valueReferences::Array{fmi2ValueReference}` corresponding to the number of states of the FMU.
+
 """
 function fmi2GetNumberOfStates(md::fmi2ModelDescription)
     length(md.stateValueReferences)
 end
 
 """
+
+   fmi2IsCoSimulation(md::fmi2ModelDescription)
+
 Returns true, if the FMU supports co simulation
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports co simulation
+
 """
 function fmi2IsCoSimulation(md::fmi2ModelDescription)
     return (md.coSimulation != nothing)
 end
 
 """
+
+   fmi2IsModelExchange(md::fmi2ModelDescription)
+
 Returns true, if the FMU supports model exchange
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports model exchange
+
 """
 function fmi2IsModelExchange(md::fmi2ModelDescription)
     return (md.modelExchange != nothing)
@@ -763,9 +865,17 @@ end
 ##################################
 
 """
-Returns if the FMU model description contains `dependency` information.
 
-ToDo: update docstring format.
+   fmi2DependenciesSupported(md::fmi2ModelDescription)
+
+Returns true if the FMU model description contains `dependency` information.
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU model description contains `dependency` information.
+
 """
 function fmi2DependenciesSupported(md::fmi2ModelDescription)
     if md.modelStructure === nothing
@@ -776,9 +886,17 @@ function fmi2DependenciesSupported(md::fmi2ModelDescription)
 end
 
 """
+
+   fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
+
 Returns if the FMU model description contains `dependency` information for `derivatives`.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU model description contains `dependency` information for `derivatives`.
+
 """
 function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
     if !fmi2DependenciesSupported(md)
@@ -794,9 +912,20 @@ function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
 end
 
 """
+
+   fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
+
 Returns the tag 'modelIdentifier' from CS or ME section.
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `type=nothing`: Defines whether a Co-Simulation or Model Exchange is present. (default = nothing)
+
+# Returns
+- `md.modelExchange.modelIdentifier::String`: Returns the tag `modelIdentifier` from ModelExchange section.
+- `md.coSimulation.modelIdentifier::String`: Returns the tag `modelIdentifier` from CoSimulation section.
 """
 function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
 
@@ -816,36 +945,74 @@ function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
 end
 
 """
+
+   fmi2CanGetSetState(md::fmi2ModelDescription)
+
 Returns true, if the FMU supports the getting/setting of states
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports the getting/setting of states.
+
 """
 function fmi2CanGetSetState(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange != nothing && md.modelExchange.canGetAndSetFMUstate)
 end
 
 """
+
+   fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
+
 Returns true, if the FMU state can be serialized
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU state can be serialized
+
 """
 function fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange != nothing && md.modelExchange.canSerializeFMUstate)
 end
 
 """
+
+   fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
+
 Returns true, if the FMU provides directional derivatives
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU provides directional derivatives
+
 """
 function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
     return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivative) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivative)
 end
 
 """
+
+   fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
+
+   fmi2GetValueReferencesAndNames(fmu::FMU2)
+
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.
+
 """
 function fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
     dict = Dict{fmi2ValueReference, Array{String}}()
@@ -860,11 +1027,23 @@ function fmi2GetValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
+
+   fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
+
 Returns a array of names corresponding to value references `vrs`
 
-If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 
-ToDo: update docstring format.
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+
 """
 function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
     names = []
@@ -891,9 +1070,20 @@ function fmi2GetNames(fmu::FMU2; kwargs...)
 end
 
 """
+
+   fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
+
 Returns a array of indices corresponding to value references `vrs`
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
+
+# Returns
+- `names::Array{Integer}`: Returns a array of indices corresponding to value references `vrs`
+
 """
 function fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
     indices = []
@@ -908,9 +1098,21 @@ function fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueRefer
 end
 
 """
+
+   fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
+
+   fmi2GetInputValueReferencesAndNames(fmu::FMU2)
+
 Returns a dict with (vrs, names of inputs)
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of inputs)
+
 """
 function fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.inputValueReferences)
@@ -921,9 +1123,24 @@ function fmi2GetInputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetInputNames(md::fmi2ModelDescription; vrs=md.inputvalueReferences, mode=:first)
+
+   fmi2GetInputNames(fmu::FMU2; vrs=md.inputValueReferences, mode=:first)
+
 Returns names of inputs
 
-ToDo: update docstring format.
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.inputvalueReferences`: Additional attribute `inputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+
 """
 function fmi2GetInputNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.inputValueReferences, kwargs...)
@@ -934,7 +1151,21 @@ function fmi2GetInputNames(fmu::FMU2; kwargs...)
 end
 
 """
-ToDo: update docstring format.
+
+   fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
+
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
+
 """
 function fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.outputValueReferences)
@@ -945,9 +1176,23 @@ function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetOutputNames(md::fmi2ModelDescription; vrs=md.outputvalueReferences, mode=:first)
+
+   fmi2GetOutputNames(fmu::FMU2; vrs=md.outputvalueReferences, mode=:first)
+
 Returns names of outputs
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+
 """
 function fmi2GetOutputNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.outputValueReferences, kwargs...)
@@ -958,7 +1203,21 @@ function fmi2GetOutputNames(fmu::FMU2; kwargs...)
 end
 
 """
-ToDo: update docstring format.
+
+   fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
+
+   fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
+
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
+
+See also ['fmi2GetValueReferencesAndNames'](@ref).
 """
 function fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences)
@@ -969,9 +1228,24 @@ function fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetParameterNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences, mode=:first)
+
+   fmi2GetParameterNames(fmu::FMU2; vrs=md.parameterValueReferences, mode=:first)
+
 Returns names of parameters
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.parameterValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.parameterValueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi2GetNames'](@ref).
 """
 function fmi2GetParameterNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.parameterValueReferences, kwargs...)
@@ -982,9 +1256,21 @@ function fmi2GetParameterNames(fmu::FMU2; kwargs...)
 end
 
 """
+
+   fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
+
+   fmi2GetStateValueReferencesAndNames(fmu::FMU2)
 Returns dict(vrs, names of states)
 
-ToDo: update docstring format.
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of state value references and their corresponding names.
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of states)
+
 """
 function fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.stateValueReferences)
@@ -995,9 +1281,24 @@ function fmi2GetStateValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetStateNames(md::fmi2ModelDescription; vrs=md.stateValueReferences, mode=:first)
+
+   fmi2GetStateNames(fmu::FMU2; vrs=md.stateValueReferences, mode=:first)
+
 Returns names of states
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.stateValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.stateValueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi2GetNames'](@ref).
 """
 function fmi2GetStateNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.stateValueReferences, kwargs...)
@@ -1008,7 +1309,20 @@ function fmi2GetStateNames(fmu::FMU2; kwargs...)
 end
 
 """
-ToDo: update docstring format.
+
+   fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
+
+   fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
+
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative value references and their corresponding names
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
+See also ['fmi2GetValueReferencesAndNames'](@ref)
 """
 function fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences)
@@ -1019,9 +1333,24 @@ function fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
 end
 
 """
+
+   fmi2GetDerivativeNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences, mode=:first)
+
+   fmi2GetDerivativeNames(fmu::FMU2; vrs=md.derivativeValueReferences, mode=:first)
+
 Returns names of derivatives
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `vrs=md.derivativeValueReferences`: Additional attribute `derivativeValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.derivativeValueReferences::Array{fmi2ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi2GetNames'](@ref).
 """
 function fmi2GetDerivativeNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
