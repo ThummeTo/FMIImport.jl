@@ -883,7 +883,7 @@ Returns the start/default value for a given value reference.
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
+- `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
 """
 function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 

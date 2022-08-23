@@ -1361,9 +1361,19 @@ function fmi2GetDerivativeNames(fmu::FMU2; kwargs...)
 end
 
 """
+
+   fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
+
+   fmi2GetNamesAndDescriptions(fmu::FMU2)
+
 Returns a dictionary of variables with their descriptions
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].description::Union{String, Nothing}`). (Creates a tuple (name, description) for each i in 1:length(md.modelVariables))
 """
 function fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
@@ -1374,9 +1384,20 @@ function fmi2GetNamesAndDescriptions(fmu::FMU2)
 end
 
 """
+
+   fmi2GetNamesAndUnits(md::fmi2ModelDescription)
+
+   fmi2GetNamesAndUnits(fmu::FMU2)
+
 Returns a dictionary of variables with their units
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
+See also [`fmi2GetUnit`](@ref).
 """
 function fmi2GetNamesAndUnits(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => fmi2GetUnit(md.modelVariables[i]) for i = 1:length(md.modelVariables))
@@ -1387,9 +1408,20 @@ function fmi2GetNamesAndUnits(fmu::FMU2)
 end
 
 """
+
+   fmi2GetNamesAndInitials(md::fmi2ModelDescription)
+
+   fmi2GetNamesAndInitials(fmu::FMU2)
+
 Returns a dictionary of variables with their initials
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type Cuint. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi2Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
+See also [`fmi2GetInitial`](@ref).
 """
 function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => fmi2GetInitial(md.modelVariables[i]) for i = 1:length(md.modelVariables))
@@ -1400,9 +1432,20 @@ function fmi2GetNamesAndInitials(fmu::FMU2)
 end
 
 """
+
+   fmi2GetNamesAndInitials(md::fmi2ModelDescription)
+
+   fmi2GetNamesAndInitials(fmu::FMU2)
+
 Returns a dictionary of variables with their initial values (please note: initial != start)
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2Initial. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi2Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
+#Todo Cuint wirlich richtig?
 """
 function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
@@ -1413,9 +1456,20 @@ function fmi2GetNamesAndInitials(fmu::FMU2)
 end
 
 """
+
+   fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
+
+   fmi2GetInputNamesAndStarts(fmu::FMU2)
+
 Returns a dictionary of input variables with their starting values
 
-ToDo: update docstring format.
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{String, Array{fmi2ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi2ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
+See also ['fmi2GetStartValue'](@ref).
 """
 function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
 
