@@ -643,7 +643,7 @@ For optimization, if the FMU's model description has the optional entry 'depende
 - `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 
 # Returns
-- nothing
+- `nothing`
 
 """
 function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
@@ -765,7 +765,7 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 - `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 
 # Returns
-- nothing
+- `nothing`
 """
 function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
                               comp::FMU2Component,
