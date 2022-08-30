@@ -65,7 +65,7 @@ Returns an array of ValueReferences coresponding to the variable names.
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-See also [`fmi2StringToValueReference`](@ref)
+See also [`fmi2StringToValueReference`](@ref).
 """
 function fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
     vr = Array{fmi2ValueReference}(undef,0)
@@ -96,7 +96,7 @@ Returns the model variable(s) fitting the value reference.
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-See also [`fmi2ModelVariablesForValueReference`](@ref)
+See also [`fmi2ModelVariablesForValueReference`](@ref).
 """
 function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
     ar = []
@@ -143,7 +143,7 @@ Returns the ValueReference or an array of ValueReferences coresponding to the va
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
-- `name::Union{String, AbstractArray{String}}`: Argument `names` contains a Strings or . For that, the corresponding value reference is searched in the given modelDescription.
+- `name::Union{String, AbstractArray{String}}`: Argument `names` contains a Strings or AbstractArray{String}. For that, the corresponding value reference is searched in the given modelDescription.
 
 # Returns
 For input parameter `name::Sting`:
@@ -153,7 +153,7 @@ For input parameter `name::AbstractArray{String}`
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-See also [`fmi2StringToValueReference`](@ref)
+See also [`fmi2StringToValueReference`](@ref).
 """
 function fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
     fmi2StringToValueReference(fmu.modelDescription, name)
@@ -296,14 +296,18 @@ end
 
    fmi2GetSolutionTime(solution::FMU2Solution)
 
-???
+Returns the Solution time.
 
 # Arguments
-- `solution::FMU2Solution`:
+- `solution::FMU2Solution`: Struct contains information about the solution `value`, `success`, `state` and  `events` of a specific FMU.
 
 # Return
--`nothing`
+- `solution.states.t::tType`: `solution.state` is a struct `ODESolution` with attribute t. `t` is the time points corresponding to the saved values of the ODE solution.
+- `solution.values.t::tType`: `solution.value` is a struct `ODESolution` with attribute t.`t` the time points corresponding to the saved values of the ODE solution.
+- `nothing`
 
+#Source
+- [ODESolution](https://github.com/SciML/SciMLBase.jl/blob/b10025c579bcdecb94b659aa3723fdd023096197/src/solutions/ode_solutions.jl)  SciML/SciMLBase.jl
 """
 
 function fmi2GetSolutionTime(solution::FMU2Solution)
