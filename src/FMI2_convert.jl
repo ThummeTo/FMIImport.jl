@@ -163,15 +163,23 @@ end
 
    fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
 
-???
+   fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
+
+   fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
-- `reference::fmi2ValueReference`: Argument `references` is a variable of `ValueReference`.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `reference::fmi2ValueReference`: The argument `references` is a variable of the type `ValueReference`.
+- `reference::Int64`: Argument `references` is a variable of the type `Int64`.
+- `reference::Union{fmi2ValueReference, Int64}`: Argument `references` of the type `fmi2ValueReference` or `Int64`.
 
 # Return
-- `::Bool`
+- `md.stringValueReferences::Dict{String, fmi2ValueReference}`: Returns a dictionary `md.stringValueReferences` that constructs a hash table with keys of type String and values of type fmi2ValueReference.
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
 function fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
     [k for (k,v) in md.stringValueReferences if v == reference]
@@ -189,17 +197,22 @@ end
 
    fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-Returns the Solution values.
+Returns the Solution state.
 
 # Arguments
-- `solution::FMU2Solution`:
-- `vr::fmi2ValueReferenceFormat`:
-- `isIndex::Bool=false`:
+- `solution::FMU2Solution`: Struct contains information about the solution `value`, `success`, `state` and  `events` of a specific FMU.
+- `vr::fmi2ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `isIndex::Bool=false`: Argument `isIndex` exists to check if `vr` ist the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat
 
 # Return
 - If `isIndex = false` the function returns an array which contains the solution states till the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat.
-- If `isIndex = true` the function return an array which contains the solution values till the spezific solution element ("index").
+- If `isIndex = true` the function return an array which contains the solution states till the spezific solution element ("index").
 - If no solution element ("index = 0") is found `nothing` is returned.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 
 """
 
@@ -239,15 +252,19 @@ end
 Returns the Solution values.
 
 # Arguments
-- `solution::FMU2Solution`:
-- `vr::fmi2ValueReferenceFormat`:
-- `isIndex::Bool=false`:
+- `solution::FMU2Solution`: Struct contains information about the solution `value`, `success`, `state` and  `events` of a specific FMU.
+- `vr::fmi2ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `isIndex::Bool=false`: Argument `isIndex` exists to check if `vr` ist the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat
 
 # Return
 - If `isIndex = false` the function returns an array which contains the solution states till the spezific solution element ("index") that equals the given fmi2ValueReferenceFormat.
 - If `isIndex = true` the function return an array which contains the solution values till the spezific solution element ("index").
 - If no solution element ("index = 0") is found `nothing` is returned.
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
 
 function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
@@ -304,10 +321,12 @@ Returns the Solution time.
 # Return
 - `solution.states.t::tType`: `solution.state` is a struct `ODESolution` with attribute t. `t` is the time points corresponding to the saved values of the ODE solution.
 - `solution.values.t::tType`: `solution.value` is a struct `ODESolution` with attribute t.`t` the time points corresponding to the saved values of the ODE solution.
-- `nothing`
+- If no solution time is  found `nothing` is returned.
 
 #Source
-- [ODESolution](https://github.com/SciML/SciMLBase.jl/blob/b10025c579bcdecb94b659aa3723fdd023096197/src/solutions/ode_solutions.jl)  SciML/SciMLBase.jl
+- using OrdinaryDiffEq: [ODESolution](https://github.com/SciML/SciMLBase.jl/blob/b10025c579bcdecb94b659aa3723fdd023096197/src/solutions/ode_solutions.jl)  (SciML/SciMLBase.jl)
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
 
 function fmi2GetSolutionTime(solution::FMU2Solution)
