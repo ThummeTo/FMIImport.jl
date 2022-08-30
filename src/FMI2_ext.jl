@@ -792,6 +792,35 @@ function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
     return nothing
 end
 
+"""
+
+   fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
+
+Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
+
+# Arguments
+- `comp::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vrs::fmi2ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `dstArray::AbstractArray`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `dstArray` has the same length as `vrs`.
+
+# Returns
+- `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.23]: 2.1.6 Initialization, Termination, and Resetting an FMU
+- FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
+
+"""
+
 function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
@@ -825,6 +854,41 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
 
     return retcodes
 end
+
+"""
+
+   fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+
+   fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
+
+Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
+
+# Arguments
+- `comp::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vrs::fmi2ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `srcArray::AbstractArray`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `dstArray` has the same length as `vrs`.
+
+# Keywords
+- `filter=nothing`:
+
+# Returns
+- `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.23]: 2.1.6 Initialization, Termination, and Resetting an FMU
+- FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
+
+
+"""
 
 function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     vrs = prepareValueReference(comp, vrs)

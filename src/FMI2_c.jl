@@ -115,10 +115,25 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 end
 
 """
-Source: FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+
+   fmi2GetTypesPlatform(fmu::FMU2)
+
+   fmi2GetTypesPlatform(c::FMU2Component)
 
 Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
 The standard header file, as documented in this specification, has fmi2TypesPlatform set to “default” (so this function usually returns “default”).
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
 function fmi2GetTypesPlatform(fmu::FMU2)
 
@@ -140,6 +155,7 @@ end
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
 # Returns
 - Returns a string from the address of a C-style (NUL-terminated) string. The string represents the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU. The function returns “fmiVersion” which is defined in this header file. The standard header file as documented in this specification has version “2.0”
 
