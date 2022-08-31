@@ -897,7 +897,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - `srcArray::AbstractArray`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
 
 # Keywords
-- `filter=nothing`:
+- `filter=nothing`: whether the individual values of "fmi2ScalarVariable" are to be stored
 
 # Returns
 - `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
