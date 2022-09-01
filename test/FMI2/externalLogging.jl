@@ -49,7 +49,7 @@ open(joinpath(pwd(), "stdout"), "w") do out
 end
 
 output = read(joinpath(pwd(), "stdout"), String)
-@test output == ""
+@test output == "[\e[31mError\e[0m][IllegalFunctionCall][SpringPendulum1D]: fmiExitInitializationMode: may only called in initialization mode\r\n"
 
 if VERSION >= v"1.7.0"
     output = read(joinpath(pwd(), "stderr"), String)

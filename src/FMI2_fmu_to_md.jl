@@ -90,6 +90,7 @@ function fmi2GetGenerationDateAndTime(fmu::FMU2)
     fmi2GetGenerationDateAndTime(fmu.modelDescription)
 end
 
+"""
 
    fmi2GetVariableNamingConvention(fmu::FMU2)
 

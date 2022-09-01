@@ -1433,30 +1433,6 @@ end
 
 """
 
-   fmi2GetNamesAndInitials(md::fmi2ModelDescription)
-
-   fmi2GetNamesAndInitials(fmu::FMU2)
-
-Returns a dictionary of variables with their initial values (please note: initial != start)
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2Initial. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi2Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
-#Todo Cuint wirlich richtig?
-"""
-function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => md.modelVariables[i].initial for i = 1:length(md.modelVariables))
-end
-
-function fmi2GetNamesAndInitials(fmu::FMU2)
-    fmi2GetNamesAndInitials(fmu.modelDescription)
-end
-
-"""
-
    fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
 
    fmi2GetInputNamesAndStarts(fmu::FMU2)
