@@ -122,6 +122,10 @@ Retrieves all the pointers of binary functions.
 # Returns
 - Returns the instance of the FMU struct.
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
+
 See also .
 """
 function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
@@ -331,7 +335,9 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 # Returns
 - Returns the instance of a new FMU component.
 
-
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 See also [`fmi2Instantiate`](#@ref).
 """
@@ -423,6 +429,10 @@ Reloads the FMU-binary. This is useful, if the FMU does not support a clean rese
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2Reload(fmu::FMU2)
     dlclose(fmu.libHandle)
@@ -494,6 +504,10 @@ Computes a linear combination of the partial derivatives of h with respect to th
 # Returns
 - `dvUnkonwn::Array{fmi2Real}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(see function fmi2GetDirectionalDerivative!).
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
+
 See also [`fmi2GetDirectionalDerivative!`](@ref) ,[`fmi2GetDirectionalDerivative`](@ref).
 """
 function fmi2SampleDirectionalDerivative(c::FMU2Component,
@@ -542,10 +556,13 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
 
 # Returns
-- nothing
+- `nothing`
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 See also [`fmi2GetDirectionalDerivative!`](@ref) ,[`fmi2GetDirectionalDerivative`](@ref).
-
 """
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -608,6 +625,9 @@ For optimization, if the FMU's model description has the optional entry 'depende
 # Returns
 - `mat::Array{fmi2Real}`: Return `mat` contains the jacobian ∂rdx / ∂rx.
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 """
 function fmi2GetJacobian(comp::FMU2Component,
@@ -644,6 +664,10 @@ For optimization, if the FMU's model description has the optional entry 'depende
 
 # Returns
 - `nothing`
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 """
 function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
@@ -728,6 +752,9 @@ No performance optimization, for an optimized version use `fmi2GetJacobian`.
 # Returns
 - `mat::Array{fmi2Real}`: Return `mat` contains the jacobian ∂rdx / ∂rx.
 
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 See also [`fmi2GetFullJacobian!`](@ref)
 """
@@ -966,6 +993,10 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 # Returns
 - `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 
@@ -1002,6 +1033,10 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 # Returns
 - `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference   
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
     fmi2GetStartValue(fmu.modelDescription, vrs)
@@ -1020,6 +1055,10 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 # Returns
 - `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference   
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
     fmi2GetStartValue(c.fmu, vrs)
