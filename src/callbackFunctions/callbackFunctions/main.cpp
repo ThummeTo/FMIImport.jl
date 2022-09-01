@@ -9,24 +9,29 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#define RED(message)    "\x1B[31m" message "\x1B[0m"
+#define GREEN(message)  "\x1B[32m" message "\x1B[0m"
+#define YELLOW(message) "\x1B[33m" message "\x1B[0m"
+#define BLUE(message)   "\x1B[34m" message "\x1B[0m"
+
 const char* fmi2StatusString(fmi2Status status)
 {
     switch(status)
     {
         case fmi2OK:
-            return "OK";
+            return GREEN("OK");
         case fmi2Warning:
-            return "Warning";
+            return YELLOW("Warning");
         case fmi2Discard:
-            return "Discard";
+            return YELLOW("Discard");
         case fmi2Error:
-            return "Error";
+            return  RED("Error");
         case fmi2Fatal:
-            return "Fatal";
+            return RED("Fatal");
         case fmi2Pending:
-            return "Pending";
+            return YELLOW("Pending");
         default:
-            return "Unknwon";
+            return RED("Unknwon");
     }
 }
 

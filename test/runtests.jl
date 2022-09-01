@@ -39,6 +39,9 @@ function runtestsFMI2(exportingTool)
         @testset "Logging" begin
             include("FMI2/logging.jl")
         end
+        @testset "Logging with externalCallbacks" begin
+            include("FMI2/externalLogging.jl")
+        end
     end
 end
 
