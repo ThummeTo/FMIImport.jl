@@ -115,10 +115,25 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 end
 
 """
-Source: FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+
+   fmi2GetTypesPlatform(fmu::FMU2)
+
+   fmi2GetTypesPlatform(c::FMU2Component)
 
 Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
 The standard header file, as documented in this specification, has fmi2TypesPlatform set to “default” (so this function usually returns “default”).
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
 function fmi2GetTypesPlatform(fmu::FMU2)
 
@@ -140,9 +155,10 @@ end
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
 # Returns
 - Returns a string from the address of a C-style (NUL-terminated) string. The string represents the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU. The function returns “fmiVersion” which is defined in this header file. The standard header file as documented in this specification has version “2.0”
-Source: FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -600,7 +616,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 
-    See also [`fmi2GetInteger!`](@ref).    
+    See also [`fmi2GetInteger!`](@ref).
 """
 function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -992,6 +1008,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
 end
 
 """
+ToDo Arguments
 
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -1001,19 +1018,31 @@ function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        dvKnown::AbstractArray{fmi2Real},
                                        dvUnknown::AbstractArray{fmi2Real})
 
-This function computes the directional derivatives of an FMU.
+Wrapper Function call to compute the partial derivative with respect to the variables `vKnown_ref`.
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
+𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
+
+- `v_unknown`: vector of unknown Real variables computed in the actual Mode:
+   - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknowns>` that have type Real.
+   - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><Derivatives>)`.
+   - Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Outputs>` with type Real and variability = `discrete`.
+   - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><Derivatives>` is present, also the variables listed here as state derivatives.
+- `v_known`: Real input variables of function h that changes its value in the actual Mode.
+- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+   Δv_unknown = (δh / δv_known) Δv_known
 
 # Arguments
-- `str::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
-More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
-- `str::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `str::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `vUnknown_ref::Array{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` is the Array of the vector values of unknown variables computed in the actual Mode.
-- `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
-- `nUnknown::Csize_t`: Argument `nUnknown`
-- `nKnown::Csize_t`: Argument `nKnown` defines the
-- `dvKnown::AbstractArray{fmi2Real}`:Argument `dvKnown` contains `fmi2Real` objects. `dvKnown` represents the seed vector.
-- `dvUnknown::AbstractArray{fmi2Real}`: defines the directional derivative vector which computes form the seed vector `dvKnown`.
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vUnknown_ref::AbstracArray{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
+- `nUnknown::Csize_t`:
+- `vKnown_ref::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
+- `nKnown::Csize_t`:
+- `dvKnown::AbstractArray{fmi2Real}`:The vector values Compute the partial derivative with respect to the given entries in vector `vKnown_ref` with the matching evaluate of `dvKnown`.
+- `dvUnknown::AbstractArray{fmi2Real}`: Stores the directional derivative vector values.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -1029,7 +1058,8 @@ More detailed:
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
-- FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
+- FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
+See also [`fmi2GetDirectionalDerivative`](@ref).
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -1055,7 +1085,7 @@ Sets the n-th time derivative of real input variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
+- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that t define the variables whose derivatives shall be set.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
 - `order::AbstractArray{fmi2Integer}`: Argument `order` is an AbstractArray of fmi2Integer values witch specifys the corresponding order of derivative of the real input variable.
 - `values::AbstractArray{fmi2Real}`: Argument `values` is an AbstractArray with the actual values of these variables.
@@ -1094,7 +1124,7 @@ Sets the n-th time derivative of real input variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
+- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that t define the variables whose derivatives shall be set.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
 - `order::Array{fmi2Integer}`: Argument `order` is an array of fmi2Integer values witch specifys the corresponding order of derivative of the real input variable.
 - `values::Array{fmi2Real}`: Argument `values` is an array with the actual values of these variables.
@@ -1206,7 +1236,7 @@ Informs the master about the actual status of the simulation run. Which status i
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: Argument `s` defines which status information is to be returned. `fmi2StatusKind` is an enumeration that defines which status is inquired.
 The following status information can be retrieved from a slave:
-  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.  
+  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
@@ -1256,7 +1286,7 @@ Informs the master about the actual status of the simulation run. Which status i
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: Argument `s` defines which status information is to be returned. `fmi2StatusKind` is an enumeration that defines which status is inquired.
 The following status information can be retrieved from a slave:
-  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.  
+  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
@@ -1296,7 +1326,7 @@ Informs the master about the actual status of the simulation run. Which status i
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: Argument `s` defines which status information is to be returned. `fmi2StatusKind` is an enumeration that defines which status is inquired.
 The following status information can be retrieved from a slave:
-  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.  
+  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
   - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
   - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
   - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
@@ -1336,7 +1366,7 @@ Informs the master about the actual status of the simulation run. Which status i
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: Argument `s` defines which status information is to be returned. `fmi2StatusKind` is an enumeration that defines which status is inquired.
 The following status information can be retrieved from a slave:
- - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.  
+ - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
  - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
  - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
  - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
@@ -1376,7 +1406,7 @@ Informs the master about the actual status of the simulation run. Which status i
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: Argument `s` defines which status information is to be returned. `fmi2StatusKind` is an enumeration that defines which status is inquired.
 The following status information can be retrieved from a slave:
-- `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.  
+- `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
 - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
 - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
 - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
@@ -1671,7 +1701,7 @@ function fmi2CompletedIntegratorStep!(c::FMU2Component,
                                       noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
                                       enterEventMode::Ptr{fmi2Boolean},
                                       terminateSimulation::Ptr{fmi2Boolean})
- 
+
     status = fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
           c.compAddr, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation)
     checkStatus(c, status)
@@ -1684,7 +1714,7 @@ end
                        derivatives::AbstractArray{fmi2Real},
                        nx::Csize_t)
 
-Compute state derivatives at the current time instant and for the current states.                       
+Compute state derivatives at the current time instant and for the current states.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.

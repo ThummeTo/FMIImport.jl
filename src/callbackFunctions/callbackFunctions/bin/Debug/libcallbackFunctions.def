@@ -1,0 +1,5 @@
+EXPORTS
+    allocateMemory @1
+    freeMemory @2
+    logger @3
+    stepFinished @4
