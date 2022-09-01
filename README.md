@@ -15,26 +15,20 @@
 ## How can I use FMIImport.jl?
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) is part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) might be the right way to go. You can install it via:
 
-1\. Open a Julia-REPL, activate your preferred environment.
+1\. Open a Julia-REPL, switch to package mode using `]`, activate your preferred environment.
 
-2\. Go to Package-Manager (if not already) and install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+2\. Install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> add FMIImport
 ```
 
 (3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> test FMIImport
 ```
 
 (4)\. Additionally, you can check the version of [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) that you have installed with the ```status``` command.
 ```julia-repl
-julia> ]
-
 (@v1.6) pkg> status FMIImport
 ```
 
