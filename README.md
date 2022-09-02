@@ -27,12 +27,7 @@
 (@v1.6) pkg> test FMIImport
 ```
 
-(4)\. Additionally, you can check the version of [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) that you have installed with the ```status``` command.
-```julia-repl
-(@v1.6) pkg> status FMIImport
-```
-
-5\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
+4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
 
 ## What FMI.jl-Library should I use?
 ![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
