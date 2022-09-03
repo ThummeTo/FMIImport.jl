@@ -14,17 +14,27 @@
 
 ## How can I use FMIImport.jl?
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) is part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) might be the right way to go. You can install it via:
-1. Open a Julia-REPL, switch to package mode using `]`, activate your preferred environment.
-1. Install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+1. Open a Julia-REPL, activate your preferred environment.
+1. Goto Package-Manager (if not already), install FMIImport.jl.
     ```julia
+    julia> ]
+
     (@v1.6) pkg> add FMIImport
     ```
 
-    If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+    If you want to check that everything works correctly, you can run the tests bundled with FMIImport.jl:
     ```julia
-    (@v1.6) pkg> test FMIImport
+    julia> using Pkg
+
+    julia> Pkg.test("FMIImport")
     ```
-1. Have a look inside the [examples folder](https://github.com/ThummeTo/FMIImport.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMIImport.jl/dev/examples/overview/) of the documentation. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
+
+    Additionally, you can check the version of FMIImport.jl that you have installed with the ```status``` command.
+    ```julia
+    julia> ]
+    (@v1.6) pkg> status FMIImport
+    ```
+1. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
 
 ## What FMI.jl-Library should I use?
 ![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
