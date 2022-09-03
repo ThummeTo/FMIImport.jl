@@ -6,10 +6,9 @@ on:
     branches: 
       - main
     paths:
-      - 'src/**'
-      - 'test/**'
-      - '.github/**'
-      - 'Project.toml'
+      - src/**
+      - test/**
+      - .github/**
 
 jobs:
   test:
