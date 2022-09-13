@@ -149,7 +149,7 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
     fmu.modelName = fmu.modelDescription.modelName
-    
+
     if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS)
         fmu.type = fmi2TypeCoSimulation::fmi2Type
     elseif (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
@@ -1030,7 +1030,7 @@ Returns the start/default value for a given value reference.
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference   
+- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1052,7 +1052,7 @@ Returns the start/default value for a given value reference.
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference   
+- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1103,7 +1103,7 @@ Returns the start/default value for a given value reference.
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.   
+- `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
 - `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
 - `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
 - `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
@@ -1157,7 +1157,7 @@ end
 
    fmi2GetUnit(mv::fmi2ScalarVariable)
 
-Returns the `inital` entry of the corresponding model variable.   
+Returns the `inital` entry of the corresponding model variable.
 
 # Arguments
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
@@ -1174,7 +1174,30 @@ function fmi2GetInitial(mv::fmi2ScalarVariable)
 end
 
 """
+
+   fmi2SampleDirectionalDerivative(c::FMU2Component,
+                                       vUnknown_ref::Array{fmi2ValueReference},
+                                       vKnown_ref::Array{fmi2ValueReference},
+                                       steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+
 This function samples the directional derivative by manipulating corresponding values (central differences).
+
+# Arguments
+- `str::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
+More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
+- `str::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `str::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vUnknown_ref::Array{fmi2ValueReference}`:  Argument `vUnKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
+- `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
+- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`:
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing`:
+
+# Returns
+- `dvUnknown::Arrya{fmi2Real}`:
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
 function fmi2SampleDirectionalDerivative(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
@@ -1189,7 +1212,33 @@ function fmi2SampleDirectionalDerivative(c::FMU2Component,
 end
 
 """
+
+   fmi2SampleDirectionalDerivative!(c::FMU2Component,
+                                          vUnknown_ref::Array{fmi2ValueReference},
+                                          vKnown_ref::Array{fmi2ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+
+# Arguments
+- `str::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
+More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
+ - `str::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+ - `str::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vUnknown_ref::Array{fmi2ValueReference}`:  Argument `vUnKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
+- `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
+- `dvUnknown::AbstractArray`: stores the samples of the directional derivative
+- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`:
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing`:
+
+# Returns
+- `nothing `
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+
 """
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
