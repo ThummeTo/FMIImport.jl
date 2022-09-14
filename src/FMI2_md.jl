@@ -326,7 +326,7 @@ function parseUnknwon(node::EzXML.Node)
 
         if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
             if length(varDep.dependencies) != length(varDep.dependenciesKind)
-                @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
+                @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."
             end
         end
 
@@ -710,7 +710,7 @@ end
 
 """
 
-   function fmi2GetModelName(md::fmi2ModelDescription)
+   fmi2GetModelName(md::fmi2ModelDescription)
 Returns the tag 'modelName' from the model description.
 
 # Arguments
