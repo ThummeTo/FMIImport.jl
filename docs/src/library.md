@@ -10,7 +10,7 @@
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
 platform dependent header file, several access functions, as well as the schema files are identical
 
-#### Reading the model description (FMI2_md.jl ; md = model descriotion)
+#### Reading the model description (FMI2_md.jl / FMI2_c.jl)
 This section documents functions to inquire information about the model description of an FMU
 
 ```@docs
@@ -77,18 +77,22 @@ fmi2GetNamesAndDescriptions
 fmi2GetNamesAndUnits
 fmi2GetNamesAndInitials
 fmi2GetInputNamesAndStarts
+fmi2GetVersion
+fmi2GetTypesPlatform
+fmi2Info
 ```
 
 ###  Creation, Destruction and Logging of FMU Instances
 This section documents functions that deal with instantiation, destruction and logging of FMUs
 
 ```@docs
-fmiInstantiate!
-fmiFreeInstance!
+fmi2Instantiate!
+fmi2FreeInstance!
 fmi2SetDebugLogging
+
 ```
 
-### Simulate an FMU
+### Initialization, Termination, and Resetting an FMU
 This section documents functions that deal with initialization, termination, resetting of an FMU.
 
 ```@docs
@@ -96,6 +100,10 @@ fmiSimulate
 fmiSimulateCS
 fmiSimulateME
 fmi2SetupExperiment
+fmi2EnterInitializationMode
+fmi2ExitInitializationMode
+fmi2Terminate
+fmi2Reset
 ```
 ### Getting and Setting Variable Values
 FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
@@ -139,9 +147,9 @@ The FMU has an internal state consisting of all values that are needed to contin
 fmiGetFMUstat
 fmiSetFMUstate
 fmiFreeFMUstate!
-fmiSerializedFMUstateSize
-fmiSerializeFMUstate
-fmiDeSerializeFMUstate
+fmiSerializedFMUstateSize!
+fmiSerializeFMUstate!
+fmiDeSerializeFMUstate!
 ```
 
 ### Getting Partial Dervatives
@@ -154,13 +162,12 @@ compute the partial derivatives at a particular communication point. One functio
 directional derivatives. This function can be used to construct the desired partial derivative matrices.
 
 ```@docs
-fmi2GetDirectionalDerivative
 fmi2GetDirectionalDerivative!
+fmi2SetRealInputDerivatives
+fmi2GetRealOutputDerivatives!
 fmi2SampleDirectionalDerivative
 fmiSampleDirectionalDerivative!
 ```
-
-
 
 ## FMI for Model Exchange
 FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
@@ -171,42 +178,32 @@ This chapter contains the interface description to access the equations of a dyn
 program.
 
 ###  Providing Independent Variables and Re-initialization of Caching
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
+Depending on the situation, different variables need to be computed. In order to be efficient, it is important that the interface requires only the computation of variables that are needed in the present context. The state derivatives shall be reused from the previous call. This feature is called “caching of variables” in the sequel. Caching requires that the model evaluation can detect when the input arguments, like time or states, have changed.
 
 ```@docs
-fmiSetTime
-fmiSetContinuousStates
-fmiSetReal
-fmiSetInteger
-fmiSetBoolean
-fmiSetString
+fmi2SetTime
+fmi2SetContinuousStates
+fmi2SetReal
+fmi2SetInteger
+fmi2SetBoolean
+fmi2SetString
 ```
 
 ### Evaluation of Model Equations
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
 This section contains the core functions to evaluate the model equations
 
 ```@docs
-fmiEnterEventMode
-fmiNewDiscreteStates
-fmiEnterContinuousTimeMode
-fmiCompletedIntegratorStep
-fmiGetDerivatives
-fmiGetEventIndicators
-fmiGetContinuousStates
-fmiGetNominalsOfContinuousStates
+fmi2EnterEventMode
+fmi2NewDiscreteStates
+fmi2EnterContinuousTimeMode
+fmi2CompletedIntegratorStep
+fmi2GetDerivatives!
+fmi2GetEventIndicators!
+fmi2GetContinuousStates!
+fmi2GetNominalsOfContinuousStates!
 ```
 
 ## FMI for CO-Simulation
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
 This chapter defines the Functional Mock-up Interface (FMI) for the coupling of two or more simulation
 models in a co-simulation environment (FMI for Co-Simulation). Co-simulation is a rather general
 approach to the simulation of coupled technical systems and coupled physical phenomena in
@@ -214,44 +211,32 @@ engineering with focus on instationary (time-dependent) problems.
 
 
 ### Transfer of Input / Output Values and Parameters
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
 In order to enable the slave to interpolate the continuous real inputs between communication steps, the
 derivatives of the inputs with respect to time can be provided. Also, higher derivatives can be set to allow
 higher order interpolation.
 
 ```@docs
-fmiSetRealInputDerivatives
-fmiGetRealOutputDerivatives
+fmi2SetRealInputDerivatives
+fmi2GetRealOutputDerivatives
 ```
 
 ### Computation
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
 The computation of time steps is controlled by the following function.
 
 ```@docs
-fmiDoStep
-fmiCancelStep
+fmi2DoStep
+fmi2CancelStep
 ```
 
 ### Retrieving Status Information from the Slave
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
 Status information is retrieved from the slave by the following functions:
 
 ```@docs
-fmiGetStatus
-fmiGetRealStatus
-fmiGetIntegerStatus
-fmiGetBooleanStatus
-fmiGetStringStatus
+fmi2GetStatus!
+fmi2GetRealStatus!
+fmi2GetIntegerStatus!
+fmi2GetBooleanStatus!
+fmi2GetStringStatus!
 ```
 
 
