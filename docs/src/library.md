@@ -13,23 +13,6 @@ platform dependent header file, several access functions, as well as the schema 
 #### Reading the model description (FMI2_md.jl / FMI2_c.jl)
 This section documents functions to inquire information about the model description of an FMU
 
-```@docs
-fmi2GetModelName
-Get2GUID
-fmi2GetGenerationTool
-fmi2GetGenerationDateAndTime
-fmi2GetVariableNamingConvention
-fmi2GetNumberOfEventIndicators
-fmi2CanGetSetState
-fmi2CanSerializeFMUstate
-fmi2ProvidesDirectionalDerivative
-fmi2IsCoSimulation
-fmi2IsModelExchange
-fmi2Info
-fmi2GetVersion
-fmi2GetTypesPlatform
-```
-
 ##### load/parse the FMI model description
 ```@docs
 fmi2LoadModelDescription
@@ -239,8 +222,45 @@ fmi2GetBooleanStatus!
 fmi2GetStringStatus!
 ```
 
+## Self-developed functions
+These new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+### Conversion functions
 
-## Visualize simulation results
+```@docs
+fmi2StringToValueReference
+fmi2ModelVariablesForValueReference
+fmi2StringToValueReference
+fmi2ValueReferenceToString
+fmi2GetSolutionState
+fmi2GetSolutionValue
+fmi2GetSolutionTime
+```
+
+### external/additional functions
+
+```@docs
+fmi2Unzip
+fmi2Load
+fmi2Instantiate!
+fmi2Reload
+fmi2Unload
+fmi2SampleDirectionalDerivative
+fmi2SampleDirectionalDerivative!
+fmi2GetJacobian
+fmi2GetJacobian!
+fmi2GetFullJacobian
+fmi2GetFullJacobian!
+fmi2Get!
+fmi2Get
+fmi2Set
+fmi2GetStartValue
+fmi2GetUnit
+fmi2GetInitial
+fmi2SampleDirectionalDerivative
+fmi2SampleDirectionalDerivative!
+```
+
+### Visualize simulation results
 
 ```@docs
 fmiPlot
