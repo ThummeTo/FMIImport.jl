@@ -10,7 +10,7 @@
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
 platform dependent header file, several access functions, as well as the schema files are identical
 
-#### Reading the model description (FMI2_md.jl / FMI2_c.jl)
+#### Reading the model description
 This section documents functions to inquire information about the model description of an FMU
 
 ##### load/parse the FMI model description
@@ -89,9 +89,6 @@ fmi2Terminate
 fmi2Reset
 ```
 ### Getting and Setting Variable Values
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
 All variable values of an FMU are identified with a variable handle called “value reference”. The handle is
 defined in the modelDescription.xml file (as attribute “valueReference” in element
 “ScalarVariable”). Element “valueReference” might not be unique for all variables. If two or more
@@ -119,11 +116,6 @@ fmi2SetString
 
 
 ### Getting and Setting the Complete FMU State
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
-
-TODO Ref FMIImport -> unterschiedliche Funktionen in FMI2 und FMI3 [FMIImport](https://thummeto.github.io/FMIImport.jl/dev/library/#library)
 The FMU has an internal state consisting of all values that are needed to continue a simulation. This internal state consists especially of the values of the continuous-time states, iteration variables, parameter values, input values, delay buffers, file identifiers, and FMU internal status information. With the functionsof this section, the internal FMU state can be copied and the pointer to this copy is returned to the environment. The FMU state copy can be set as actual FMU state, in order to continue the simulationfrom it.
 
 ```@docs
@@ -136,9 +128,6 @@ fmiDeSerializeFMUstate!
 ```
 
 ### Getting Partial Dervatives
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
 It is optionally possible to provide evaluation of partial derivatives for an FMU. For Model Exchange, this
 means computing the partial derivatives at a particular time instant. For Co-Simulation, this means to
 compute the partial derivatives at a particular communication point. One function is provided to compute
@@ -153,9 +142,6 @@ fmiSampleDirectionalDerivative!
 ```
 
 ## FMI for Model Exchange
-FMI2 and FMI3 contain different functions for this paragraph, therefore reference to the specific function in the FMIImport documentation.
-- [FMI2]()
-- [FMI3]() TODo Link
 
 This chapter contains the interface description to access the equations of a dynamic system from a C
 program.
@@ -224,6 +210,14 @@ fmi2GetStringStatus!
 
 ## Self-developed functions
 These new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+
+### Opening and closing FMUs
+```@docs
+fmi2Unzip
+fmi2Unload
+fmi2Load
+fmi2Reload
+```
 ### Conversion functions
 
 ```@docs
@@ -239,11 +233,7 @@ fmi2GetSolutionTime
 ### external/additional functions
 
 ```@docs
-fmi2Unzip
-fmi2Load
 fmi2Instantiate!
-fmi2Reload
-fmi2Unload
 fmi2SampleDirectionalDerivative
 fmi2SampleDirectionalDerivative!
 fmi2GetJacobian
