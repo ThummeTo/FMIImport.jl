@@ -982,15 +982,33 @@ end
 
    fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 
+   fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+
+   fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+
+   fmi2GetStartValue(mv::fmi2ScalarVariable)
+
 Returns the start/default value for a given value reference.
 
 # Arguments
 - `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `mv::fmi2ScalarVariable`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 - `vrs::fmi2ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
+- first optional function: `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
+- second optional function:`starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
+- third optional function: `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
+- forth optional function:
+ - `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
+ - `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
+ - `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
+ - `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
+ - `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
+
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1019,44 +1037,15 @@ function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceForm
     end
 end
 """
-
-   fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
-
 Returns the start/default value for a given value reference.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = fmu.modelDescription.valueReferences)
-More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
-
-# Returns
-- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
     fmi2GetStartValue(fmu.modelDescription, vrs)
 end
 
 """
-
-   fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
-
 Returns the start/default value for a given value reference.
 
-# Arguments
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = c.fmu.modelDescription.valueReferences)
-More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
-
-# Returns
-- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
 
@@ -1095,23 +1084,8 @@ end
 
 """
 
-   fmi2GetStartValue(mv::fmi2ScalarVariable)
-
 Returns the start/default value for a given value reference.
 
-# Arguments
-- `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
-
-# Returns
-- `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
-- `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
-- `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
-- `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
-- `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
@@ -1155,7 +1129,7 @@ end
 
 """
 
-   fmi2GetUnit(mv::fmi2ScalarVariable)
+   fmi2GetInitial(mv::fmi2ScalarVariable)
 
 Returns the `inital` entry of the corresponding model variable.
 
