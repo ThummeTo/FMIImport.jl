@@ -1227,8 +1227,8 @@ function fmi2CancelStep(c::FMU2Component)
 end
 
 """
-Todo
-   fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) #todo value type
+
+   fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) 
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1358,7 +1358,7 @@ end
 
 """
 
-   function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Boolean})
+    fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Boolean})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1398,7 +1398,7 @@ end
 
 """
 
-   function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
+   fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
