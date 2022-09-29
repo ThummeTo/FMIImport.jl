@@ -1059,7 +1059,38 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
-    fmi2GetStartValue(c.fmu, vrs)
+
+    vrs = prepareValueReference(c, vrs)
+
+    starts = []
+
+    for vr in vrs
+        mvs = fmi2ModelVariablesForValueReference(c.fmu.modelDescription, vr)
+
+        if length(mvs) == 0
+            @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
+        end
+
+        if mvs[1]._Real != nothing
+            push!(starts, mvs[1]._Real.start)
+        elseif mvs[1]._Integer != nothing
+            push!(starts, mvs[1]._Integer.start)
+        elseif mvs[1]._Boolean != nothing
+            push!(starts, mvs[1]._Boolean.start)
+        elseif mvs[1]._String != nothing
+            push!(starts, mvs[1]._String.start)
+        elseif mvs[1]._Enumeration != nothing
+            push!(starts, mvs[1]._Enumeration.start)
+        else
+            @assert false "fmi2GetStartValue(...): Value reference $(vr) has no data type."
+        end
+    end
+
+    if length(vrs) == 1
+        return starts[1]
+    else
+        return starts
+    end
 end
 
 """
@@ -1140,4 +1171,50 @@ Returns the `inital` entry of the corresponding model variable.
 """
 function fmi2GetInitial(mv::fmi2ScalarVariable)
     return mv.initial
+end
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences).
+"""
+function fmi2SampleDirectionalDerivative(c::FMU2Component,
+                                       vUnknown_ref::Array{fmi2ValueReference},
+                                       vKnown_ref::Array{fmi2ValueReference},
+                                       steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+
+    dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi2SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+"""
+This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+"""
+function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+                                          vUnknown_ref::Array{fmi2ValueReference},
+                                          vKnown_ref::Array{fmi2ValueReference},
+                                          dvUnknown::AbstractArray,
+                                          steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi2GetReal(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi2GetReal(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
 end
