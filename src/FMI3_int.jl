@@ -1218,7 +1218,11 @@ For more information call ?fmi3SetContinuousStates
 """
 function fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
     nx = Csize_t(length(x))
-    fmi3SetContinuousStates(c, Array{fmi3Float64}(x), nx)
+    status = fmi3SetContinuousStates(c, Array{fmi3Float64}(x), nx)
+    if status == fmi3StatusOK
+        c.x = x
+    end 
+    return status
 end
 
 """
