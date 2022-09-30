@@ -1,7 +1,7 @@
 name = "FMIImport"
 uuid = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>", "JK <josef.kircher@student.uni-augsburg.de>"]
-version = "0.9.5"
+version = "0.11.1"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -12,8 +12,8 @@ Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
-ChainRulesCore = "^1.13.0"
-EzXML = "^1.1"
-FMICore = "0.9.0"
-ZipFile = "0.9.4"
+ChainRulesCore = "1.15.3"
+EzXML = "^1.1.0"
+FMICore = "0.11.0"
+ZipFile = "^0.10"
 julia = "1.6"

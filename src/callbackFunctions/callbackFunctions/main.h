@@ -6,18 +6,25 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
-#include <windows.h>
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <stdio.h>
+#endif
 
 /*  To use this exported function of dll, include this header
  *  in your project.
  */
 
-#ifdef BUILD_DLL
-    #define DLL_EXPORT __declspec(dllexport)
+#ifdef _WIN32
+    #ifdef BUILD_DLL
+        #define DLL_EXPORT __declspec(dllexport)
+    #else
+        #define DLL_EXPORT __declspec(dllimport)
+    #endif
 #else
-    #define DLL_EXPORT __declspec(dllimport)
+    #define DLL_EXPORT
 #endif
-
 
 #ifdef __cplusplus
 extern "C"
@@ -43,15 +50,15 @@ typedef enum
     fmi2Pending
 } fmi2Status;
 
-void DLL_EXPORT logger(fmi2ComponentEnvironment componentEnvironment,
+DLL_EXPORT void logger(fmi2ComponentEnvironment componentEnvironment,
                        fmi2String instanceName,
                        fmi2Status status,
                        fmi2String category,
                        fmi2String message, ...);
-void* DLL_EXPORT allocateMemory(size_t nobj,
+DLL_EXPORT void* allocateMemory(size_t nobj,
                                 size_t size);
-void DLL_EXPORT freeMemory(void* obj);
-void DLL_EXPORT stepFinished(fmi2ComponentEnvironment componentEnvironment,
+DLL_EXPORT void freeMemory(void* obj);
+DLL_EXPORT void stepFinished(fmi2ComponentEnvironment componentEnvironment,
                              fmi2Status status);
 
 #ifdef __cplusplus

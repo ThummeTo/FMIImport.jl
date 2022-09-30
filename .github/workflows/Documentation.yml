@@ -1,0 +1,44 @@
+name: Documentation
+
+on:
+  pull_request:
+  push:
+    branches: 
+      - main
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - '.github/workflows/Documentation.yml'
+    tags: 
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: "Copy readme"
+
+        run: |
+          git fetch
+          cp ./README.md ./docs/src/index.md
+
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.6'
+          arch: x64
+
+      - name: "Install dependencies"
+        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+
+      - name: "Build and deploy"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # For authentication with GitHub Actions token
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }} # For authentication with SSH deploy key
+        run: julia --project=docs/ docs/make.jl
