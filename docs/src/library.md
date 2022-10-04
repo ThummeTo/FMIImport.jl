@@ -1,4 +1,4 @@
-# [Library Functions](@id library)
+# [FMI2 Library Functions](@id library)
 
 ## FMI2 Common Concepts for Model Exchange and Co-Simulation
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
@@ -202,7 +202,7 @@ fmi2GetBooleanStatus!
 fmi2GetStringStatus!
 ```
 
-## additional  functions
+## add  functions
 These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
 
 ### Opening and closing FMUs
