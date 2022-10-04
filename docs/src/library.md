@@ -1,23 +1,20 @@
 # [Library Functions](@id library)
 
-```@index
-```
-
 
 ## FMI 2
 
 ### FMI Common Concepts for Model Exchange and Co-Simulation
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
-platform dependent header file, several access functions, as well as the schema files are identical
+platform dependent header file, several access functions, as well as the schema files are identical.
 
 #### Reading the model description
-This section documents functions to inquire information about the model description of an FMU
+This section documents functions to inquire information about the model description of an FMU.
 
-##### load/parse the FMI model description
+##### Load/Parse the FMI model description
 ```@docs
 fmi2LoadModelDescription
 ```
-##### get value functions
+##### Get value functions
 ```@docs
 fmi2GetDefaultStartTime
 fmi2GetDefaultStopTime
@@ -34,7 +31,7 @@ fmi2IsCoSimulation
 fmi2IsModelExchange
 ```
 
-##### information functions
+##### Information functions
 
 ```@docs
 fmi2DependenciesSupported
@@ -66,7 +63,7 @@ fmi2Info
 ```
 
 ###  Creation, Destruction and Logging of FMU Instances
-This section documents functions that deal with instantiation, destruction and logging of FMUs
+This section documents functions that deal with instantiation, destruction and logging of FMUs.
 
 ```@docs
 fmi2Instantiate!
@@ -159,7 +156,7 @@ fmi2SetString
 ```
 
 ### Evaluation of Model Equations
-This section contains the core functions to evaluate the model equations
+This section contains the core functions to evaluate the model equations.
 
 ```@docs
 fmi2EnterEventMode
@@ -172,9 +169,9 @@ fmi2GetContinuousStates!
 fmi2GetNominalsOfContinuousStates!
 ```
 
-## FMI for CO-Simulation
+## FMI for Co-Simulation
 This chapter defines the Functional Mock-up Interface (FMI) for the coupling of two or more simulation
-models in a co-simulation environment (FMI for Co-Simulation). Co-simulation is a rather general
+models in a Co-Simulation environment (FMI for Co-Simulation). Co-Simulation is a rather general
 approach to the simulation of coupled technical systems and coupled physical phenomena in
 engineering with focus on instationary (time-dependent) problems.
 
@@ -209,7 +206,7 @@ fmi2GetStringStatus!
 ```
 
 ## Self-developed functions
-These new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
 
 ### Opening and closing FMUs
 ```@docs
@@ -230,7 +227,7 @@ fmi2GetSolutionValue
 fmi2GetSolutionTime
 ```
 
-### external/additional functions
+### External/Additional functions
 
 ```@docs
 fmi2Instantiate!
@@ -254,4 +251,9 @@ fmi2SampleDirectionalDerivative!
 
 ```@docs
 fmiPlot
+```
+
+## All functions
+
+```@index
 ```
