@@ -1,20 +1,17 @@
 # [Library Functions](@id library)
 
-
-## FMI 2
-
-### FMI Common Concepts for Model Exchange and Co-Simulation
+## FMI2 Common Concepts for Model Exchange and Co-Simulation
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
 platform dependent header file, several access functions, as well as the schema files are identical.
 
-#### Reading the model description
+### Reading the model description
 This section documents functions to inquire information about the model description of an FMU.
 
-##### Load/Parse the FMI model description
+#### Load/Parse the FMI model description
 ```@docs
 fmi2LoadModelDescription
 ```
-##### Get value functions
+#### Get value functions
 ```@docs
 fmi2GetDefaultStartTime
 fmi2GetDefaultStopTime
@@ -31,7 +28,7 @@ fmi2IsCoSimulation
 fmi2IsModelExchange
 ```
 
-##### Information functions
+#### Information functions
 
 ```@docs
 fmi2DependenciesSupported
@@ -205,7 +202,7 @@ fmi2GetBooleanStatus!
 fmi2GetStringStatus!
 ```
 
-## Self-developed functions
+## additional  functions
 These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
 
 ### Opening and closing FMUs
