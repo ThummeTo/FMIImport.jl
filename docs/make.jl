@@ -14,7 +14,8 @@ makedocs(sitename="FMIImport.jl",
         pages= Any[
             "Introduction" => "index.md"
             "Examples" =>  "overview.md"
-            "Library Functions" => "library.md"
+            "FMI2 Library Functions" => "library.md"
+            "FMI3 Library Functions" => "fmi3_library.md"
             "Related Publication" => "related.md"
             "Contents" => "contents.md"
             ]
