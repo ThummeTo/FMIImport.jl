@@ -36,7 +36,7 @@ instanceEnvironment - is the instance name of the model that calls this function
 category - is the category of the message. The meaning of “category” is defined by the modeling environment that generated the FMU. Depending on this modeling environment, none, some or all allowed values of “category” for this FMU are defined in the modelDescription.xml file via element “<fmiModelDescription><LogCategories>”, see section 2.4.5. Only messages are provided by function logger that have a category according to a call to fmi3SetDebugLogging (see below). 
 message - is provided in the same way and with the same format control as in function “printf” from the C standard library. [Typically, this function prints the message and stores it optionally in a log file.]
 """
-function fmi3CallbackLogger(_instanceEnvironment::Ptr{Cvoid},
+function fmi3CallbackLogger(_instanceEnvironment::Ptr{FMU3InstanceEnvironment},
     _status::Cuint,
     _category::Ptr{Cchar},
     _message::Ptr{Cchar})

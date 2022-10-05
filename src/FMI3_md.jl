@@ -896,13 +896,24 @@ end
 """
 Returns the tag 'modelIdentifier' from CS or ME section.
 """
-function fmi3GetModelIdentifier(md::fmi3ModelDescription)
-    if fmi3IsCoSimulation(md)
+function fmi3GetModelIdentifier(md::fmi3ModelDescription; type=nothing)
+
+    if type === nothing
+        if fmi3IsCoSimulation(md)
+            return md.coSimulation.modelIdentifier
+        elseif fmi3IsModelExchange(md)
+            return md.modelExchange.modelIdentifier
+        elseif fmi3IsScheduledExecution(md)
+            return md.scheduledExecution.modelIdentifier
+        else
+            @assert false "fmi2GetModelName(...): FMU does not support ME or CS!"
+        end
+    elseif type == fmi3TypeCoSimulation
         return md.coSimulation.modelIdentifier
-    elseif fmi3IsModelExchange(md)
+    elseif type == fmi3TypeModelExchange
         return md.modelExchange.modelIdentifier
-    else
-        @assert false "fmi3GetModelName(...): FMU does not support ME or CS!"
+    elseif type == fmi3TypeScheduledExecution
+        return md.scheduledExecution.modelIdentifier
     end
 end
 
