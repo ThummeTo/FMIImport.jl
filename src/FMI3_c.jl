@@ -1,3 +1,5 @@
+#STATUS: todos due to no sufficient FMU for testing
+
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
@@ -34,7 +36,6 @@ instanceEnvironment - is the instance name of the model that calls this function
 category - is the category of the message. The meaning of “category” is defined by the modeling environment that generated the FMU. Depending on this modeling environment, none, some or all allowed values of “category” for this FMU are defined in the modelDescription.xml file via element “<fmiModelDescription><LogCategories>”, see section 2.4.5. Only messages are provided by function logger that have a category according to a call to fmi3SetDebugLogging (see below). 
 message - is provided in the same way and with the same format control as in function “printf” from the C standard library. [Typically, this function prints the message and stores it optionally in a log file.]
 """
-# TODO error in the specification??
 function fmi3CallbackLogger(_instanceEnvironment::Ptr{Cvoid},
     _status::Cuint,
     _category::Ptr{Cchar},

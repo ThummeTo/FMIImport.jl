@@ -1,3 +1,6 @@
+# STATUS: todos for implementing fmi3SampleDirectionalDerivative, refactoring 
+
+
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
@@ -105,7 +108,6 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     # parse modelDescription.xml
     fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
     fmu.modelName = fmu.modelDescription.modelName
-    fmu.instanceName = fmu.modelDescription.modelName
 
     # TODO special use case?
     if (fmi3IsCoSimulation(fmu.modelDescription) && fmi3IsModelExchange(fmu.modelDescription) && type==:CS) 
@@ -315,7 +317,7 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; visible::Bool = false, logging
     instEnv.logStatusFatal = logStatusFatal
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
 
-    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
+    compAddr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(fmu.modelName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger)
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
@@ -372,7 +374,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; visible::Bool = false, loggingO
         mode = false
     end
 
-    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(fmu.instanceName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
+    compAddr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(fmu.modelName), pointer(fmu.modelDescription.instantiationToken), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
                                             fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !== nothing), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), fmu.instanceEnvironment, ptrLogger, ptrIntermediateUpdate)
 
     if compAddr == Ptr{Cvoid}(C_NULL)
@@ -419,7 +421,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3, ptrlockPreemption::Ptr{Cv
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{Cvoid}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
 
-    compAddr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, fmu.instanceName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
+    compAddr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, fmu.modelName, fmu.modelDescription.instantiationToken, fmu.fmuResourceLocation, fmi3Boolean(visible), fmi3Boolean(loggingOn), fmu.instanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
 
     if compAddr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateScheduledExecution!(...): Instantiation failed!"

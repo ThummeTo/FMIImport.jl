@@ -1,3 +1,5 @@
+# STATUS: all tests are working, couple of todos to improve package
+
 module FMIImport
 
 using FMICore
@@ -104,7 +106,7 @@ export fmi3GetDirectionalDerivative!, fmi3GetAdjointDerivative!, fmi3GetOutputDe
 export fmi3EnterConfigurationMode, fmi3ExitConfigurationMode, fmi3GetNumberOfContinuousStates, fmi3GetNumberOfEventIndicators, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!
 export fmi3EvaluateDiscreteStates, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3EnterStepMode
 export fmi3SetTime, fmi3SetContinuousStates, fmi3GetContinuousStateDerivatives, fmi3GetContinuousStateDerivatives!, fmi3GetEventIndicators!, fmi3CompletedIntegratorStep!, fmi3EnterEventMode, fmi3DoStep!
-
+# TODO check which fmi3GetContinuousDerivatives to export
 # FMI3_convert.jl
 export fmi3StringToValueReference, fmi3ValueReferenceToString, fmi3ModelVariablesForValueReference
 export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
@@ -132,6 +134,8 @@ export fmi3GetDefaultStartTime, fmi3GetDefaultStopTime, fmi3GetDefaultTolerance,
 export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
 
 # FMI3_fmu_to_md.jl
+export fmi3GetNumberOfEventIndicatorsMD
+# TODO check if needed
 # everything exported in `FMI2_md.jl`
 
 

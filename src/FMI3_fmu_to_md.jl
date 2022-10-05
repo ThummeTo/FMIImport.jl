@@ -1,3 +1,6 @@
+# STATUS: check why GetEventIndicators got changed, lost during break
+
+
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
@@ -25,8 +28,8 @@ end
 function fmi3GetVariableNamingConvention(fmu::FMU3)
     fmi3GetVariableNamingConvention(fmu.modelDescription)
 end
-
-function fmi3GetNumberOfEventIndicatorsMD(fmu::FMU3)
+#TODO check if MD ending is needed in FMI.jl
+function fmi3GetNumberOfEventIndicators(fmu::FMU3)
     fmi3GetNumberOfEventIndicators(fmu.modelDescription)
 end
 
