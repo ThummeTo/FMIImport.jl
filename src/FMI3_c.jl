@@ -1,4 +1,5 @@
 #STATUS: todos due to no sufficient FMU for testing
+# ABM: done
 
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
@@ -41,22 +42,23 @@ function fmi3CallbackLogger(_instanceEnvironment::Ptr{FMU3InstanceEnvironment},
     _category::Ptr{Cchar},
     _message::Ptr{Cchar})
 
-message = unsafe_string(_message)
-category = unsafe_string(_category)
-status = fmi3StatusToString(_status)
-instanceEnvironment = unsafe_load(_instanceEnvironment)
+    message = unsafe_string(_message)
+    category = unsafe_string(_category)
+    status = fmi3StatusToString(_status)
+    instanceEnvironment = unsafe_load(_instanceEnvironment)
 
-if status == fmi3StatusOK && instanceEnvironment.logStatusOK
-@info "[$status][$category][$instanceName]: $message"
-elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning)
-@warn "[$status][$category][$instanceName]: $message"
-elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
-   (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
-   (status == fmi3StatusFatal   && instanceEnvironment.logStatusFatal)
-@error "[$status][$category][$instanceName]: $message"
-end
+    if status == fmi3StatusOK && instanceEnvironment.logStatusOK
+        @info "[$status][$category][$instanceName]: $message"
+    elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning) ||
+           (status == fmi3StatusPending && instanceEnvironment.logStatusPending)
+        @warn "[$status][$category][$instanceName]: $message"
+    elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
+           (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
+           (status == fmi3StatusFatal   && instanceEnvironment.logStatusFatal)
+        @error "[$status][$category][$instanceName]: $message"
+    end
 
-return nothing
+    return nothing
 end
 
 """
@@ -114,11 +116,14 @@ Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
 
 Disposes the given instance, unloads the loaded model, and frees all the allocated memory and other resources that have been allocated by the functions of the FMU interface. If a NULL pointer is provided for argument instance, the function call is ignored (does not have an effect).
 """
-function fmi3FreeInstance!(c::FMU3Instance)
+function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 
-    ind = findall(x->x==c, c.fmu.instances)
-    deleteat!(c.fmu.instances, ind)
-    ccall(c.fmu.cFreeInstance, Cvoid, (Ptr{Cvoid},), c.compAddr)
+    if popInstance
+        ind = findall(x->x==c, c.fmu.instances)
+        @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
+        deleteat!(c.fmu.instances, ind)
+    end
+    fmi3FreeInstance!(c.fmu.cFreeInstance, c.compAddr)
 
     nothing
 end
@@ -232,7 +237,7 @@ function fmi3Terminate(c::FMU3Instance; soft::Bool=false)
     if status == fmi3StatusOK 
         c.state = fmi3InstanceStateTerminated
     end 
-    status
+    return status
 end
 
 """
@@ -288,7 +293,7 @@ function fmi3GetFloat32!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference},
     status = fmi3GetFloat32!(c.fmu.cGetFloat32,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 
@@ -303,7 +308,7 @@ function fmi3SetFloat32(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3SetFloat32(c.fmu.cSetFloat32,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -317,7 +322,7 @@ function fmi3GetFloat64!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference},
     status = fmi3GetFloat64!(c.fmu.cGetFloat64,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 
@@ -332,7 +337,7 @@ function fmi3SetFloat64(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3SetFloat64(c.fmu.cSetFloat64,
                c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -347,7 +352,7 @@ function fmi3GetInt8!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3GetInt8!(c.fmu.cGetInt8,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -361,7 +366,7 @@ function fmi3SetInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr
     status = fmi3SetInt8(c.fmu.cSetInt8,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -376,7 +381,7 @@ function fmi3GetUInt8!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3GetUInt8!(c.fmu.cGetUInt8,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -390,7 +395,7 @@ function fmi3SetUInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3SetUInt8(c.fmu.cSetUInt8,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -405,7 +410,7 @@ function fmi3GetInt16!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3GetInt16!(c.fmu.cGetInt16,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status  
+    return status  
 end
 
 """
@@ -419,7 +424,7 @@ function fmi3SetInt16(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3SetInt16(c.fmu.cSetInt16,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -434,7 +439,7 @@ function fmi3GetUInt16!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3GetUInt16!(c.fmu.cGetUInt16,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -448,7 +453,7 @@ function fmi3SetUInt16(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3SetUInt16(c.fmu.cSetUInt16,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -462,7 +467,7 @@ function fmi3GetInt32!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3GetInt32!(c.fmu.cGetInt32,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -476,7 +481,7 @@ function fmi3SetInt32(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3SetInt32(c.fmu.cSetInt32,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -491,7 +496,7 @@ function fmi3GetUInt32!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3GetUInt32!(c.fmu.cGetUInt32,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -505,7 +510,7 @@ function fmi3SetUInt32(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3SetUInt32(c.fmu.cSetUInt32,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -520,7 +525,7 @@ function fmi3GetInt64!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3GetInt64!(c.fmu.cGetInt64,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -534,7 +539,7 @@ function fmi3SetInt64(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3SetInt64(c.fmu.cSetInt64,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO test, no variable in FMUs
@@ -549,7 +554,7 @@ function fmi3GetUInt64!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3GetUInt64!(c.fmu.cGetUInt64,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -563,7 +568,7 @@ function fmi3SetUInt64(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3SetUInt64(c.fmu.cSetUInt64,
             c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -577,7 +582,7 @@ function fmi3GetBoolean!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference},
     status = fmi3GetBoolean!(c.fmu.cGetBoolean,
           c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -591,7 +596,7 @@ function fmi3SetBoolean(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3SetBoolean(c.fmu.cSetBoolean,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO change to fmi3String when possible to test
@@ -606,7 +611,7 @@ function fmi3GetString!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3GetString!(c.fmu.cGetString,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -620,7 +625,7 @@ function fmi3SetString(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3SetString(c.fmu.cSetString,
                 c.compAddr, vr, nvr, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -634,7 +639,7 @@ function fmi3GetBinary!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, 
     status = fmi3GetBinary!(c.fmu.cGetBinary,
                 c.compAddr, vr, nvr, valueSizes, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -648,7 +653,7 @@ function fmi3SetBinary(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3SetBinary(c.fmu.cSetBinary,
                 c.compAddr, vr, nvr, valueSizes, value, nvalue)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO, Clocks not implemented so far thus not tested
@@ -663,7 +668,7 @@ function fmi3GetClock!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, n
     status = fmi3GetClock!(c.fmu.cGetClock,
                 c.compAddr, vr, nvr, value)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -677,7 +682,7 @@ function fmi3SetClock(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nv
     status = fmi3SetClock(c.fmu.cSetClock,
                 c.compAddr, vr, nvr, value)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -689,7 +694,7 @@ function fmi3GetFMUState!(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
     status = fmi3GetFMUState!(c.fmu.cGetFMUState,
                 c.compAddr, FMUstate)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -701,7 +706,7 @@ function fmi3SetFMUState(c::FMU3Instance, FMUstate::fmi3FMUState)
     status = fmi3SetFMUState(c.fmu.cSetFMUState,
                 c.compAddr, FMUstate)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -713,7 +718,7 @@ function fmi3FreeFMUState!(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
     status = fmi3FreeFMUState!(c.fmu.cFreeFMUState,
                 c.compAddr, FMUstate)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -725,7 +730,7 @@ function fmi3SerializedFMUStateSize!(c::FMU3Instance, FMUstate::fmi3FMUState, si
     status = fmi3SerializedFMUStateSize!(c.fmu.cSerializedFMUStateSize,
                 c.compAddr, FMUstate, size)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -737,7 +742,7 @@ function fmi3SerializeFMUState!(c::FMU3Instance, FMUstate::fmi3FMUState, serialz
     status = fmi3SerializeFMUState!(c.fmu.cSerializeFMUState,
                 c.compAddr, FMUstate, serialzedState, size)
     checkStatus(c, status)
-    status   
+    return status   
 end
 
 """
@@ -749,7 +754,7 @@ function fmi3DeSerializeFMUState!(c::FMU3Instance, serialzedState::AbstractArray
     status = fmi3DeSerializeFMUState!(c.fmu.cDeSerializeFMUState,
                 c.compAddr, serialzedState, size, FMUstate)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -762,7 +767,7 @@ function fmi3SetIntervalDecimal(c::FMU3Instance, vr::AbstractArray{fmi3ValueRefe
     status = fmi3SetIntervalDecimal(c.fmu.cSetIntervalDecimal,
                 c.compAddr, vr, nvr, intervals)     
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -775,7 +780,7 @@ function fmi3SetIntervalFraction(c::FMU3Instance, vr::AbstractArray{fmi3ValueRef
     status = fmi3SetIntervalFraction(c.fmu.cSetIntervalFraction,
                 c.compAddr, vr, nvr, intervalCounters, resolutions)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -793,7 +798,7 @@ function fmi3GetIntervalDecimal!(c::FMU3Instance, vr::AbstractArray{fmi3ValueRef
     status = fmi3GetIntervalDecimal!(c.fmu.cGetIntervalDecimal,
                 c.compAddr, vr, nvr, intervals, qualifiers)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -811,7 +816,7 @@ function fmi3GetIntervalFraction!(c::FMU3Instance, vr::AbstractArray{fmi3ValueRe
     status = fmi3GetIntervalFraction!(c.fmu.cGetIntervalFraction,
                 c.compAddr, vr, nvr, intervalCounters, resolutions, qualifiers)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -823,7 +828,7 @@ function fmi3GetShiftDecimal!(c::FMU3Instance, vr::AbstractArray{fmi3ValueRefere
     status = fmi3GetShiftDecimal!(c.fmu.cGetShiftDecimal,
                 c.compAddr, vr, nvr, shifts)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -835,7 +840,7 @@ function fmi3GetShiftFraction!(c::FMU3Instance, vr::AbstractArray{fmi3ValueRefer
     status = fmi3GetShiftFraction!(c.fmu.cGetShiftFraction,
                 c.compAddr, vr, nvr, shiftCounters, resolutions)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -849,7 +854,7 @@ function fmi3ActivateModelPartition(c::FMU3Instance, vr::fmi3ValueReference, act
     status = fmi3ActivateModelPartition(c.fmu.cActivateModelPartition,
                 c.compAddr, vr, activationTime)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -864,7 +869,7 @@ function fmi3GetNumberOfVariableDependencies!(c::FMU3Instance, vr::fmi3ValueRefe
     status = fmi3GetNumberOfVariableDependencies!(c.fmu.cGetNumberOfVariableDependencies,
                 c.compAddr, vr, nvr)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -899,7 +904,7 @@ function fmi3GetVariableDependencies!(c::FMU3Instance, vr::fmi3ValueReference, e
     status = fmi3GetVariableDependencies!(c.fmu.cGetVariableDependencies,
                c.compAddr, vr, elementIndiceOfDependents, independents, elementIndiceOfInpendents, dependencyKind, ndependencies)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO not tested
@@ -935,10 +940,12 @@ function fmi3GetDirectionalDerivative!(c::FMU3Instance,
                                        nSeed::Csize_t,
                                        sensitivity::AbstractArray{fmi3Float64},
                                        nSensitivity::Csize_t)
+    @assert fmi3ProvidesDirectionalDerivatives(c.fmu) ["fmi3GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!"]
+
     status = fmi3GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
           c.compAddr, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
     checkStatus(c, status)
-    status
+    return status
     
 end
 
@@ -975,10 +982,12 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
                                        nSeed::Csize_t,
                                        sensitivity::AbstractArray{fmi3Float64},
                                        nSensitivity::Csize_t)
+    @assert fmi3ProvidesAdjointDerivatives(c.fmu) ["fmi3GetAdjointDerivative!(...): This FMU does not support build-in adjoint derivatives!"]
+
     status = fmi3GetAdjointDerivative!(c.fmu.cGetAdjointDerivative,
           c.compAddr, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
     checkStatus(c, status)
-    status
+    return status
     
 end
 
@@ -1003,7 +1012,7 @@ function fmi3GetOutputDerivatives!(c::FMU3Instance, vr::AbstractArray{fmi3ValueR
     status = fmi3GetOutputDerivatives!(c.fmu.cGetOutputDerivatives,
                c.compAddr, vr, nValueReferences, order, values, nValues)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1076,7 +1085,7 @@ function fmi3GetNumberOfContinuousStates!(c::FMU3Instance, nContinuousStates::Re
     status = fmi3GetNumberOfContinuousStates!(c.fmu.cGetNumberOfContinuousStates,
            c.compAddr, nContinuousStates)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1091,7 +1100,7 @@ function fmi3GetNumberOfEventIndicators!(c::FMU3Instance, nEventIndicators::Ref{
     status = fmi3GetNumberOfEventIndicators!(c.fmu.cGetNumberOfEventIndicators,
             c.compAddr, nEventIndicators)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1105,7 +1114,7 @@ function fmi3GetContinuousStates!(c::FMU3Instance, nominals::AbstractArray{fmi3F
     status = fmi3GetContinuousStates!(c.fmu.cGetContinuousStates,
             c.compAddr, nominals, nContinuousStates)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1120,7 +1129,7 @@ function fmi3GetNominalsOfContinuousStates!(c::FMU3Instance, x_nominal::Abstract
     status = fmi3GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
     checkStatus(c, status)
-    status
+    return status
 end
 
 # TODO not testable not supported by FMU
@@ -1134,7 +1143,7 @@ function fmi3EvaluateDiscreteStates(c::FMU3Instance)
     status = fmi3EvaluateDiscreteStates(c.fmu.cEvaluateDiscreteStates,
             c.compAddr)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1148,7 +1157,7 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance, discreteStatesNeedUpdate::Ref
     status = fmi3UpdateDiscreteStates(c.fmu.cUpdateDiscreteStates,
             c.compAddr, discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1185,7 +1194,7 @@ function fmi3EnterStepMode(c::FMU3Instance; soft::Bool = false)
         if soft 
             return fmi3StatusOK
         else
-            @warn "fmi3EnterContinuousTimeMode(...): Needs to be called in state `fmi3InstanceStateEventMode`."
+            @warn "fmi3EnterStepMode(...): Needs to be called in state `fmi3InstanceStateEventMode`."
         end
     end
 
@@ -1205,11 +1214,14 @@ Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 Set a new time instant and re-initialize caching of variables that depend on time, provided the newly provided time value is different to the previously set time value (variables that depend solely on constants or parameters need not to be newly computed in the sequel, but the previously computed values can be reused).
 """
 function fmi3SetTime(c::FMU3Instance, time::fmi3Float64)
-    c.t = time
+    
     status = fmi3SetTime(c.fmu.cSetTime,
-          c.compAddr, time)
+          c.compAddr, time + c.t_offset)
     checkStatus(c, status)
-    status
+    if status == fmi3StatusOK
+        c.t = time
+    end
+    return status
 end
 
 """
@@ -1223,7 +1235,7 @@ function fmi3SetContinuousStates(c::FMU3Instance,
     status = fmi3SetContinuousStates(c.fmu.cSetContinuousStates,
          c.compAddr, x, nx)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1237,7 +1249,7 @@ function fmi3GetContinuousStateDerivatives!(c::FMU3Instance,
     status = fmi3GetContinuousStateDerivatives!(c.fmu.cGetContinuousStateDerivatives,
           c.compAddr, derivatives, nx)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1249,7 +1261,7 @@ function fmi3GetEventIndicators!(c::FMU3Instance, eventIndicators::AbstractArray
     status = fmi3GetEventIndicators!(c.fmu.cGetEventIndicators,
                    c.compAddr, eventIndicators, ni)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1266,7 +1278,7 @@ function fmi3CompletedIntegratorStep!(c::FMU3Instance,
     status = fmi3CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
          c.compAddr, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation)
     checkStatus(c, status)
-    status
+    return status
 end
 
 """
@@ -1300,8 +1312,10 @@ The computation of a time step is started.
 """
 function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::fmi3Float64, communicationStepSize::fmi3Float64, noSetFMUStatePriorToCurrentPoint::fmi3Boolean,
                     eventEncountered::Ref{fmi3Boolean}, terminateSimulation::Ref{fmi3Boolean}, earlyReturn::Ref{fmi3Boolean}, lastSuccessfulTime::Ref{fmi3Float64})
+    @assert c.fmu.cDoStep != C_NULL ["fmi3DoStep(...): This FMU does not support fmi3DoStep, probably it's a ME-FMU with no CS-support?"]
+
     status = fmi3DoStep!(c.fmu.cDoStep,
           c.compAddr, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint, eventEncountered, terminateSimulation, earlyReturn, lastSuccessfulTime)
     checkStatus(c, status)
-    status
+    return status
 end
