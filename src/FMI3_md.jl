@@ -1,5 +1,6 @@
 # STATUS: todos include adding of missing attributes, saving value references in different array and 
 # selecting data type not based on variable type because fmi3Boolean and fmi3UInt8 use same data type UInt8
+# ABM: done
 
 
 #
