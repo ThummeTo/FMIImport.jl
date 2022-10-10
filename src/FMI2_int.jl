@@ -1343,7 +1343,7 @@ end
 
 """
 
-   fmi2GetSta  tus(c::FMU2Component, s::fmi2StatusKind)
+   fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
