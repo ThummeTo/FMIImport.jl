@@ -783,7 +783,7 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
                                       dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
-    nUnknown = Csize_t(length(vUnknown_ref))     
+    nUnknown = Csize_t(length(vUnknown_ref))
 
     dvUnknown = zeros(fmi2Real, nUnknown)
     status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, dvKnown)
@@ -793,7 +793,7 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
 end
 
 """
-TODO -> Arguments
+
     fmiGetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -868,7 +868,7 @@ end
                                       vKnown_ref::fmi2ValueReference,
                                       dvKnown::fmi2Real = 1.0)
 
-Direct function call to compute the partial derivative with respect to `vKnown_ref`.                           
+Direct function call to compute the partial derivative with respect to `vKnown_ref`.
 
 Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns.The
 precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
@@ -1273,6 +1273,9 @@ function fmi2GetEventIndicators(c::FMU2Component)
 end
 
 """
+
+   fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
+
 Returns the event indicators of the FMU
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -1339,7 +1342,30 @@ function fmi2GetNominalsOfContinuousStates(c::FMU2Component)
 end
 
 """
-ToDo
+
+   fmi2GetSta  tus(c::FMU2Component, s::fmi2StatusKind)
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `s::fmi2StatusKind`: The enumeration `fmi2StatusKind` defines which status is inquired.
+The following status information can be retrieved from a slave:
+  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
+  - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
+  - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
+  - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
+- `value::Ref{fmi2Status}`: The `value` argument points to a status flag that was requested.
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+-`value::Union{nothing; fmi2Boolean}`:
+    - If `s == fmi2Terminated`: The function returns the first value of an array with type `Boolean`, that
+    - Else `value = nothing`
 """
 function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
     rtype = nothing
