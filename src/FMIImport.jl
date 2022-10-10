@@ -1,5 +1,5 @@
 # STATUS: all tests are working, couple of todos to improve package
-
+# ABM: done
 module FMIImport
 
 using FMICore
@@ -107,6 +107,7 @@ export fmi3EnterConfigurationMode, fmi3ExitConfigurationMode, fmi3GetNumberOfCon
 export fmi3EvaluateDiscreteStates, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3EnterStepMode
 export fmi3SetTime, fmi3SetContinuousStates, fmi3GetContinuousStateDerivatives, fmi3GetContinuousStateDerivatives!, fmi3GetEventIndicators!, fmi3CompletedIntegratorStep!, fmi3EnterEventMode, fmi3DoStep!
 # TODO check which fmi3GetContinuousDerivatives to export
+
 # FMI3_convert.jl
 export fmi3StringToValueReference, fmi3ValueReferenceToString, fmi3ModelVariablesForValueReference
 export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
@@ -117,7 +118,7 @@ export fmi3GetInt8, fmi3GetUInt8, fmi3GetInt16, fmi3GetUInt16, fmi3GetInt32, fmi
 export fmi3GetBoolean, fmi3GetString, fmi3GetBinary, fmi3GetClock
 export fmi3GetFMUState, fmi3SerializedFMUStateSize, fmi3SerializeFMUState, fmi3DeSerializeFMUState
 export fmi3GetDirectionalDerivative
-export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegratorStep
+export fmi3CompletedIntegratorStep
 
 
 # FMI3_ext.jl
@@ -125,13 +126,17 @@ export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3Insta
 export fmi3Get, fmi3Get!, fmi3Set 
 export fmi3SampleDirectionalDerivative!
 export fmi3GetJacobian, fmi3GetJacobian!, fmi3GetFullJacobian, fmi3GetFullJacobian!
+export fmi3GetUnit, fmi3GetInitial, fmi3GetStartValue, fmi3SampleDirectionalDerivative
+export fmi3GetContinuousStates
 
 # FMI3_md.jl
 export fmi3LoadModelDescription
-export fmi3GetModelName, fmi3GetInstantiationToken, fmi3GetGenerationTool, fmi3GetGenerationDateAndTime, fmi3GetVariableNamingConvention
-export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution 
 export fmi3GetDefaultStartTime, fmi3GetDefaultStopTime, fmi3GetDefaultTolerance, fmi3GetDefaultStepSize
-export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
+export fmi3GetNumberOfStates, fmi3GetModelName, fmi3GetInstantiationToken, fmi3GetGenerationTool, fmi3GetGenerationDateAndTime, fmi3GetVariableNamingConvention
+export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution 
+export fmi3DependenciesSupported, fmi3DerivativeDependenciesSupported, fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
+export fmi3GetInputNames, fmi3GetOutputNames, fmi3GetParameterNames, fmi3GetStateNames, fmi3GetDerivativeNames
+export fmi3GetValueReferencesAndNames, fmi3GetNamesAndDescriptions, fmi3GetNamesAndUnits, fmi3GetNamesAndInitials, fmi3GetInputNamesAndStarts
 
 # FMI3_fmu_to_md.jl
 export fmi3GetNumberOfEventIndicatorsMD
