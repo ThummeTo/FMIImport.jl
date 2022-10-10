@@ -5,6 +5,9 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+using ChainRulesCore: ignore_derivatives
+
+# Receives one or an array of value references in an arbitrary format (see fmi3ValueReferenceFormat) and converts it into an Array{fmi3ValueReference} (if not already).
 function prepareValueReference(md::fmi3ModelDescription, vr::fmi3ValueReferenceFormat)
     tvr = typeof(vr)
     if isa(vr, AbstractArray{fmi3ValueReference,1})
@@ -21,6 +24,22 @@ function prepareValueReference(md::fmi3ModelDescription, vr::fmi3ValueReferenceF
         return fmi3ValueReference.(vr)
     elseif tvr == Nothing
         return Array{fmi3ValueReference,1}()
+    elseif tvr == Symbol
+        if vr == :states
+            return md.stateValueReferences
+        elseif vr == :derivatives
+            return md.derivativeValueReferences
+        elseif vr == :inputs
+            return md.inputValueReferences
+        elseif vr == :outputs
+            return md.outputValueReferences
+        elseif vr == :all
+            return md.valueReferences
+        elseif vr == :none
+            return Array{fmi3ValueReference,1}()
+        else
+            @assert false "Unknwon symbol `$vr`, can't convert to value reference."
+        end
     end
 
     @assert false "prepareValueReference(...): Unknown value reference structure `$tvr`."
@@ -92,6 +111,9 @@ function fmi3ValueReferenceToString(fmu::FMU3, reference::Union{fmi3ValueReferen
     fmi3ValueReferenceToString(fmu.modelDescription, reference)
 end
 
+"""
+todo
+"""
 function fmi3GetSolutionState(solution::FMU3Solution, vr::fmi3ValueReferenceFormat; isIndex::Bool=false)
  
     index = 0
@@ -121,6 +143,9 @@ function fmi3GetSolutionState(solution::FMU3Solution, vr::fmi3ValueReferenceForm
     return nothing
 end
 
+"""
+Todo
+"""
 function fmi3GetSolutionValue(solution::FMU3Solution, vr::fmi3ValueReferenceFormat; isIndex::Bool=false)
 
     index = 0
@@ -163,6 +188,9 @@ function fmi3GetSolutionValue(solution::FMU3Solution, vr::fmi3ValueReferenceForm
     return nothing
 end
 
+"""
+Todo
+"""
 function fmi3GetSolutionTime(solution::FMU3Solution)
     if solution.states !== nothing 
         return solution.states.t
