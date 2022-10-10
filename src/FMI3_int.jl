@@ -1,5 +1,5 @@
 # STATUS: todos include moving sampleDerivative function
-
+# ABM: done
 
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
@@ -9,29 +9,8 @@
 # What is included in the file `FMI3_int.jl` (internal functions)?
 # - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
 
-"""
-Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
-
-FMU enters Initialization mode.
-
-For more information call ?fmi3EnterInitializationMode
-"""
-function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Real = 0.0, stopTime::Real = startTime; tolerance::Real = 0.0)
-    if c.state != fmi3InstanceStateInstantiated
-        @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
-    end
-    c.t = startTime
-
-    toleranceDefined = (tolerance > 0.0)
-    stopTimeDefined = (stopTime > startTime)
-
-    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
-    checkStatus(c, status)
-    if status == fmi3StatusOK
-        c.state = fmi3InstanceStateInitializationMode
-    end
-    return status
-end
+# Best practices:
+# - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
 Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
@@ -40,6 +19,44 @@ Set the DebugLogger for the FMU.
 """
 function fmi3SetDebugLogging(c::FMU3Instance)
     fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
+
+FMU enters Initialization mode.
+
+For more information call ?fmi3EnterInitializationMode
+"""
+function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+    if c.state != fmi3InstanceStateInstantiated
+        @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
+    end
+
+    if startTime === nothing
+        startTime = fmi3GetDefaultStartTime(c.fmu.modelDescription)
+        if startTime === nothing
+            startTime = 0.0
+        end
+    end
+    c.t = startTime
+
+    toleranceDefined = (tolerance !== nothing)
+    if !toleranceDefined
+        tolerance = 0.0 # dummy value, will be ignored
+    end
+
+    stopTimeDefined = (stopTime !== nothing)
+    if !stopTimeDefined
+        stopTime = 0.0 # dummy value, will be ignored
+    end
+
+    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
+    checkStatus(c, status)
+    if status == fmi3StatusOK
+        c.state = fmi3InstanceStateInitializationMode
+    end
+    return status
 end
 
 """
@@ -929,7 +946,8 @@ For more information call ?fmi3SerzializeFMUstate
 function fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
     size = fmi3SerializedFMUStateSize(c, state)
     serializedState = Array{fmi3Byte}(undef, size)
-    fmi3SerializeFMUState!(c, state, serializedState, size)
+    status = fmi3SerializeFMUState!(c, state, serializedState, size)
+    @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
     serializedState
 end
 
@@ -944,7 +962,10 @@ function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray
     size = length(serializedState)
     state = fmi3FMUState()
     stateRef = Ref(state)
-    fmi3DeSerializeFMUState!(c, serializedState, Csize_t(size), stateRef)
+
+    status = fmi3DeSerializeFMUState!(c, serializedState, Csize_t(size), stateRef)
+    @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
+    
     state = stateRef[]
 end
 
@@ -959,11 +980,15 @@ function fmi3GetDirectionalDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
                                       seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
-    sensitivity = zeros(fmi3Float64, length(unknowns))
+    
+    nUnknown = Csize_t(length(unknowns))
+    
+    sensitivity = zeros(fmi3Float64, nUnknown)
 
-    fmi3GetDirectionalDerivative!(c, unknowns, knowns, sensitivity, seed)
-
-    sensitivity
+    status = fmi3GetDirectionalDerivative!(c, unknowns, knowns, sensitivity, seed)
+    @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
+    
+    return sensitivity
 end
 
 """
@@ -977,21 +1002,21 @@ function fmi3GetDirectionalDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
                                       sensitivity::AbstractArray,
-                                      seed::AbstractArray{fmi3Float64}= Array{fmi3Float64}([]))
+                                      seed::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
 
-    if length(seed) == 0
+    if seed === nothing
         seed = ones(fmi3Float64, nKnowns)
     end
 
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
 
-    fmi3GetDirectionalDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
+    status = fmi3GetDirectionalDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
 
-    nothing
+    return status
 end
 
 """
@@ -1017,29 +1042,17 @@ Computes adjoint derivatives.
 For more information call ?fmi3GetAdjointDerivative
 """
 function fmi3GetAdjointDerivative(c::FMU3Instance,
-                                      unknowns::fmi3ValueReference,
-                                      knowns::fmi3ValueReference,
-                                      seed::fmi3Float64 = 1.0)
-
-    fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
-end
-
-"""
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
-
-Computes adjoint derivatives.
-
-For more information call ?fmi3GetAdjointDerivative
-"""
-function fmi3GetAdjointDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
                                       seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
-    sensitivity = zeros(fmi3Float64, length(unknowns))
+    nUnknown = Csize_t(length(unknowns))
 
-    fmi3GetAdjointDerivative!(c, unknowns, knowns, sensitivity, seed)
+    sensitivity = zeros(fmi3Float64, nUnknown)
 
-    sensitivity
+    status = fmi3GetAdjointDerivative!(c, unknowns, knowns, sensitivity, seed)
+    @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
+    
+    return sensitivity
 end
 
 """
@@ -1053,21 +1066,36 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
                                       sensitivity::AbstractArray,
-                                      seed::AbstractArray{fmi3Float64}= Array{fmi3Float64}([]))
+                                      seed::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
 
-    if length(seed) == 0
+    if seed === nothing
         seed = ones(fmi3Float64, nKnowns)
     end
 
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
 
-    fmi3GetAdjointDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
+    status = fmi3GetAdjointDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
 
-    nothing
+    status
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
+
+Computes adjoint derivatives.
+
+For more information call ?fmi3GetAdjointDerivative
+"""
+function fmi3GetAdjointDerivative(c::FMU3Instance,
+                                      unknowns::fmi3ValueReference,
+                                      knowns::fmi3ValueReference,
+                                      seed::fmi3Float64 = 1.0)
+
+    fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
 end
 
 """
@@ -1082,27 +1110,16 @@ For more information call ?fmi3GetOutputDerivatives
 """
 function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat, order::AbstractArray{Integer})
     vr = prepareValueReference(c, vr)
+    order = prepareValue(order)
     nvr = Csize_t(length(vr))
-    values = Array{fmi3Float64}(undef, nvr)
-    fmi3GetOutputDerivatives!(c, vr, nvr, fmi3Int32.(order), values, nvr)
-    values
-end
-
-"""
-Source: FMISpec3.0, Version D5ef1c1: 2.2.12. Getting Derivatives of Continuous Outputs
-
-Retrieves the n-th derivative of output values.
-
-vr defines the value references of the variables
-the array order specifies the corresponding order of derivation of the variables
-
-For more information call ?fmi3GetOutputDerivatives
-"""
-function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReference, order::Integer)
-    nvr = Csize_t(1)
-    values = Array{fmi3Float64}(undef, nvr)
-    fmi3GetOutputDerivatives!(c, [vr], nvr, [order], values, nvr)
-    values
+    values = zeros(fmi3Float64, nvr)
+    fmi3GetOutputDerivatives!(c, vr, nvr, order, values, nvr)
+    
+    if length(values) == 1
+        return values[1]
+    else
+        return values
+    end
 end
 
 """
@@ -1209,7 +1226,9 @@ Set independent variable time and reinitialize chaching of variables that depend
 For more information call ?fmi3SetTime
 """
 function fmi3SetTime(c::FMU3Instance, time::Real)
-    fmi3SetTime(c, fmi3Float64(time))
+    status = fmi3SetTime(c, fmi3Float64(time))
+    c.t = t
+    return status
 end
 
 """
@@ -1238,8 +1257,23 @@ For more information call ?fmi3GetContinuousDerivatives
 function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     derivatives = zeros(fmi3Float64, nx)
-    fmi3GetContinuousStateDerivatives!(c, derivatives, nx)
-    derivatives
+    fmi3GetContinuousStateDerivatives!(c, derivatives)
+    return derivatives
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
+
+Compute state derivatives at the current time instant and for the current states.
+
+For more information call ?fmi3GetContinuousDerivatives
+"""
+function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::AbstractArray{fmi3Float64})
+    status = fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    if status == fmi3StatusOK
+        c.ẋ = derivatives
+    end
+    return status
 end
 
 """
@@ -1286,7 +1320,7 @@ function fmi3GetEventIndicators(c::FMU3Instance)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     eventIndicators = zeros(fmi3Float64, ni)
     fmi3GetEventIndicators!(c, eventIndicators, ni)
-    eventIndicators
+    return eventIndicators
 end
 
 """
@@ -1324,79 +1358,3 @@ For more information call ?fmi3EnterEventMode
 function fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
     fmi3EnterEventMode(c, fmi3Boolean(stepEvent), fmi3Boolean(stateEvent), rootsFound, nEventIndicators, fmi3Boolean(timeEvent))
 end
-
-"""
-Returns the start/default value for a given value reference.
-
-TODO: Add this command in the documentation.
-"""
-function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat)
-
-    vrs = prepareValueReference(c, vrs)
-
-    starts = []
-
-    for vr in vrs
-        mvs = fmi3ModelVariablesForValueReference(c.fmu.modelDescription, vr) 
-
-        if length(mvs) == 0
-            @warn "fmi3GetStartValue(...) found no model variable with value reference $(vr)."
-        end
-    
-        push!(starts, mvs[1].datatype.start)
-    end
-
-    if length(vrs) == 1
-        return starts[1]
-    else
-        return starts 
-    end
-end 
-
-"""
-This function samples the directional derivative by manipulating corresponding values (central differences).
-"""
-function fmi3SampleDirectionalDerivative(c::FMU3Instance,
-                                       vUnknown_ref::AbstractArray{fmi3ValueReference},
-                                       vKnown_ref::AbstractArray{fmi3ValueReference},
-                                       steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
-
-    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
-
-    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
-
-    dvUnknown
-end
-
-# TODO should probably in FMI3_ext.jl
-"""
-This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
-"""
-function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
-                                          vUnknown_ref::AbstractArray{fmi3ValueReference},
-                                          vKnown_ref::AbstractArray{fmi3ValueReference},
-                                          dvUnknown::AbstractArray,
-                                          steps::AbstractArray{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
-    
-    for i in 1:length(vKnown_ref)
-        vKnown = vKnown_ref[i]
-        origValue = fmi3GetFloat64(c, vKnown)
-
-        fmi3SetFloat64(c, vKnown, origValue - steps[i]*0.5)
-        negValues = fmi3GetFloat64(c, vUnknown_ref)
-
-        fmi3SetFloat64(c, vKnown, origValue + steps[i]*0.5)
-        posValues = fmi3GetFloat64(c, vUnknown_ref)
-
-        fmi3SetFloat64(c, vKnown, origValue)
-
-        if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
-        else
-            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
-        end
-    end
-
-    nothing
-end
-
