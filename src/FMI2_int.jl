@@ -1345,6 +1345,8 @@ end
 
    fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
 
+Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
+
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `s::fmi2StatusKind`: The enumeration `fmi2StatusKind` defines which status is inquired.
@@ -1363,9 +1365,7 @@ More detailed:
   - `fmi2Error`: the communication step could not be carried out at all
   - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
   - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
--`value::Union{nothing; fmi2Boolean}`:
-    - If `s == fmi2Terminated`: The function returns the first value of an array with type `Boolean`, that
-    - Else `value = nothing`
+-`value::Union{nothing; fmi2Boolean}`: If the slave dont want to terminate the simulation `nothing` ist returned. Howerver, if the slave want to terminate the simulation 
 """
 function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
     rtype = nothing
