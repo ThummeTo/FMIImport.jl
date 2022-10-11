@@ -1358,3 +1358,40 @@ For more information call ?fmi3EnterEventMode
 function fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
     fmi3EnterEventMode(c, fmi3Boolean(stepEvent), fmi3Boolean(stateEvent), rootsFound, nEventIndicators, fmi3Boolean(timeEvent))
 end
+
+function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Nothing} = nothing, communicationStepSize::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true,
+    eventEncountered::fmi3Boolean = fmi3False, terminateSimulation::fmi3Boolean = fmi3False, earlyReturn::fmi3Boolean = fmi3False, lastSuccessfulTime::fmi3Float64 = 0.0)
+
+    # skip `fmi3DoStep` if this is set (allows evaluation of a CS_NeuralFMUs at t_0)
+    if c.skipNextDoStep
+        c.skipNextDoStep = false
+        return fmi3StatusOK
+    end
+
+    if currentCommunicationPoint === nothing
+        currentCommunicationPoint = c.t
+    end
+
+    if communicationStepSize === nothing
+        communicationStepSize = fmi3GetDefaultStepSize(c.fmu.modelDescription)
+        if communicationStepSize === nothing
+            communicationStepSize = 1e-2
+        end
+    end
+
+    refeventEncountered = Ref(eventEncountered)
+    refterminateSimulation = Ref(terminateSimulation)
+    refearlyReturn = Ref(earlyReturn)
+    reflastSuccessfulTime = Ref(lastSuccessfulTime)
+
+    c.t = currentCommunicationPoint
+    status = fmi3DoStep!(c, fmi3Float64(currentCommunicationPoint), fmi3Float64(communicationStepSize), fmi3Boolean(noSetFMUStatePriorToCurrentPoint), refeventEncountered, refterminateSimulation, refearlyReturn, reflastSuccessfulTime)
+    c.t += communicationStepSize
+
+    eventEncountered = refeventEncountered[]
+    terminateSimulation = refterminateSimulation[]
+    earlyReturn = refearlyReturn[]
+    lastSuccessfulTime = reflastSuccessfulTime[]
+
+    return status
+end
