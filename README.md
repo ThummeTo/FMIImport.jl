@@ -22,7 +22,11 @@
 (@v1.6) pkg> add FMIImport
 ```
 
+<<<<<<< HEAD
 3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+=======
+(3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+>>>>>>> a904e0368285ba11991598ba8c42cd25b2964800
 ```julia-repl
 (@v1.6) pkg> test FMIImport
 ```
