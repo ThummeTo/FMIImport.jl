@@ -31,7 +31,7 @@ include("FMI2_int.jl")
 include("FMI2_ext.jl")
 include("FMI2_md.jl")
 include("FMI2_fmu_to_md.jl")
-#include("FMI2_sens.jl")
+include("FMI2_sens.jl")
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
@@ -76,7 +76,8 @@ export fmi2GetValueReferencesAndNames, fmi2GetNamesAndDescriptions, fmi2GetNames
 # FMI2_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`
 
-
+# FMI2_sens.jl 
+export eval!
 
 ### FMI3 ###
 
