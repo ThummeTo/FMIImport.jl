@@ -76,7 +76,7 @@ function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
                 numBytes = write(fileAbsPath, read(f))
 
                 if numBytes == 0
-                    @info "fmi2Unzip(...): Written file `$(f.name)`, but file is empty."
+                    @debug "fmi2Unzip(...): Written file `$(f.name)`, but file is empty."
                 end
 
                 @assert isfile(fileAbsPath) ["fmi2Unzip(...): Can't unzip file `$(f.name)` at `$(fileAbsPath)`."]
@@ -87,7 +87,7 @@ function fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
     end
 
     @assert isdir(unzippedAbsPath) ["fmi2Unzip(...): ZIP-Archive couldn't be unzipped at `$(unzippedPath)`."]
-    @info "fmi2Unzip(...): Successfully unzipped $numFiles files at `$unzippedAbsPath`."
+    @debug "fmi2Unzip(...): Successfully unzipped $numFiles files at `$unzippedAbsPath`."
 
     (unzippedAbsPath, zipAbsPath)
 end
@@ -98,7 +98,7 @@ end
 function dlsym_opt(libHandle, symbol)
     addr = dlsym(libHandle, symbol; throw_error=false)
     if addr == nothing
-        @info "This FMU does not support function '$symbol'."
+        logWarn(fmu, "This FMU does not support function '$symbol'.")
         addr = Ptr{Cvoid}(C_NULL)
     end
     addr
@@ -128,12 +128,12 @@ Retrieves all the pointers of binary functions.
 
 See also .
 """
-function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
+function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
     # Create uninitialized FMU
-    fmu = FMU2()
+    fmu = FMU2(logLevel)
 
     if startswith(pathToFMU, "http")
-        @info "Downloading FMU from `$(pathToFMU)`."
+        logInfo(fmu, "Downloading FMU from `$(pathToFMU)`.")
         pathToFMU = Downloads.download(pathToFMU)
     end
 
@@ -218,10 +218,10 @@ function fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
     fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") # URIs.escapeuri(tmpResourceLocation)
 
-    @info "fmi2Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
+    logInfo(fmu, "fmi2Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
 
     if fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription)
-        @info "fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified."
+        logInfo(fmu, "fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.")
     end
 
     fmu.binaryPath = pathToBinary
@@ -403,7 +403,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
     end
 
     if component != nothing
-        @info "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+        logInfo(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
     else
         component = FMU2Component(compAddr, fmu)
         component.jacobianUpdate! = fmi2GetJacobian!

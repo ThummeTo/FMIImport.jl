@@ -48,10 +48,10 @@ open(joinpath(pwd(), "stdout"), "w") do out
     end 
 end
 
-output = read(joinpath(pwd(), "stdout"), String)
-@test output == ""
-
 if VERSION >= v"1.7.0"
+    output = read(joinpath(pwd(), "stdout"), String)
+    @test output == "[\e[31mError\e[0m][IllegalFunctionCall][SpringPendulum1D]: fmiExitInitializationMode: may only called in initialization mode\r\n"
+
     output = read(joinpath(pwd(), "stderr"), String)
     println(output)
     @test startswith(output, "┌ Warning: fmi2ExitInitializationMode(...): Needs to be called in state `fmi2ComponentStateInitializationMode`.\n")
