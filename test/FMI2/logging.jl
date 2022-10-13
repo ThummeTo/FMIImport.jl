@@ -51,11 +51,7 @@ end
 if VERSION >= v"1.7.0"
     output = read(joinpath(pwd(), "stdout"), String)
 
-    if Sys.iswindows()
-        @test output == "[\e[31mError\e[0m][IllegalFunctionCall][SpringPendulum1D]: fmiExitInitializationMode: may only called in initialization mode\r\n"
-    elseif Sys.islinux()
-        @test output == ""
-    end
+    @test output == "" # [\e[31mError\e[0m][IllegalFunctionCall][SpringPendulum1D]: fmiExitInitializationMode: may only called in initialization mode\r\n
 
     output = read(joinpath(pwd(), "stderr"), String)
     println(output)
