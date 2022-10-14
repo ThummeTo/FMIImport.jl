@@ -22,11 +22,7 @@
 (@v1.6) pkg> add FMIImport
 ```
 
-<<<<<<< HEAD
 3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
-=======
-(3)\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
->>>>>>> a904e0368285ba11991598ba8c42cd25b2964800
 ```julia-repl
 (@v1.6) pkg> test FMIImport
 ```
@@ -45,7 +41,7 @@ To keep dependencies nice and clean, the original package [*FMI.jl*](https://git
 - [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
 
 ## What Platforms are supported?
-[FMIImport.jl](https://github.com/ThummeTo/FMIImport.jl) is tested (and testing) under Julia Versions *1.6.5 LTS* and *latest* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. Mac and x86-architectures might work, but are not tested.
+[FMIImport.jl](https://github.com/ThummeTo/FMIImport.jl) is tested (and testing) under Julia Versions *1.6 LTS* and *latest* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. Mac and x86-architectures might work, but are not tested.
 
 ## How to cite?
 Tobias Thummerer, Lars Mikelsons and Josef Kircher. 2021. **NeuralFMU: towards structural integration of FMUs into neural networks.** Martin Sjölund, Lena Buffoni, Adrian Pop and Lennart Ochel (Ed.). Proceedings of 14th Modelica Conference 2021, Linköping, Sweden, September 20-24, 2021. Linköping University Electronic Press, Linköping (Linköping Electronic Conference Proceedings ; 181), 297-306. [DOI: 10.3384/ecp21181297](https://doi.org/10.3384/ecp21181297)
