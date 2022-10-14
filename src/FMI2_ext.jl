@@ -419,6 +419,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
         component.instanceName = instanceName
+        component.type = type
 
         if pushComponents
             push!(fmu.components, component)

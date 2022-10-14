@@ -140,7 +140,7 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
 
     if fmi2IsModelExchange(c.fmu)
         
-        if c.fmu.type == fmi2TypeModelExchange::fmi2Type
+        if c.type == fmi2TypeModelExchange::fmi2Type
             if dx == nothing
                 dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
             end
@@ -148,7 +148,7 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     end
 
     if fmi2IsCoSimulation(c.fmu)
-        if c.fmu.type == fmi2TypeCoSimulation::fmi2Type
+        if c.type == fmi2TypeCoSimulation::fmi2Type
             @assert dx == nothing "Keyword `dx != nothing` is invalid for CS-FMUs. Setting a state-derivative is not possible in CS."
             @assert x == nothing "Keyword `x != nothing` is invalid for CS-FMUs. Setting a state is not possible in CS."
             @assert t == nothing "Keyword `t != nothing` is invalid for CS-FMUs. Setting explicit time is not possible in CS."
@@ -200,7 +200,7 @@ function _eval!(cRef::UInt64,
     end
 
     # set time
-    if t != nothing
+    if t != nothing && t >= 0.0
         fmi2SetTime(c, t)
     end
 
