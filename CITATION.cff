@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-preferred-citation: conference-paper
+preferred-citation: "conference-paper"
 authors:
 - family-names: "Thummerer"
   given-names: "Tobias"

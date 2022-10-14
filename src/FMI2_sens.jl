@@ -138,7 +138,7 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     @assert y == nothing || (length(y) == length(y_refs)) "Length of `y` must match length of `y_refs`."
     @assert u == nothing || (length(u) == length(u_refs)) "Length of `u` must match length of `u_refs`."
 
-    if fmi2IsModelExchange(c.fmu)
+    if fmi2IsModelExchange(c.fmu) && c.fmu.type == fmi2TypeModelExchange::fmi2Type
         if dx == nothing
             dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
         end
