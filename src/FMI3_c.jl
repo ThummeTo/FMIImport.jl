@@ -254,7 +254,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.1. Super State: FMU State Setable
 See also [`fmi3SetDebugLogging`](@ref).
@@ -299,7 +299,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.2. State: Instantiated
 See also [`fmi3EnterInitializationMode`](@ref).
@@ -342,7 +342,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.3. State: Initialization Mode
 See also [`fmi3ExitInitializationMode`](@ref).
@@ -390,7 +390,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.4. Super State: Initialized
 See also [`fmi3Terminate`](@ref).
@@ -436,7 +436,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.1. Super State: FMU State Setable
 See also [`fmi3Reset`](@ref).
@@ -503,7 +503,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetFloat32!`](@ref).
@@ -541,7 +541,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetFloat32`](@ref).
@@ -578,7 +578,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetFloat64!`](@ref).
@@ -616,7 +616,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetFloat64`](@ref).
@@ -654,7 +654,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetInt8!`](@ref).
@@ -691,7 +691,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetInt8!`](@ref).
@@ -729,7 +729,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetUInt8!`](@ref).
@@ -766,7 +766,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetUInt8`](@ref).
@@ -804,7 +804,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetInt16!`](@ref).
@@ -841,7 +841,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetInt16`](@ref).
@@ -879,7 +879,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetUInt16!`](@ref).
@@ -916,7 +916,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetUInt16!`](@ref).
@@ -953,7 +953,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetInt32!`](@ref).
@@ -990,7 +990,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetInt32`](@ref).
@@ -1028,7 +1028,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetUInt32!`](@ref).
@@ -1065,7 +1065,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetUInt32`](@ref).
@@ -1103,7 +1103,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetInt64!`](@ref).
@@ -1140,7 +1140,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetInt64`](@ref).
@@ -1178,7 +1178,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetUInt64!`](@ref).
@@ -1215,7 +1215,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetUInt64`](@ref).
@@ -1252,7 +1252,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetBoolean!`](@ref).
@@ -1289,7 +1289,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetBoolean`](@ref).
@@ -1327,7 +1327,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetString!`](@ref).
@@ -1364,7 +1364,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetString`](@ref).
@@ -1402,7 +1402,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetBinary!`](@ref).
@@ -1440,7 +1440,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetBinary`](@ref).
@@ -1478,7 +1478,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3GetClock!`](@ref).
@@ -1515,7 +1515,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetClock`](@ref).
@@ -1549,7 +1549,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3GetFMUState!`](@ref).
@@ -1583,7 +1583,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3SetFMUState`](@ref).
@@ -1617,7 +1617,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3FreeFMUState!`](@ref).
@@ -1652,7 +1652,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3SerializedFMUStateSize!`](@ref).
@@ -1673,7 +1673,7 @@ Serializes the data which is referenced by pointer `FMUState` and copies this da
 # Arguments
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `FMUstate::fmi3FMUstate`: Argument `FMUstate` is a pointer to a data structure in the FMU that saves the internal FMU state of the actual or a previous time instant.
-- `serialzedState::AbstractArray{fmi2Byte}`: Argument `serializedState` contains the copy of the serialized data referenced by the pointer FMUstate.
+- `serialzedState::AbstractArray{fmi3Byte}`: Argument `serializedState` contains the copy of the serialized data referenced by the pointer FMUstate.
 - `size::Ref{Csize_t}`: Argument `size` is an object that safely references a value of type `Csize_t` and defines the size of the byte vector in which the FMUstate can be stored.
 
 # Returns
@@ -1688,7 +1688,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3SerializeFMUState!`](@ref).
@@ -1709,7 +1709,7 @@ Deserializes the byte vector serializedState of length size, constructs a copy o
 # Arguments
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `FMUstate::fmi3FMUstate`: Argument `FMUstate` is a pointer to a data structure in the FMU that saves the internal FMU state of the actual or a previous time instant.
-- `serialzedState::AbstractArray{fmi2Byte}`: Argument `serializedState` contains the copy of the serialized data referenced by the pointer FMUstate.
+- `serialzedState::AbstractArray{fmi3Byte}`: Argument `serializedState` contains the copy of the serialized data referenced by the pointer FMUstate.
 - `size::Ref{Csize_t}`: Argument `size` is an object that safely references a value of type `Csize_t` and defines the size of the byte vector in which the FMUstate can be stored.
 
 # Returns
@@ -1724,7 +1724,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 See also [`fmi3DeSerializeFMUState!`](@ref).
@@ -1759,7 +1759,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3SetIntervalDecimal`](@ref).
@@ -1795,7 +1795,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3SetIntervalFraction`](@ref).
@@ -1837,7 +1837,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3GetIntervalDecimal!`](@ref).
@@ -1879,7 +1879,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3GetIntervalFraction!`](@ref).
@@ -1915,7 +1915,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3GetShiftDecimal!`](@ref).
@@ -1951,7 +1951,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3GetShiftFraction!`](@ref).
@@ -1988,7 +1988,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 5.2.2. State: Clock Activation Mode
 See also [`fmi3ActivateModelPartition`](@ref).
@@ -2025,7 +2025,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.10. Dependencies of Variables
 See also [`fmi3GetNumberOfVariableDependencies!`](@ref).
@@ -2072,7 +2072,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.10. Dependencies of Variables
 See also [`fmi3GetVariableDependencies!`](@ref).
@@ -2097,8 +2097,6 @@ end
                                        nSeed::Csize_t,
                                        sensitivity::AbstractArray{fmi3Float64},
                                        nSensitivity::Csize_t)
-    dvKnown::AbstractArray{fmi2Real},
-    dvUnknown::AbstractArray{fmi2Real})
 
 Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
 
@@ -2140,7 +2138,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.11. Getting Partial Derivatives
 See also [`fmi3GetDirectionalDerivative`](@ref).
@@ -2166,17 +2164,15 @@ end
 # TODO not tested
 """
 
-fmi3GetAdjointDerivative!(c::FMU3Instance,
-unknowns::AbstractArray{fmi3ValueReference},
-nUnknowns::Csize_t,
-knowns::AbstractArray{fmi3ValueReference},
-nKnowns::Csize_t,
-seed::AbstractArray{fmi3Float64},
-nSeed::Csize_t,
-sensitivity::AbstractArray{fmi3Float64},
-nSensitivity::Csize_t)
-dvKnown::AbstractArray{fmi2Real},
-dvUnknown::AbstractArray{fmi2Real})
+    fmi3GetAdjointDerivative!(c::FMU3Instance,
+                unknowns::AbstractArray{fmi3ValueReference},
+                nUnknowns::Csize_t,
+                knowns::AbstractArray{fmi3ValueReference},
+                nKnowns::Csize_t,
+                seed::AbstractArray{fmi3Float64},
+                nSeed::Csize_t,
+                sensitivity::AbstractArray{fmi3Float64},
+                nSensitivity::Csize_t)
 
 Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
 
@@ -2218,7 +2214,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.11. Getting Partial Derivatives
 See also [`fmi3GetAdjointDerivative!`](@ref).
@@ -2267,7 +2263,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.12. Getting Derivatives of Continuous Outputs
 
@@ -2304,7 +2300,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.2. State: Instantiated
 
@@ -2356,7 +2352,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.6. State: Configuration Mode
 
@@ -2412,7 +2408,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.2. State: Instantiated
 
@@ -2449,7 +2445,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.2. State: Instantiated
 
@@ -2487,7 +2483,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.3. State: Initialization Mode
 
@@ -2526,7 +2522,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.3. State: Initialization Mode
 
@@ -2562,7 +2558,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.3. State: Initialization Mode
 
@@ -2599,7 +2595,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.5. State: Event Mode
 
@@ -2639,7 +2635,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.5. State: Event Mode
 
@@ -2687,7 +2683,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.5. State: Event Mode
 
@@ -2734,7 +2730,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 
@@ -2778,7 +2774,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 
@@ -2818,7 +2814,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 
@@ -2856,7 +2852,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 
@@ -2898,7 +2894,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 See also [`fmi3CompletedIntegratorStep!`](@ref).
@@ -2938,7 +2934,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 3.2.1. State: Continuous-Time Mode
 
@@ -2986,7 +2982,7 @@ More detailed:
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 4.2.1. State: Step Mode
 
