@@ -138,17 +138,21 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     @assert y == nothing || (length(y) == length(y_refs)) "Length of `y` must match length of `y_refs`."
     @assert u == nothing || (length(u) == length(u_refs)) "Length of `u` must match length of `u_refs`."
 
-    if fmi2IsModelExchange(c.fmu) && c.fmu.type == fmi2TypeModelExchange::fmi2Type
-        if dx == nothing
-            dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
-        end
+    if fmi2IsModelExchange(c.fmu)
         
-    elseif fmi2IsCoSimulation(c.fmu)
-        @assert dx == nothing "Keyword `dx != nothing` is invalid for CS-FMUs. Setting a state-derivative is not possible in CS."
-        @assert x == nothing "Keyword `x != nothing` is invalid for CS-FMUs. Setting a state is not possible in CS."
-        @assert t == nothing "Keyword `t != nothing` is invalid for CS-FMUs. Setting explicit time is not possible in CS."
-    else 
-        @assert false "Unknown FMU2 type."
+        if c.fmu.type == fmi2TypeModelExchange::fmi2Type
+            if dx == nothing
+                dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
+            end
+        end
+    end
+
+    if fmi2IsCoSimulation(c.fmu)
+        if c.fmu.type == fmi2TypeCoSimulation::fmi2Type
+            @assert dx == nothing "Keyword `dx != nothing` is invalid for CS-FMUs. Setting a state-derivative is not possible in CS."
+            @assert x == nothing "Keyword `x != nothing` is invalid for CS-FMUs. Setting a state is not possible in CS."
+            @assert t == nothing "Keyword `t != nothing` is invalid for CS-FMUs. Setting explicit time is not possible in CS."
+        end
     end
 
     # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Nothing`.
