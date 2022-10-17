@@ -264,7 +264,7 @@ end
 
 Writes the integer values of an array of variables in the given field
 
-fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar.
+fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar. 
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
