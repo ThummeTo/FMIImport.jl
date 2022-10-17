@@ -1,5 +1,5 @@
 # STATUS: todos for implementing fmi3SampleDirectionalDerivative, refactoring 
-# ABM: structure is same as FMI2
+# ABM: structure is same as FMI3
 
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
@@ -14,9 +14,24 @@ using ZipFile
 import Downloads
 
 """
+
+    fmi3Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
+
 Create a copy of the .fmu file as a .zip folder and unzips it.
 Returns the paths to the zipped and unzipped folders.
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+
+# Arguments
+- `pathToFMU::String`: The folder path to the .zip folder.
+
+# Keywords
+- `unpackPath=nothing`: Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+- `cleanup=true`: The cleanup option controls whether the temporary directory is automatically deleted when the process exits.
+
+# Returns
+- `unzippedAbsPath::String`: Contains the Path to the uzipped Folder.
+- `zipAbsPath::String`: Contains the Path to the zipped Folder.
+
+See also [`mktempdir`](https://docs.julialang.org/en/v1/base/file/#Base.Filesystem.mktempdir-Tuple{AbstractString}).
 """
 function fmi3Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
@@ -81,10 +96,28 @@ function fmi3Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 end
 
 """
+
+    fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
+
 Sets the properties of the fmu by reading the modelDescription.xml.
 Retrieves all the pointers of binary functions.
-Returns the instance of the FMU struct.
-Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+
+# Arguments
+- `pathToFMU::String`: The folder path to the .fmu file.
+
+# Keywords
+- `unpackPath=nothing`: Via optional argument ```unpackPath```, a path to unpack the FMU can be specified (default: system temporary directory).
+- `type=nothing`: Defines whether a Co-Simulation or Model Exchange is present
+- `cleanup=true`: The cleanup option controls whether the temporary directory is automatically deleted when the process exits.
+
+# Returns
+- Returns the instance of the FMU struct.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.4.7  Model Variables
+
+See also .
 """
 function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
     # Create uninitialized FMU
@@ -196,6 +229,9 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
     fmu
 end
 
+"""
+TODO
+"""
 function loadBinary(fmu::FMU3)
     lastDirectory = pwd()
     cd(dirname(fmu.binaryPath))
@@ -305,10 +341,37 @@ function loadBinary(fmu::FMU3)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateModelExchange
+
+    fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+        logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new modelExchange instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU modelExchange instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateModelExchange`](#@ref).
 """
 function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.modelName, type::fmi3Type = fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallBacks::Bool = fmu.executionConfig.externalCallbacks,
     logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
@@ -392,10 +455,39 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateCoSimulation
+
+    fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+        eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new coSimulation instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `eventModeUsed::Bool = false`: Defines if the FMU instance can use the event mode. (default=`false`)
+- `ptrIntermediateUpdate=nothing`: Points to a function handling intermediate Updates (defalut=`nothing`) 
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU coSimulation instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateCoSimulation`](#@ref).
 """
 function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
     eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
@@ -483,10 +575,39 @@ end
 
 # TODO not tested
 """
-Source: FMISpec3.0, Version D5ef1c1:: 2.3.1. Super State: FMU State Setable
-Create a new instance of the given fmu, adds a logger if logginOn == true.
-Returns the instance of a new FMU component.
-For more information call ?fmi3InstantiateScheduledExecution
+
+    fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+        logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new ScheduledExecution instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `ptrlockPreemption::Ptr{Cvoid}`: Points to a function handling locking Preemption
+- `ptrunlockPreemption::Ptr{Cvoid}`: Points to a function handling unlocking Preemption
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU ScheduledExecution instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateScheduledExecution`](#@ref).
 """
 function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
     logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
@@ -565,17 +686,33 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
 end
 
 """
+
+    fmi3Reload(fmu::FMU3)
+
 Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3Reload(fmu::FMU3)
     dlclose(fmu.libHandle)
     loadBinary(fmu)
 end
 
-
 """
+
+    function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
+
 Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+- `cleanUp::Bool= true`: Defines if the file, link, or empty directory should be deleted.
 """
 function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
 
@@ -599,7 +736,43 @@ function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
 end
 
 """
+
+fmi3SampleDirectionalDerivative(c::FMU3Instance,
+    vUnknown_ref::AbstractArray{fmi3ValueReference},
+    vKnown_ref::AbstractArray{fmi3ValueReference},
+    steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
 This function samples the directional derivative by manipulating corresponding values (central differences).
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
+𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
+
+- `v_unknown`: vector of unknown Real variables computed in the actual Mode:
+- Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+- Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><Derivatives>)`.
+- Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+- Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `v_known`: Real input variables of function h that changes its value in the actual Mode.
+- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δv_unknown = (δh / δv_known) Δv_known
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vUnknown_ref::AbstractArray{fmi3ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
+- `vKnown_ref::AbstractArray{fmi3ValueReference}`: Argument `vKnown_ref` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `dvUnkonwn::Array{fmi3Float64}`: Argument `vUnknown_ref` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(see function fmi3GetDirectionalDerivative!).
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model Variables
+
+See also [`fmi3GetDirectionalDerivative!`](@ref) ,[`fmi3GetDirectionalDerivative`](@ref).
 """
 function fmi3SampleDirectionalDerivative(c::fmi3Instance,
                                        vUnknown_ref::AbstractArray{fmi3ValueReference},
@@ -613,8 +786,45 @@ function fmi3SampleDirectionalDerivative(c::fmi3Instance,
     dvUnknown
 end
 
+
 """
-This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
+
+fmi3SampleDirectionalDerivative!(c::FMU3Instance,
+    vUnknown_ref::AbstractArray{fmi3ValueReference},
+    vKnown_ref::AbstractArray{fmi3ValueReference},
+    steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
+This function samples the directional derivative by manipulating corresponding values (central differences).
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
+𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
+
+- `v_unknown`: vector of unknown Real variables computed in the actual Mode:
+- Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+- Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><Derivatives>)`.
+- Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+- Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `v_known`: Real input variables of function h that changes its value in the actual Mode.
+- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δv_unknown = (δh / δv_known) Δv_known
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vUnknown_ref::AbstractArray{fmi3ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
+- `vKnown_ref::AbstractArray{fmi3ValueReference}`: Argument `vKnown_ref` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `nothing`
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model Variables
+
+See also [`fmi3GetDirectionalDerivative!`](@ref) ,[`fmi3GetDirectionalDerivative`](@ref).
 """
 function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
                                           vUnknown_ref::AbstractArray{fmi3ValueReference},
@@ -652,13 +862,32 @@ function fmi3SampleDirectionalDerivative!(c::fmi3Instance,
 end
 
 """
+
+    fmi3GetJacobian(inst::FMU3Instance,
+        rdx::AbstractArray{fmi3ValueReference},
+        rx::AbstractArray{fmi3ValueReference};
+        steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
 Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD).
 
-If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+# Arguments
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `rdx::AbstractArray{fmi3ValueReference}`: Argument `rdx` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model.
+- `rx::AbstractArray{fmi3ValueReference}`: Argument `rx` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.
+
+# Keywords
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `mat::Array{fmi3Float64}`: Return `mat` contains the jacobian ∂rdx / ∂rx.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetJacobian(inst::FMU3Instance, 
                          rdx::AbstractArray{fmi3ValueReference}, 
@@ -670,13 +899,34 @@ function fmi3GetJacobian(inst::FMU3Instance,
 end
 
 """
-Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
+
+    function fmi3GetJacobian!(jac::AbstractMatrix{fmi3Float64},
+        comp::FMU3Instance,
+        rdx::AbstractArray{fmi3ValueReference},
+        rx::AbstractArray{fmi3ValueReference};
+        steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
+Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function stores the jacobian ∂rdx / ∂rx in an AbstractMatrix `jac`.
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD). 
+For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD).
 
-If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+# Arguments
+- `jac::AbstractMatrix{fmi3Float64}`: Stores the the jacobian ∂rdx / ∂rx.
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `rdx::AbstractArray{fmi3ValueReference}`: Argument `rdx` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model.
+- `rx::AbstractArray{fmi3ValueReference}`: Argument `rx` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.
+
+# Keywords
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `nothing`
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetJacobian!(jac::Matrix{fmi3Float64}, 
                           inst::FMU3Instance, 
@@ -732,13 +982,35 @@ function fmi3GetJacobian!(jac::Matrix{fmi3Float64},
 end
 
 """
+
+    fmi3GetFullJacobian(inst::FMU3Instance,
+        rdx::AbstractArray{fmi3ValueReference},
+        rx::AbstractArray{fmi3ValueReference};
+        steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
 Builds the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
 No performance optimization, for an optimized version use `fmi3GetJacobian`.
 
-If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Arguments
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `rdx::AbstractArray{fmi3ValueReference}`: Argument `rdx` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model.
+- `rx::AbstractArray{fmi3ValueReference}`: Argument `rx` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.
+
+# Keywords
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `mat::Array{fmi3Float64}`: Return `mat` contains the jacobian ∂rdx / ∂rx.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
+
+See also [`fmi3GetFullJacobian!`](@ref)
 """
 function fmi3GetFullJacobian(inst::FMU3Instance, 
                              rdx::AbstractArray{fmi3ValueReference}, 
@@ -750,13 +1022,31 @@ function fmi3GetFullJacobian(inst::FMU3Instance,
 end
 
 """
+
+    fmi3GetFullJacobian!(jac::Matrix{fmi3Float64},
+        inst::FMU3Instance,
+        rdx::AbstractArray{fmi3ValueReference},
+        rx::AbstractArray{fmi3ValueReference};
+        steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+
 Fills the jacobian over the FMU `fmu` for FMU value references `rdx` and `rx`, so that the function returns the jacobian ∂rdx / ∂rx.
 
 If FMI built-in directional derivatives are supported, they are used.
 As fallback, directional derivatives will be sampled with central differences.
-No performance optimization, for an optimized version use `fmi3GetJacobian!`.
+No performance optimization, for an optimized version use `fmi3GetJacobian`.
 
-If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Arguments
+- `jac::AbstractMatrix{fmi3Float64}`: Stores the the jacobian ∂rdx / ∂rx.
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `rdx::AbstractArray{fmi3ValueReference}`: Argument `rdx` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model.
+- `rx::AbstractArray{fmi3ValueReference}`: Argument `rx` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.
+
+# Keywords
+- `steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+
+# Returns
+- `nothing`
 """
 function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64}, 
                               inst::FMU3Instance, 
@@ -783,6 +1073,31 @@ function fmi3GetFullJacobian!(jac::Matrix{fmi3Float64},
     return nothing
 end
 
+"""
+    fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::AbstractArray)
+
+Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
+
+# Arguments
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vrs::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `dstArray::AbstractArray`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` has the same length as `vrs`.
+
+# Returns
+- `retcodes::Array{fmi3Status}`: Returns an array of length length(vrs) with Type `fmi3Status`. Type `fmi3Status` is an enumeration and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+"""
 function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
     vrs = prepareValueReference(inst, vrs)
 
@@ -847,6 +1162,26 @@ function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::A
     return retcodes
 end
 
+"""
+
+    fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
+
+
+Returns the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference in an array.
+
+# Arguments
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vrs::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `dstArray::Array{Any,1}(undef, length(vrs))`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` is a 1-Dimensional Array that has the same length as `vrs`.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+"""
 function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
     vrs = prepareValueReference(inst, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
@@ -854,6 +1189,34 @@ function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
     return dstArray
 end
 
+"""
+    fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
+
+Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
+
+# Arguments
+- `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vrs::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `srcArray::AbstractArray`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
+
+# Keywords
+- `filter=nothing`: whether the individual values of "fmi3ModelVariable" are to be stored
+
+# Returns
+- `retcodes::Array{fmi3Status}`: Returns an array of length length(vrs) with Type `fmi3Status`. Type `fmi3Status` is an enumeration and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+"""
 function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array)
     vrs = prepareValueReference(inst, vrs)
 
@@ -916,7 +1279,23 @@ function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Ar
 end
 
 """
-TODO
+
+    fmi3GetStartValue(md::fmi3ModelDescription, vrs::fmi3ValueReferenceFormat = md.valueReferences)
+
+Returns the start/default value for a given value reference.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+- `vrs::fmi3ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- first optional function: `starts::Array{fmi3ValueReferenceFormat}`: start/default value for a given value reference
+- second optional function:`starts::fmi3ValueReferenceFormat`: start/default value for a given value reference
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetStartValue(md::fmi3ModelDescription, vrs::fmi3ValueReferenceFormat = md.valueReferences)
 
@@ -942,15 +1321,46 @@ function fmi3GetStartValue(md::fmi3ModelDescription, vrs::fmi3ValueReferenceForm
 end
 
 """
+
+    fmi3GetStartValue(fmu::FMU3, vrs::fmi3ValueReferenceFormat = fmu.modelDescription.valueReferences)
+
 Returns the start/default value for a given value reference.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+- `vrs::fmi3ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- first optional function: `starts::Array{fmi3ValueReferenceFormat}`: start/default value for a given value reference
+- second optional function:`starts::fmi3ValueReferenceFormat`: start/default value for a given value reference
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetStartValue(fmu::FMU3, vrs::fmi3ValueReferenceFormat = fmu.modelDescription.valueReferences)
     fmi3GetStartValue(fmu.modelDescription, vrs)
 end
 
 """
+
+    fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+
 Returns the start/default value for a given value reference.
 
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vrs::fmi3ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- first optional function: `starts::Array{fmi3ValueReferenceFormat}`: start/default value for a given value reference
+- second optional function:`starts::fmi3ValueReferenceFormat`: start/default value for a given value reference
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
 
@@ -976,7 +1386,7 @@ function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat = c.fm
         # elseif mvs[1]._Enumeration != nothing
         #     push!(starts, mvs[1]._Enumeration.start)
         # else
-        #     @assert false "fmi2GetStartValue(...): Value reference $(vr) has no data type."
+        #     @assert false "fmi3GetStartValue(...): Value reference $(vr) has no data type."
         # end
     end
 
@@ -989,8 +1399,26 @@ end
 
 """
 
+    fmi3GetStartValue(mv::fmi3ModelVariable)
+
 Returns the start/default value for a given value reference.
 
+# Arguments
+- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of "ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `vrs::fmi3ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `mv._Real.start`: start/default value for a given ModelVariable. In this case representing a variable of primitive type Real.
+- `mv._Integer.start`: start/default value for a given ModelVariable. In this case representing a variable of primitive type Integer.
+- `mv._Boolean.start`: start/default value for a given ModelVariable. In this case representing a variable of primitive type Boolean.
+- `mv._String.start`: start/default value for a given ModelVariable. In this case representing a variable of primitive type String.
+- `mv._Enumeration.start`: start/default value for a given ModelVariable. In this case representing a variable of primitive type Enumeration.
+
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 
 function fmi3GetStartValue(mv::fmi3ModelVariable)
@@ -1011,10 +1439,23 @@ function fmi3GetStartValue(mv::fmi3ModelVariable)
 end
 
 """
-TODO
+
+    fmi3GetUnit(mv::fmi3ModelVariable)
+
+Returns the `unit` entry of the corresponding model variable.
+
+# Arguments
+- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+
+# Returns
+- `mv._Float.unit`: Returns the `unit` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
+
 """
 function fmi3GetUnit(mv::fmi3ModelVariable)
-    if mv._Float != nothing
+    if mv._Float !== nothing
         return mv._Float.unit
     else
         return nothing
@@ -1022,51 +1463,21 @@ function fmi3GetUnit(mv::fmi3ModelVariable)
 end
 
 """
-TODO
+
+    fmi3GetInitial(mv::fmi3ModelVariable)
+
+Returns the `inital` entry of the corresponding model variable.
+
+# Arguments
+- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+
+# Returns
+- `mv._Float.initial`: Returns the `inital` entry of the corresponding ModelVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7 Model Variables
 """
 function fmi3GetInitial(mv::fmi3ModelVariable)
     return mv.initial
-end
-
-"""
-TODO
-"""
-function fmi3SampleDirectionalDerivative(c::FMU3Instance,
-    vUnknown_ref::Array{fmi3ValueReference},
-    vKnown_ref::Array{fmi3ValueReference},
-    steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
-
-    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
-
-    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
-
-    dvUnknown
-end
-
-function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
-    vUnknown_ref::Array{fmi3ValueReference},
-    vKnown_ref::Array{fmi3ValueReference},
-    dvUnknown::AbstractArray,
-    steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
-
-    for i in 1:length(vKnown_ref)
-        vKnown = vKnown_ref[i]
-        origValue = fmi3GetFloat64(c, vKnown)
-
-        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
-        negValues = fmi3GetFloat64(c, vUnknown_ref)
-
-        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
-        posValues = fmi3GetFloat64(c, vUnknown_ref)
-
-        fmi3SetFloat64(c, vKnown, origValue)
-
-        if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
-        else
-            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
-        end
-    end
-
-    nothing
 end
