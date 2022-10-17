@@ -264,7 +264,7 @@ end
 
 Writes the integer values of an array of variables in the given field
 
-fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar. 
+fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar.
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -307,9 +307,9 @@ function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 end
 function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Integer)
     @assert false "fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar."
-end
-
 """
+
+
 
    fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
 
@@ -912,7 +912,7 @@ end
 # CoSimulation specific functions
 """
 
-   fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+    fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -1117,7 +1117,7 @@ end
 
 """
 
-   fmi2NewDiscreteStates(c::FMU2Component)
+    fmi2NewDiscreteStates(c::FMU2Component)
 
 Returns the next discrete states
 

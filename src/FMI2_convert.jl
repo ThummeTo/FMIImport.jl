@@ -51,7 +51,7 @@ end
 
 """
 
-   fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
+    fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
 
 Returns an array of ValueReferences coresponding to the variable names.
 
@@ -82,7 +82,7 @@ end
 
 """
 
-   fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
+    fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
 
 Returns the model variable(s) fitting the value reference.
 
@@ -110,7 +110,7 @@ end
 
 """
 
-   fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
+    fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
 
@@ -139,7 +139,7 @@ end
 
 """
 
-   fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
+    fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
 
@@ -164,7 +164,7 @@ end
 
 """
 
-   fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
+    fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
@@ -183,7 +183,7 @@ end
 
 """
 
-   fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
+    fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
@@ -202,7 +202,7 @@ end
 
 """
 
-   fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
+    fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
@@ -222,7 +222,7 @@ end
 
 """
 
-   fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+      fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution state.
 
@@ -274,7 +274,7 @@ end
 
 """
 
-   fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+    fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution values.
 
@@ -338,7 +338,7 @@ end
 
 """
 
-   fmi2GetSolutionTime(solution::FMU2Solution)
+     fmi2GetSolutionTime(solution::FMU2Solution)
 
 Returns the Solution time.
 
@@ -365,3 +365,4 @@ function fmi2GetSolutionTime(solution::FMU2Solution)
         return nothing
     end
 end
+"""

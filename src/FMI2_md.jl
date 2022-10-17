@@ -1284,7 +1284,7 @@ end
 
 """
 
-   fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
 

@@ -272,8 +272,8 @@ function loadBinary(fmu::FMU2)
     if fmi2CanSerializeFMUstate(fmu.modelDescription)
         fmu.cSerializedFMUstateSize       = dlsym_opt(fmu.libHandle, :fmi2SerializedFMUstateSize)
         fmu.cSerializeFMUstate            = dlsym_opt(fmu.libHandle, :fmi2SerializeFMUstate)
-        fmu.cDeSerializeFMUstate          = dlsym_opt(fmu.libHandle, :fmi2DeSerializeFMUstate)
-    end
+
+
 
     if fmi2ProvidesDirectionalDerivative(fmu.modelDescription)
         fmu.cGetDirectionalDerivative     = dlsym_opt(fmu.libHandle, :fmi2GetDirectionalDerivative)
@@ -309,7 +309,7 @@ end
 
 """
 
-    function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
 Create a new instance of the given fmu, adds a logger if logginOn == true.
@@ -339,7 +339,8 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 
 See also [`fmi2Instantiate`](#@ref).
 """
-function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+
+    fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -421,7 +422,7 @@ end
 
 """
 
-   fmi2Reload(fmu::FMU2)
+    fmi2Reload(fmu::FMU2)
 
 Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
 
@@ -439,7 +440,7 @@ end
 
 """
 
-   function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
+    fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 
 Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
@@ -522,7 +523,7 @@ end
 
 """
 
-   function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+    function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
                                           dvUnknown::AbstractArray, # ToDo: datatype
@@ -727,7 +728,7 @@ end
 
 """
 
-   fmi2GetFullJacobian(comp::FMU2Component,
+    fmi2GetFullJacobian(comp::FMU2Component,
                              rdx::AbstractArray{fmi2ValueReference},
                              rx::AbstractArray{fmi2ValueReference};
                              steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
@@ -767,7 +768,6 @@ end
 
 """
 
-
     fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
                               comp::FMU2Component,
                               rdx::AbstractArray{fmi2ValueReference},
@@ -792,7 +792,8 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 # Returns
 - `nothing`
 """
-function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
+
+    fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
                               comp::FMU2Component,
                               rdx::AbstractArray{fmi2ValueReference},
                               rx::AbstractArray{fmi2ValueReference};
@@ -819,7 +820,7 @@ end
 
 """
 
-   fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
+    fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
 
@@ -882,7 +883,7 @@ end
 
 """
 
-   fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+    fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
 
 
 Returns the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference in an array.
@@ -911,7 +912,7 @@ end
 
 """
 
-   fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
+    fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
 
@@ -980,7 +981,7 @@ end
 
 """
 
-   fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
+    fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 
 Returns the start/default value for a given value reference.
 
@@ -1020,7 +1021,7 @@ function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceForm
 end
 """
 
-   fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
 
 Returns the start/default value for a given value reference.
 
@@ -1042,7 +1043,7 @@ end
 
 """
 
-   fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+    fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
 
 Returns the start/default value for a given value reference.
 
@@ -1095,7 +1096,7 @@ end
 
 """
 
-   fmi2GetStartValue(mv::fmi2ScalarVariable)
+    fmi2GetStartValue(mv::fmi2ScalarVariable)
 
 Returns the start/default value for a given value reference.
 
@@ -1133,7 +1134,7 @@ end
 
 """
 
-   fmi2GetUnit(mv::fmi2ScalarVariable)
+    fmi2GetUnit(mv::fmi2ScalarVariable)
 
 Returns the `unit` entry of the corresponding model variable.
 
@@ -1156,7 +1157,7 @@ end
 
 """
 
-   fmi2GetInitial(mv::fmi2ScalarVariable)
+    fmi2GetInitial(mv::fmi2ScalarVariable)
 
 Returns the `inital` entry of the corresponding model variable.
 
@@ -1176,7 +1177,7 @@ end
 
 """
 
-   fmi2SampleDirectionalDerivative(c::FMU2Component,
+    fmi2SampleDirectionalDerivative(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
@@ -1214,7 +1215,7 @@ end
 
 """
 
-   fmi2SampleDirectionalDerivative!(c::FMU2Component,
+    fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
@@ -1239,8 +1240,8 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
-
 """
+
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},

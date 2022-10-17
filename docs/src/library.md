@@ -113,12 +113,16 @@ fmi2SetString
 The FMU has an internal state consisting of all values that are needed to continue a simulation. This internal state consists especially of the values of the continuous-time states, iteration variables, parameter values, input values, delay buffers, file identifiers, and FMU internal status information. With the functions of this section, the internal FMU state can be copied and the pointer to this copy is returned to the environment. The FMU state copy can be set as actual FMU state, in order to continue the simulation from it.
 
 ```@docs
-fmiGetFMUstat
-fmiSetFMUstate
-fmiFreeFMUstate!
-fmiSerializedFMUstateSize!
-fmiSerializeFMUstate!
-fmiDeSerializeFMUstate!
+fmi2GetFMUstate
+fmi2GetFMUstate!
+fmi2SetFMUstate
+fmi2FreeFMUstate!
+fmi2SerializedFMUstateSize
+fmi2SerializedFMUstateSize!
+fmi2SerializeFMUstate
+fmi2SerializeFMUstate!
+fmi2DeSerializeFMUstate
+fmi2DeSerializeFMUstate!
 ```
 
 ### Getting Partial Dervatives
@@ -132,7 +136,7 @@ fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
 fmi2GetRealOutputDerivatives!
 fmi2SampleDirectionalDerivative
-fmiSampleDirectionalDerivative!
+fmi2SampleDirectionalDerivative!
 ```
 
 ## FMI for Model Exchange
@@ -158,11 +162,17 @@ This section contains the core functions to evaluate the model equations.
 ```@docs
 fmi2EnterEventMode
 fmi2NewDiscreteStates
+fmi2NewDiscreteStates!
 fmi2EnterContinuousTimeMode
 fmi2CompletedIntegratorStep
+fmi2CompletedIntegratorStep!
+fmi2GetDerivatives
 fmi2GetDerivatives!
+fmi2GetEventIndicators
 fmi2GetEventIndicators!
+fmi2GetContinuousStates
 fmi2GetContinuousStates!
+fmi2GetNominalsOfContinuousStates
 fmi2GetNominalsOfContinuousStates!
 ```
 
@@ -244,11 +254,6 @@ fmi2SampleDirectionalDerivative
 fmi2SampleDirectionalDerivative!
 ```
 
-### Visualize simulation results
-
-```@docs
-fmiPlot
-```
 
 ## All functions
 
