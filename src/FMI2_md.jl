@@ -1039,7 +1039,7 @@ end
 
 """
 
-   fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
+    fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`
 
@@ -1075,7 +1075,7 @@ end
 
 """
 
-   fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
+    fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`.
 
@@ -1096,7 +1096,7 @@ end
 
 """
 
-   fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
+    fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
 
 Returns a array of indices corresponding to value references `vrs`.
 
@@ -1210,7 +1210,6 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value referenc
 
 # Arguments
 - `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 
 # Keywords
 - `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
@@ -1223,9 +1222,24 @@ function fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.outputValueReferences)
 end
 
+"""
+
+   fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
+
+Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Returns
+- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
+
+"""
+
 function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
     fmi2GetOutputValueReferencesAndNames(fmu.modelDescription)
 end
+
 
 """
 

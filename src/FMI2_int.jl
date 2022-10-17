@@ -1365,7 +1365,7 @@ More detailed:
   - `fmi2Error`: the communication step could not be carried out at all
   - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
   - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
--`value::Union{nothing; fmi2Boolean}`: If the slave dont want to terminate the simulation `nothing` ist returned. Howerver, if the slave want to terminate the simulation 
+-`value::Union{nothing; fmi2Boolean}`: If the slave dont want to terminate the simulation `nothing` ist returned. Howerver, if the slave wants to end the simulation the first value of the value array will be returned.
 """
 function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
     rtype = nothing
