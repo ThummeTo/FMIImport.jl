@@ -13,20 +13,65 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
+
+    fmi3SetDebugLogging(c::FMU3Instance)
 
 Set the DebugLogger for the FMU.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- Returns a warning if `str.state` is not called in `fmi3InstanceStateInstantiated`.
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3SetDebugLogging`](@ref).
 """
 function fmi3SetDebugLogging(c::FMU3Instance)
     fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
+
+    fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
 
 FMU enters Initialization mode.
 
-For more information call ?fmi3EnterInitializationMode
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `startTime::Union{Real, Nothing} = nothing`: `startTime` is a real number which sets the value of starting time of the experiment. The default value is set automatically if doing nothing (default = `nothing`).
+- `stopTime::Union{Real, Nothing} = nothing`: `stopTime` is a real number which sets the value of ending time of the experiment. The default value is set automatically if doing nothing (default = `nothing`).
+ 
+# Keywords
+- `tolerance::Union{Real, Nothing} = nothing`: `tolerance` is a real number which sets the value of tolerance range. The default value is set automatically if doing nothing (default = `nothing`).
+ 
+# Returns
+- Returns a warning if `str.state` is not called in `fmi3InstanceStateInstantiated`.
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.3.2. State: Instantiated
+
+See also [`fmi3EnterInitializationMode`](@ref).
 """
 function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
     if c.state != fmi3InstanceStateInstantiated
@@ -60,11 +105,25 @@ function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Not
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Float32 variables.
 
-For more information call ?fmi3GetFloat32
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Float32}`: returns values of an array of fmi3Float32 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetFloat32`](@ref).
 """
 function fmi3GetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -82,11 +141,34 @@ function fmi3GetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Float32 variables.
+    fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float32})
 
-For more information call ?fmi3GetFloat32!
+Writes the real values of an array of variables in the given field
+
+fmi3GetFloat32! is only possible for arrays of values, please use an array instead of a scalar.
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Float32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetFloat32!`](@ref).
 """
 function fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float32})
 
@@ -102,11 +184,32 @@ function fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Float32 variables.
+    fmi3SetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float32}, fmi3Float32})
 
-For more information call ?fmi3SetFloat32
+Set the values of an array of real variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Float32}, fmi3Float32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetFloat32`](@ref).
 """
 function fmi3SetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float32}, fmi3Float32})
 
@@ -119,11 +222,25 @@ function fmi3SetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::U
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Float64 variables.
 
-For more information call ?fmi3GetFloat64
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Float64}`: returns values of an array of fmi3Float64 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetFloat64`](@ref).
 """
 function fmi3GetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -141,11 +258,34 @@ function fmi3GetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Float64 variables.
+    fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float64})
 
-For more information call ?fmi3GetFloat64!
+Writes the real values of an array of variables in the given field
+
+fmi3GetFloat64! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Float64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetFloat64!`](@ref).
 """
 function fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float64})
 
@@ -162,11 +302,32 @@ function fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Float64 variables.
+    fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64})
 
-For more information call ?fmi3SetFloat64
+Set the values of an array of real variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Float64}, fmi3Float64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetFloat64`](@ref).
 """
 function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64})
 
@@ -179,11 +340,25 @@ function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::U
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Int8 variables.
 
-For more information call ?fmi3GetInt8
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Int8}`: returns values of an array of fmi3Int8 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt8`](@ref).
 """
 function fmi3GetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -201,11 +376,34 @@ function fmi3GetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Int8 variables.
+    fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int8})
 
-For more information call ?fmi3GetInt8!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetInt8! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Int8}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt8!`](@ref).
 """
 function fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int8})
 
@@ -221,11 +419,32 @@ function fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fmi
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Int8 variables.
+    fmi3SetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int8}, fmi3Int8})
 
-For more information call ?fmi3SetInt8
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Int8}, fmi3Int8}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetInt8`](@ref).
 """
 function fmi3SetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int8}, fmi3Int8})
 
@@ -238,11 +457,25 @@ function fmi3SetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Unio
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3UInt8 variables.
 
-For more information call ?fmi3GetUInt8
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3UInt8}`: returns values of an array of fmi3UInt8 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt8`](@ref).
 """
 function fmi3GetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -260,11 +493,34 @@ function fmi3GetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3UInt8 variables.
+    fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt8})
 
-For more information call ?fmi3GetUInt8!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetUInt8! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3UInt8}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt8!`](@ref).
 """
 function fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt8})
 
@@ -280,11 +536,32 @@ function fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fm
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3UInt8 variables.
+    fmi3SetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt8}, fmi3UInt8})
 
-For more information call ?fmi3SetUInt8
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3UInt8}, fmi3UInt8}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetUInt8`](@ref).
 """
 function fmi3SetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt8}, fmi3UInt8})
 
@@ -297,11 +574,25 @@ function fmi3SetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Int16 variables.
 
-For more information call ?fmi3GetInt16
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Int16}`: returns values of an array of fmi3Int16 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt16`](@ref).
 """
 function fmi3GetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -319,11 +610,34 @@ function fmi3GetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Int16 variables.
+    fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int16})
 
-For more information call ?fmi3GetInt16!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetInt16! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Int16}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt16!`](@ref).
 """
 function fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int16})
 
@@ -339,11 +653,32 @@ function fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fm
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Int16 variables.
+    fmi3SetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int16}, fmi3Int16})
 
-For more information call ?fmi3SetInt16
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Int16}, fmi3Int16}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetInt16`](@ref).
 """
 function fmi3SetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int16}, fmi3Int16})
 
@@ -356,11 +691,25 @@ function fmi3SetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3UInt16 variables.
 
-For more information call ?fmi3GetUInt16
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3UInt16}`: returns values of an array of fmi3UInt16 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt16`](@ref).
 """
 function fmi3GetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -378,11 +727,34 @@ function fmi3GetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3UInt16 variables.
+    fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt16})
 
-For more information call ?fmi3GetUInt16!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetUInt16! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3UInt16}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt16!`](@ref).
 """
 function fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt16})
 
@@ -398,11 +770,32 @@ function fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::f
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3UInt16 variables.
+    fmi3SetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt16}, fmi3UInt16})
 
-For more information call ?fmi3SetUInt16
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3UInt16}, fmi3UInt16}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetUInt16`](@ref).
 """
 function fmi3SetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt16}, fmi3UInt16})
 
@@ -415,11 +808,25 @@ function fmi3SetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Un
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Int32 variables.
 
-For more information call ?fmi3GetInt32
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Int32}`: returns values of an array of fmi3Int32 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt32`](@ref).
 """
 function fmi3GetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -437,11 +844,34 @@ function fmi3GetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Int32 variables.
+    fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int32})
 
-For more information call ?fmi3GetInt32!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetInt32! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Int32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt32!`](@ref).
 """
 function fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int32})
 
@@ -457,11 +887,32 @@ function fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fm
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Int32 variables.
+    fmi3SetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int32}, fmi3Int32})
 
-For more information call ?fmi3SetInt32
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Int32}, fmi3Int32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetInt32`](@ref).
 """
 function fmi3SetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int32}, fmi3Int32})
 
@@ -474,11 +925,25 @@ function fmi3SetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3UInt32 variables.
 
-For more information call ?fmi3GetUInt32
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3UInt32}`: returns values of an array of fmi3UInt32 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt32`](@ref).
 """
 function fmi3GetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -496,11 +961,34 @@ function fmi3GetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3UInt32 variables.
+    fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt32})
 
-For more information call ?fmi3GetUInt32!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetUInt32! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3UInt32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt32!`](@ref).
 """
 function fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt32})
 
@@ -516,11 +1004,32 @@ function fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::f
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3UInt32 variables.
+    fmi3SetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt32}, fmi3UInt32})
 
-For more information call ?fmi3SetUInt32
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3UInt32}, fmi3UInt32}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetUInt32`](@ref).
 """
 function fmi3SetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt32}, fmi3UInt32})
 
@@ -533,11 +1042,25 @@ function fmi3SetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Un
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Int64 variables.
 
-For more information call ?fmi3GetInt64
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Int64}`: returns values of an array of fmi3Int64 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt64`](@ref).
 """
 function fmi3GetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -555,11 +1078,34 @@ function fmi3GetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Int64 variables.
+    fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int64})
 
-For more information call ?fmi3GetInt64!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetInt64! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Int64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetInt64!`](@ref).
 """
 function fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int64})
 
@@ -575,11 +1121,32 @@ function fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fm
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Int64 variables.
+    fmi3SetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int64}, fmi3Int64})
 
-For more information call ?fmi3SetInt64
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Int64}, fmi3Int64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetInt64`](@ref).
 """
 function fmi3SetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int64}, fmi3Int64})
 
@@ -592,11 +1159,25 @@ function fmi3SetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3UInt64 variables.
 
-For more information call ?fmi3GetUInt64
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3UInt64}`: returns values of an array of fmi3UInt64 variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt64`](@ref).
 """
 function fmi3GetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -614,11 +1195,34 @@ function fmi3GetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3UInt64 variables.
+    fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt64})
 
-For more information call ?fmi3GetUInt64!
+Writes the integer values of an array of variables in the given field
+
+fmi3GetUInt64! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3UInt64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetUInt64!`](@ref).
 """
 function fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt64})
 
@@ -634,11 +1238,32 @@ function fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::f
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3UInt64 variables.
+    fmi3SetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt64}, fmi3UInt64})
 
-For more information call ?fmi3SetUInt64
+Set the values of an array of integer variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3UInt64}, fmi3UInt64}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetUInt64`](@ref).
 """
 function fmi3SetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt64}, fmi3UInt64})
 
@@ -651,11 +1276,25 @@ function fmi3SetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Un
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Boolean variables.
 
-For more information call ?fmi3GetBoolean
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Boolean}`: returns values of an array of fmi3Boolean variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetBoolean`](@ref).
 """
 function fmi3GetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -673,11 +1312,34 @@ function fmi3GetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Boolean variables.
+    fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Boolean})
 
-For more information call ?fmi3GetBoolean!
+Writes the boolean values of an array of variables in the given field
+
+fmi3GetBoolean! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Boolean}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetBoolean!`](@ref).
 """
 function fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Boolean})
 
@@ -694,11 +1356,32 @@ function fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Boolean variables.
+    fmi3SetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
-For more information call ?fmi3SetBoolean
+Set the values of an array of boolean variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{Bool}, Bool}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetBoolean`](@ref).
 """
 function fmi3SetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
@@ -711,11 +1394,25 @@ function fmi3SetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::U
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3String variables.
 
-For more information call ?fmi3GetString
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3String}`: returns values of an array of fmi3String variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetString`](@ref).
 """
 function fmi3GetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -735,11 +1432,34 @@ function fmi3GetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3String variables.
+    fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3String})
 
-For more information call ?fmi3GetString!
+Writes the string values of an array of variables in the given field
+
+fmi3GetString! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3String}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetString!`](@ref).
 """
 function fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3String})
 
@@ -758,11 +1478,32 @@ function fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::S
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3String variables.
+    fmi3SetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
-For more information call ?fmi3SetString
+Set the values of an array of string variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{String}, String}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetString`](@ref).
 """
 function fmi3SetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
@@ -776,11 +1517,25 @@ function fmi3SetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Un
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+
+    fmi3GetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Binary variables.
 
-For more information call ?fmi3GetBinary
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Binary}`: returns values of an array of fmi3Binary variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetBinary`](@ref).
 """
 function fmi3GetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -798,11 +1553,34 @@ function fmi3GetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Binary variables.
+    fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Binary})
 
-For more information call ?fmi3GetBinary!
+Writes the binary values of an array of variables in the given field
+
+fmi3GetBinary! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Binary}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetBinary!`](@ref).
 """
 function fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Binary})
 
@@ -818,11 +1596,33 @@ function fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::f
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Binary variables.
+    fmi3SetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{AbstractArray{Csize_t}, Csize_t}, values::Union{AbstractArray{fmi3Binary}, fmi3Binary})
 
-For more information call ?fmi3SetBinary
+Set the values of an array of binary variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `valueSizes::Union{AbstractArray{Csize_t}, Csize_t}`: Argument `valueSizes` defines the size of a binary element of each variable.
+- `values::Union{AbstractArray{fmi3Binary}, fmi3Binary}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetBinary`](@ref).
 """
 function fmi3SetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{AbstractArray{Csize_t}, Csize_t}, values::Union{AbstractArray{fmi3Binary}, fmi3Binary})
 
@@ -836,11 +1636,24 @@ function fmi3SetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
+    fmi3GetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
 Get the values of an array of fmi3Clock variables.
 
-For more information call ?fmi3GetClock
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `values::Array{fmi3Clock}`: returns values of an array of fmi3Clock variables with the dimension of fmi3ValueReferenceFormat length.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetClock`](@ref).
 """
 function fmi3GetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 
@@ -858,11 +1671,34 @@ function fmi3GetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Get the values of an array of fmi3Clock variables.
+    fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Clock})
 
-For more information call ?fmi3GetClock!
+Writes the clock values of an array of variables in the given field
+
+fmi3GetClock! is only possible for arrays of values, please use an array instead of a scalar.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::AbstractArray{fmi3Clock}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3GetClock!`](@ref).
 """
 function fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Clock})
 
@@ -878,11 +1714,32 @@ function fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::fm
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.2. Getting and Setting Variable Values
 
-Set the values of an array of fmi3Clock variables.
+    fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{AbstractArray{Csize_t}, Csize_t}, values::Union{AbstractArray{fmi3Clock}, fmi3Clock})
 
-For more information call ?fmi3SetClock
+Set the values of an array of clock variables
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::fmi3ValueReferenceFormat`: Wildcards for how a user can pass a fmi[X]ValueReference
+More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+- `values::Union{AbstractArray{fmi3Clock}, fmi3Clock}`: Argument `values` is an AbstractArray with the actual values of these variables.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+  - `fmi3OK`: all well
+  - `fmi3Warning`: things are not quite right, but the computation can continue
+  - `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi3Error`: the communication step could not be carried out at all
+  - `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
+
+See also [`fmi3SetClock`](@ref).
 """
 function fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Clock}, fmi3Clock})
 
@@ -895,11 +1752,23 @@ function fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.4. Getting and Setting the Complete FMU State
 
-Get the pointer to the current FMU state.
+    fmi3GetFMUState(c::FMU3Instance)
 
-For more information call ?fmi3GetFMUstate
+Makes a copy of the internal FMU state and returns a pointer to this copy.
+
+# Arguments
+ - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- Return `state` is a pointer to a copy of the internal FMU state.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
+
+See also [`fmi3GetFMUState`](@ref).
 """
 function fmi3GetFMUState(c::FMU3Instance)
     state = fmi3FMUState()
@@ -910,11 +1779,24 @@ function fmi3GetFMUState(c::FMU3Instance)
 end
 
 """
-function fmi3FreeFMUState(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
+    
+    fmi3FreeFMUState(c::FMU3Instance, state::fmi3FMUState)
 
 Free the allocated memory for the FMU state.
 
-For more information call ?fmi3FreeFMUstate
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `state::fmi3FMUState`: Argument `state` is a pointer to a data structure in the FMU that saves the internal FMU state of the actual or a previous time instant.
+
+# Returns
+- Return singleton instance of type `Nothing`, if there is no value to return (as in a C void function) or when a variable or field holds no value.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
+
+See also [`fmi3FreeFMUState`](@ref).
 """
 function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
     stateRef = Ref(state)
@@ -923,11 +1805,24 @@ function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.4. Getting and Setting the Complete FMU State
+    
+    fmi3SerializedFMUStateSize(c::FMU3Instance, state::fmi3FMUState)
 
-Returns the size of a byte vector the FMU can be stored in.
+Returns the size of the byte vector in which the FMUstate can be stored.
 
-For more information call ?fmi3SerzializedFMUstateSize
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `state::fmi3FMUState`: Argument `state` is a pointer to a data structure in the FMU that saves the internal FMU state of the actual or a previous time instant.
+
+# Returns
+- Return `size` is an object that safely references a value of type `Csize_t`.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
+
+See also [`fmi3SerializedFMUStateSize`](@ref).
 """
 function fmi3SerializedFMUStateSize(c::FMU3Instance, state::fmi3FMUState)
     size = 0
@@ -937,11 +1832,24 @@ function fmi3SerializedFMUStateSize(c::FMU3Instance, state::fmi3FMUState)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.4. Getting and Setting the Complete FMU State
+    
+    fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
 
-Serialize the data in the FMU state pointer.
+Serializes the data referenced by the pointer FMUstate and copies this data into the byte vector serializedState of length size to be provided by the environment.
 
-For more information call ?fmi3SerzializeFMUstate
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `state::fmi3FMUState`: Argument `state` is a pointer to a data structure in the FMU that saves the internal FMU state of the actual or a previous time instant.
+
+# Returns
+- `serializedState:: Array{fmi3Byte}`: Return `serializedState` contains the copy of the serialized data referenced by the pointer FMUstate
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
+
+See also [`fmi3SerializeFMUState`](@ref).
 """
 function fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
     size = fmi3SerializedFMUStateSize(c, state)
@@ -952,11 +1860,24 @@ function fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.6.4. Getting and Setting the Complete FMU State
+    
+fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
 
-Deserialize the data in the serializedState fmi3Byte field.
+Serializes the data referenced by the pointer FMUstate and copies this data into the byte vector serializedState of length size to be provided by the environment.
 
-For more information call ?fmi3DeSerzializeFMUstate
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `serializedState::Array{fmi3Byte}`: Argument `serializedState` contains the fmi3Byte field to be deserialized.
+
+# Returns
+- Return `state` is a pointer to a copy of the internal FMU state.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
+
+See also [`fmi3DeSerializeFMUState`](@ref).
 """
 function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray{fmi3Byte})
     size = length(serializedState)
@@ -970,11 +1891,44 @@ function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes directional derivatives.
+    fmi3GetDirectionalDerivative(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        seed::AbstractArray{fmi3Float64})
 
-For more information call ?fmi3GetDirectionalDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `seed::AbstractArray{fmi3Float64}`:The vector values Compute the partial derivative with respect to the given entries in vector `knowns` with the matching evaluate of `sensitivity`.
+
+# Returns
+- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetDirectionalDerivative`](@ref).
 """
 function fmi3GetDirectionalDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
@@ -992,11 +1946,53 @@ function fmi3GetDirectionalDerivative(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes directional derivatives.
+    fmi3GetDirectionalDerivative!(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        sensitivity::AbstractArray{fmi3Float64},
+        seed::AbstractArray{fmi3Float64})
 
-For more information call ?fmi3GetDirectionalDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `sensitivity::AbstractArray{fmi3Float64}`: Stores the directional derivative vector values.
+- `seed::AbstractArray{fmi3Float64}`:The vector values Compute the partial derivative with respect to the given entries in vector `knowns` with the matching evaluate of `sensitivity`.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetDirectionalDerivative!`](@ref).
 """
 function fmi3GetDirectionalDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
@@ -1020,11 +2016,44 @@ function fmi3GetDirectionalDerivative!(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes directional derivatives.
+    fmi3GetDirectionalDerivative(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        seed::fmi3Float64)
 
-For more information call ?fmi3GetDirectionalDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `seed::fmi3Float64 = 1.0`:  If no seed value is passed the value `seed = 1.0` is used. Compute the partial derivative with respect to `knowns` with the value `seed = 1.0`.  # gehört das zu den v_rest values
+
+# Returns
+- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetDirectionalDerivative`](@ref).
 """
 function fmi3GetDirectionalDerivative(c::FMU3Instance,
                                       unknown::fmi3ValueReference,
@@ -1035,11 +2064,44 @@ function fmi3GetDirectionalDerivative(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes adjoint derivatives.
+    fmi3GetAdjointDerivative(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        seed::AbstractArray{fmi3Float64})
 
-For more information call ?fmi3GetAdjointDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the adjoint derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `seed::AbstractArray{fmi3Float64}`:The vector values Compute the partial derivative with respect to the given entries in vector `knowns` with the matching evaluate of `sensitivity`.
+
+# Returns
+- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetAdjointDerivative`](@ref).
 """
 function fmi3GetAdjointDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
@@ -1056,11 +2118,53 @@ function fmi3GetAdjointDerivative(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes adjoint derivatives.
+    fmi3GetAdjointDerivative!(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        sensitivity::AbstractArray{fmi3Float64},
+        seed::AbstractArray{fmi3Float64})
 
-For more information call ?fmi3GetAdjointDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the adjoint derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `sensitivity::AbstractArray{fmi3Float64}`: Stores the directional derivative vector values.
+- `seed::AbstractArray{fmi3Float64}`:The vector values Compute the partial derivative with respect to the given entries in vector `knowns` with the matching evaluate of `sensitivity`.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetAdjointDerivative!`](@ref).
 """
 function fmi3GetAdjointDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
@@ -1084,11 +2188,44 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.11. Getting Partial Derivatives
 
-Computes adjoint derivatives.
+    fmi3GetAdjointDerivative(c::FMU3Instance,
+        unknowns::AbstractArray{fmi3ValueReference},
+        knowns::AbstractArray{fmi3ValueReference},
+        seed::fmi3Float64)
 
-For more information call ?fmi3GetAdjointDerivative
+Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
+
+Computes the adjoint derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
+unknowns = 𝐡(knowns, rest)
+
+- `unknowns`: vector of unknown Real variables computed in the actual Mode:
+    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
+    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
+    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
+    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
+- `knowns`: Real input variables of function h that changes its value in the actual Mode.
+- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+
+Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
+
+Δunknowns = (δh / δknowns) Δknowns
+
+# Arguments
+- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
+- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
+- `seed::fmi3Float64 = 1.0`:  If no seed value is passed the value `seed = 1.0` is used. Compute the partial derivative with respect to `knowns` with the value `seed = 1.0`.  # gehört das zu den v_rest values
+
+# Returns
+- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.11. Getting Partial Derivatives
+
+See also [`fmi3GetAdjointDerivative`](@ref).
 """
 function fmi3GetAdjointDerivative(c::FMU3Instance,
                                       unknowns::fmi3ValueReference,
@@ -1099,14 +2236,25 @@ function fmi3GetAdjointDerivative(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.12. Getting Derivatives of Continuous Outputs
+
+fmi3GetOutputDerivatives!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nValueReferences::Csize_t, order::AbstractArray{fmi3Int32}, values::AbstractArray{fmi3Float64}, nValues::Csize_t)
 
 Retrieves the n-th derivative of output values.
 
-vr defines the value references of the variables
-the array order specifies the corresponding order of derivation of the variables
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::Array{fmi3ValueReference}`: Argument `vr` is an array of `nValueReferences` value handels called "ValueReference" that t define the variables whose derivatives shall be set.
+- `order::Array{fmi3Int32}`: Argument `order` is an array of fmi3Int32 values witch specifys the corresponding order of derivative of the real input variable.
 
-For more information call ?fmi3GetOutputDerivatives
+# Returns
+- `value::AbstactArray{fmi3Float64}`: Return `value` is an array which represents a vector with the values of the derivatives.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.12. Getting Derivatives of Continuous Outputs
+
+See also [`fmi3GetOutputDerivatives`](@ref).
 """
 function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat, order::AbstractArray{Integer})
     vr = prepareValueReference(c, vr)
@@ -1123,11 +2271,25 @@ function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
 
-This function returns the number of continuous states.
-This function can only be called in Model Exchange. 
-For more information call ?fmi3GetNumberOfContinuousStates
+    fmi3GetNumberOfContinuousStates(c::FMU3Instance)
+
+This function returns the number of continuous states. This function can only be called in Model Exchange. 
+    
+`fmi3GetNumberOfContinuousStates` must be called after a structural parameter is changed. As long as no structural parameters changed, the number of states is given in the modelDescription.xml, alleviating the need to call this function.
+    
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `size::Integer`: Return `size` is the number of continuous states of this instance 
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.2. State: Instantiated
+
+See also [`fmi3GetNumberOfContinuousStates`](@ref).
 """
 function fmi3GetNumberOfContinuousStates(c::FMU3Instance)
     size = 0
@@ -1138,11 +2300,25 @@ function fmi3GetNumberOfContinuousStates(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.2. State: Instantiated
 
-This function returns the number of event indicators.
-This function can only be called in Model Exchange.
-For more information call ?fmi3GetNumberOfEventIndicators
+    fmi3GetNumberOfEventIndicators(c::FMU3Instance)
+
+This function returns the number of event indicators. This function can only be called in Model Exchange. 
+
+`fmi3GetNumberOfEventIndicators` must be called after a structural parameter is changed. As long as no structural parameters changed, the number of states is given in the modelDescription.xml, alleviating the need to call this function.
+        
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `size::Integer`: Return `size` is the number of event indicators of this instance 
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.2. State: Instantiated
+
+See also [`fmi3GetNumberOfEventIndicators`](@ref).
 """
 function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
     size = 0
@@ -1153,10 +2329,26 @@ function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.10. Dependencies of Variables
 
-The number of dependencies of a given variable, which may change if structural parameters are changed, can be retrieved by calling the following function:
-For more information call ?fmi3GetNumberOfVariableDependencies
+    fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::fmi3ValueReference, nvr::Ref{Csize_t})
+
+The number of dependencies of a given variable, which may change if structural parameters are changed, can be retrieved by calling fmi3GetNumberOfVariableDependencies.
+
+This information can only be retrieved if the 'providesPerElementDependencies' tag in the ModelDescription is set.
+
+# Arguments
+- `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::Union{fmi3ValueReference, String}`: Argument `vr` is the value handel called "ValueReference" that define the variable that shall be inquired.
+
+# Returns
+- `size::Integer`: Return `size` is the number of variable dependencies for the given variable 
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.10. Dependencies of Variables
+
+See also [`fmi3GetNumberOfVariableDependencies`](@ref).
 """
 function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
     if typeof(vr) == String
@@ -1170,10 +2362,32 @@ function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3Valu
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.2.10. Dependencies of Variables
+
+    fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
 
 The actual dependencies (of type dependenciesKind) can be retrieved by calling the function fmi3GetVariableDependencies:
-For more information call ?fmi3GetVariableDependencies
+
+# Arguments
+- `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `vr::Union{fmi3ValueReference, String}`: Argument `vr` is the value handel called "ValueReference" that define the variable that shall be inquired.
+    
+# Returns
+- `elementIndicesOfDependent::AbstractArray{Csize_t}`: must point to a buffer of size_t values of size `nDependencies` allocated by the calling environment. 
+    It is filled in by this function with the element index of the dependent variable that dependency information is provided for. The element indices start with 1. Using the element index 0 means all elements of the variable. (Note: If an array has more than one dimension the indices are serialized in the same order as defined for values in Section 2.2.6.1.)
+- `independents::AbstractArray{fmi3ValueReference}`:  must point to a buffer of `fmi3ValueReference` values of size `nDependencies` allocated by the calling environment. 
+    It is filled in by this function with the value reference of the independent variable that this dependency entry is dependent upon.
+- `elementIndicesIndependents::AbstractArray{Csize_t}`: must point to a buffer of size_t `values` of size `nDependencies` allocated by the calling environment. 
+    It is filled in by this function with the element index of the independent variable that this dependency entry is dependent upon. The element indices start with 1. Using the element index 0 means all elements of the variable. (Note: If an array has more than one dimension the indices are serialized in the same order as defined for values in Section 2.2.6.1.)
+- `dependencyKinds::AbstractArray{fmi3DependencyKind}`: must point to a buffer of dependenciesKind values of size `nDependencies` allocated by the calling environment. 
+    It is filled in by this function with the enumeration value describing the dependency of this dependency entry.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 2.2.10. Dependencies of Variables
+
+See also [`fmi3GetVariableDependencies!`](@ref).
 """
 function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
     if typeof(vr) == String
@@ -1191,11 +2405,23 @@ function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReferen
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.3. State: Initialization Mode
 
-Return the new (continuous) state vector x.
+    fmi3GetContinuousStates(c::FMU3Instance)
 
-For more information call ?fmi3GetContinuousStates
+Return the new (continuous) state vector x
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- `x::Array{fmi3Float64}`: Returns an array of `fmi3Float64` values representing the new continuous state vector `x`.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.3. State: Initialization Mode
+
+See also [`fmi3GetContinuousStates`](@ref).
 """
 function fmi3GetContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
@@ -1205,11 +2431,23 @@ function fmi3GetContinuousStates(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.3. State: Initialization Mode
 
-Return the new (continuous) state vector x.
+    fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
 
-For more information call ?fmi3GetNominalsOfContinuousStates
+Return the nominal values of the continuous states.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- `x::Array{fmi3Float64}`: Returns an array of `fmi3Float64` values representing the new nominals of continuous state vector `x`.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.3. State: Initialization Mode
+
+See also [`fmi3GetNominalsOfContinuousStates`](@ref).
 """
 function fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
@@ -1219,24 +2457,63 @@ function fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 
-Set independent variable time and reinitialize chaching of variables that depend on time.
+    fmi3SetTime(c::FMU3Instance, time::Real)
 
-For more information call ?fmi3SetTime
-"""
-function fmi3SetTime(c::FMU3Instance, time::Real)
-    status = fmi3SetTime(c, fmi3Float64(time))
+Set a new time instant and re-initialize caching of variables that depend on time, provided the newly provided time value is different to the previously set time value (variables that depend solely on constants or parameters need not to be newly computed in the sequel, but the previously computed values can be reused).
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `t::Real`: Argument `t` contains a value of type `Real` which is a alias type for `Real` data type. `time` sets the independent variable time t.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3SetTime`](@ref)."""
+function fmi3SetTime(c::FMU3Instance, t::Real)
+    status = fmi3SetTime(c, fmi3Float64(t))
     c.t = t
     return status
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 
-Set a new (continuous) state vector and reinitialize chaching of variables that depend on states.
+    fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
 
-For more information call ?fmi3SetContinuousStates
+Set a new (continuous) state vector and re-initialize caching of variables that depend on the states. Argument nx is the length of vector x and is provided for checking purposes
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `x::Union{AbstractArray{Float32},AbstractArray{Float64}}`:Argument `x` is the `AbstractArray` of the vector values of `Float64` or `Float32`.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3SetContinuousStates`](@ref).
 """
 function fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
     nx = Csize_t(length(x))
@@ -1248,11 +2525,24 @@ function fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
+
+    fmi3GetContinuousStateDerivatives(c::FMU3Instance)
 
 Compute state derivatives at the current time instant and for the current states.
 
-For more information call ?fmi3GetContinuousDerivatives
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `derivatives::Array{fmi3Float64}`: Returns an array of `fmi3Float64` values representing the `derivatives` for the current states. The ordering of the elements of the derivatives vector is identical to the ordering of the state
+vector.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3GetContinuousStateDerivatives`](@ref).
 """
 function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
@@ -1262,11 +2552,31 @@ function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
+
+    fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::Array{fmi3Float64})
 
 Compute state derivatives at the current time instant and for the current states.
 
-For more information call ?fmi3GetContinuousDerivatives
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `derivatives::AbstractArray{fmi3Float64}`: Argument `derivatives` contains values of type `fmi3Float64` which is a alias type for `Real` data type.`derivatives` is the `AbstractArray` which contains the `Real` values of the vector that represent the derivatives. The ordering of the elements of the derivatives vector is identical to the ordering of the state vector.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3GetContinuousStateDerivatives!`](@ref).
 """
 function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::AbstractArray{fmi3Float64})
     status = fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
@@ -1277,11 +2587,24 @@ function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::Abstr
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.5. State: Event Mode
+
+fmi3UpdateDiscreteStates(c::FMU3Instance)
 
 This function is called to signal a converged solution at the current super-dense time instant. fmi3UpdateDiscreteStates must be called at least once per super-dense time instant.
 
-For more information call ?fmi3UpdateDiscreteStates
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# TODO returns
+# Returns
+-
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.5. State: Event Mode
+
+See also [`fmi3UpdateDiscreteStates`](@ref).
 """
 function fmi3UpdateDiscreteStates(c::FMU3Instance)
     discreteStatesNeedUpdate = fmi3True
@@ -1310,11 +2633,23 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 
-Returns the event indicators of the FMU.
+    fmi3GetEventIndicators(c::FMU3Instance)
 
-For more information call ?fmi3GetEventIndicators
+Returns the event indicators of the FMU
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `eventIndicators::Array{fmi3Float64}`:The event indicators are returned as a vector represented by an array of "fmi3Float64" values.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3GetEventIndicators`](@ref).
 """
 function fmi3GetEventIndicators(c::FMU3Instance)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
@@ -1324,13 +2659,33 @@ function fmi3GetEventIndicators(c::FMU3Instance)
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
+
+    fmi3CompletedIntegratorStep!(c::FMU3Instance, noSetFMUStatePriorToCurrentPoint::fmi3Boolean)
 
 This function must be called by the environment after every completed step
-If enterEventMode == fmi3True, the event mode must be entered
-If terminateSimulation == fmi3True, the simulation shall be terminated
 
-For more information call ?fmi3CompletedIntegratorStep
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `noSetFMUStatePriorToCurrentPoint::fmi3Boolean`: Argument `noSetFMUStatePriorToCurrentPoint = fmi3True` if `fmi3SetFMUState`  will no longer be called for time instants prior to current time in this simulation run.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+- `enterEventMode::Array{fmi3Boolean, 1}`: Returns `enterEventMode[1]` to signal to the environment if the FMU shall call `fmi2EnterEventMode`
+- `terminateSimulation::Array{fmi3Boolean, 1}`: Returns `terminateSimulation[1]` to signal if the simulation shall be terminated.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3CompletedIntegratorStep`](@ref).
 """
 function fmi3CompletedIntegratorStep(c::FMU3Instance,
     noSetFMUStatePriorToCurrentPoint::fmi3Boolean)
@@ -1349,16 +2704,63 @@ function fmi3CompletedIntegratorStep(c::FMU3Instance,
 end
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
 
-The model enters Event Mode.
+    fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
 
-For more information call ?fmi3EnterEventMode
+The model enters Event Mode from the Continuous-Time Mode in ModelExchange oder Step Mode in CoSimulation and discrete-time equations may become active (and relations are not “frozen”).
+
+# TODO argmuents
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 3.2.1. State: Continuous-Time Mode
+
+See also [`fmi3EnterEventMode`](@ref).
 """
 function fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
     fmi3EnterEventMode(c, fmi3Boolean(stepEvent), fmi3Boolean(stateEvent), rootsFound, nEventIndicators, fmi3Boolean(timeEvent))
 end
 
+"""
+    fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Nothing} = nothing, communicationStepSize::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true,
+        eventEncountered::fmi3Boolean = fmi3False, terminateSimulation::fmi3Boolean = fmi3False, earlyReturn::fmi3Boolean = fmi3False, lastSuccessfulTime::fmi3Float64 = 0.0)
+
+The computation of a time step is started.
+
+# TODO argmuents
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
+More detailed:
+- `fmi3OK`: all well
+- `fmi3Warning`: things are not quite right, but the computation can continue
+- `fmi3Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi3Error`: the communication step could not be carried out at all
+- `fmi3Fatal`: if an error occurred which corrupted the FMU irreparably
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions
+- FMISpec3.0: 2.2.4 Status Returned by Functions
+- FMISpec3.0: 4.2.1. State: Step Mode
+
+See also [`fmi3DoStep!`](@ref).
+"""
 function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Nothing} = nothing, communicationStepSize::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true,
     eventEncountered::fmi3Boolean = fmi3False, terminateSimulation::fmi3Boolean = fmi3False, earlyReturn::fmi3Boolean = fmi3False, lastSuccessfulTime::fmi3Float64 = 0.0)
 

@@ -2009,9 +2009,9 @@ The actual dependencies (of type dependenciesKind) can be retrieved by calling t
     It is filled in by this function with the value reference of the independent variable that this dependency entry is dependent upon.
 - `elementIndicesIndependents::AbstractArray{Csize_t}`: must point to a buffer of size_t `values` of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the element index of the independent variable that this dependency entry is dependent upon. The element indices start with 1. Using the element index 0 means all elements of the variable. (Note: If an array has more than one dimension the indices are serialized in the same order as defined for values in Section 2.2.6.1.)
-- `dependencyKinds`_ must point to a buffer of dependenciesKind values of size `nDependencies` allocated by the calling environment. 
+- `dependencyKinds::AbstractArray{fmi3DependencyKind}`: must point to a buffer of dependenciesKind values of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the enumeration value describing the dependency of this dependency entry.
-- `nDependencies`: specifies the number of dependencies that the calling environment allocated space for in the result buffers, and should correspond to value obtained by calling `fmi3GetNumberOfVariableDependencies`.
+- `nDependencies::Csize_t`: specifies the number of dependencies that the calling environment allocated space for in the result buffers, and should correspond to value obtained by calling `fmi3GetNumberOfVariableDependencies`.
         
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
