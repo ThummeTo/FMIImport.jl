@@ -941,6 +941,9 @@ More detailed:
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
 function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+
+    @assert c.type == fmi2TypeCoSimulation "`fmi2SetRealInputDerivatives` only available for CS-FMUs."
+
     vr = prepareValueReference(c, vr)
     order = prepareValue(order)
     values = prepareValue(values)
@@ -971,6 +974,9 @@ Sets the n-th time derivative of real input variables.
 See also [`fmi2SetRealInputDerivatives!`](@ref).
 """
 function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
+
+    @assert c.type == fmi2TypeCoSimulation "`fmi2GetRealOutputDerivatives` only available for CS-FMUs."
+
     vr = prepareValueReference(c, vr)
     order = prepareValue(order)
     nvr = Csize_t(length(vr))
@@ -1017,6 +1023,8 @@ More detailed:
 See also [`fmi2DoStep`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
 """
 function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+
+    @assert c.type == fmi2TypeCoSimulation "`fmi2DoStep` only available for CS-FMUs."
 
     # skip `fmi2DoStep` if this is set (allows evaluation of a CS_NeuralFMUs at t_0)
     if c.skipNextDoStep
@@ -1070,6 +1078,9 @@ More detailed:
 See also [`fmi2SetTime`](@ref)
 """
 function fmi2SetTime(c::FMU2Component, t::Real)
+
+    @assert c.type == fmi2TypeModelExchange "`fmi2SetTime` only available for ME-FMUs."
+
     status = fmi2SetTime(c, fmi2Real(t))
     c.t = t
     return status

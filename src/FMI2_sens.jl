@@ -139,29 +139,21 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     @assert u == nothing || (length(u) == length(u_refs)) "Length of `u` must match length of `u_refs`."
 
     if fmi2IsModelExchange(c.fmu)
-        if dx == nothing
-            dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
-        end
         
-    elseif fmi2IsCoSimulation(c.fmu)
-        @assert dx == nothing "Keyword `dx != nothing` is invalid for CS-FMUs. Setting a state-derivative is not possible in CS."
-        @assert x == nothing "Keyword `x != nothing` is invalid for CS-FMUs. Setting a state is not possible in CS."
-        @assert t == nothing "Keyword `t != nothing` is invalid for CS-FMUs. Setting explicit time is not possible in CS."
-    else 
-        @assert false "Unknown FMU2 type."
+        if c.type == fmi2TypeModelExchange::fmi2Type
+            if dx == nothing
+                dx = zeros(fmi2Real, fmi2GetNumberOfStates(c.fmu.modelDescription))
+            end
+        end
     end
 
-    return eval!(c, dx, y, y_refs, x, u, u_refs, t)
-end
-
-function eval!(c::FMU2Component, 
-    dx::Union{AbstractVector{<:Real}, Nothing},
-    y::Union{AbstractVector{<:Real}, Nothing},
-    y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
-    x::Union{AbstractVector{<:Real}, Nothing}, 
-    u::Union{AbstractVector{<:Real}, Nothing},
-    u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
-    t::Union{Real, Nothing})
+    if fmi2IsCoSimulation(c.fmu)
+        if c.type == fmi2TypeCoSimulation::fmi2Type
+            @assert dx == nothing "Keyword `dx != nothing` is invalid for CS-FMUs. Setting a state-derivative is not possible in CS."
+            @assert x == nothing "Keyword `x != nothing` is invalid for CS-FMUs. Setting a state is not possible in CS."
+            @assert t == nothing "Keyword `t != nothing` is invalid for CS-FMUs. Setting explicit time is not possible in CS."
+        end
+    end
 
     # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Nothing`.
     if t == nothing
@@ -169,8 +161,11 @@ function eval!(c::FMU2Component,
     end
 
     # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Ptr{Nothing}`.
-    cRef = pointer_from_objref(c)
-    cRef = UInt64(cRef)
+    cRef = nothing
+    ignore_derivatives() do
+        cRef = pointer_from_objref(c)
+        cRef = UInt64(cRef)
+    end
 
     # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Nothing`.
     if u == nothing || length(u) <= 0 
@@ -192,6 +187,7 @@ function _eval!(cRef::UInt64,
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
     t::Union{Real, Nothing})
+
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
 
     @assert x == nothing || !isdual(x) "eval!(...): Wrong dispatched: `x` is ForwardDiff.Dual, please open an issue with MWE."
@@ -204,7 +200,7 @@ function _eval!(cRef::UInt64,
     end
 
     # set time
-    if t != nothing
+    if t != nothing && t >= 0.0
         fmi2SetTime(c, t)
     end
 
@@ -246,7 +242,6 @@ function _eval!(cRef::UInt64,
 end
 
 function _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
-    ::typeof(eval!), 
     cRef, 
     dx,
     y,
@@ -356,41 +351,14 @@ function _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt),
         fmi2SetTime(c, t)
     end
 
+    #@info "frule:   ∂y=$(∂y)   ∂dx=$(∂dx)"
+
     ∂Ω = (∂y, ∂dx) 
 
     return Ω, ∂Ω 
 end
 
-# EVAL! WITH `x` and `u`
-
-function eval!(cRef::UInt64, 
-    dx::Union{AbstractVector{<:Real}, Nothing},
-    y::Union{AbstractVector{<:Real}, Nothing},
-    y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
-    x::Union{AbstractVector{<:Real}, Nothing}, 
-    u::Union{AbstractVector{<:Real}, Nothing},
-    u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
-    t::Union{Real, Nothing})
-
-    y, dx = _eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
-
-    return y, dx
-end
-
-function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
-                            ::typeof(eval!), 
-                            cRef, 
-                            dx,
-                            y,
-                            y_refs, 
-                            x,
-                            u,
-                            u_refs,
-                            t)
-
-    Ω, ∂Ω = _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
-    eval!, 
-    cRef, 
+function _rrule(cRef, 
     dx,
     y,
     y_refs, 
@@ -399,28 +367,10 @@ function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δ
     u_refs,
     t)
 
-    return Ω, ∂Ω
-end
-
-function ChainRulesCore.rrule(::typeof(eval!), 
-                            cRef, 
-                            dx,
-                            y,
-                            y_refs, 
-                            x,
-                            u,
-                            u_refs,
-                            t)
-
-    c = nothing
-    if isa(cRef, FMU2Component)
-        c = cRef
-        cRef = pointer_from_objref(c)
-        cRef = UInt64(cRef)
-    else
-        c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
-    end
-
+    @assert !isa(cRef, FMU2Component) "Wrong dispatched!"
+      
+    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+    
     outputs = (y != nothing && length(y) > 0)
     inputs = (u != nothing && length(u) > 0)
     derivatives = (dx != nothing && length(dx) > 0)
@@ -486,7 +436,14 @@ function ChainRulesCore.rrule(::typeof(eval!),
         end
 
         # sample time partials
-        if times && (derivatives || outputs)
+        # in rrule this should be done even if no new time is actively set
+        if (derivatives || outputs) # && times
+
+            # if no time is actively set, use the component current time for sampling
+            if !times 
+                t = c.t 
+            end 
+
             dt = 1e-6 # ToDo: better value 
 
             dx1 = nothing
@@ -524,7 +481,7 @@ function ChainRulesCore.rrule(::typeof(eval!),
 
             fmi2SetTime(c, t)
         end
-        
+
         # write back
         f̄ = NoTangent()
         c̄Ref = ZeroTangent()
@@ -536,12 +493,54 @@ function ChainRulesCore.rrule(::typeof(eval!),
         ū_refs = ZeroTangent()
         t̄ = n_y_t + n_dx_t
 
-        #@info "Returning pullback:\n$((f̄, c̄Ref, d̄x, ȳ, ȳ_refs, x̄, ū, ū_refs, t̄))"
+        #@info "rrule:   $((f̄, c̄Ref, d̄x, ȳ, ȳ_refs, x̄, ū, ū_refs, t̄))"
 
         return f̄, c̄Ref, d̄x, ȳ, ȳ_refs, x̄, ū, ū_refs, t̄
     end
 
     return (Ω, eval_pullback)
+end
+
+# EVAL! WITH `x` and `u`
+
+function eval!(cRef::UInt64, 
+               dx::Union{AbstractVector{<:Real}, Nothing},
+               y::Union{AbstractVector{<:Real}, Nothing},
+               y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
+               x::Union{AbstractVector{<:Real}, Nothing}, 
+               u::Union{AbstractVector{<:Real}, Nothing},
+               u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
+               t::Union{Real, Nothing})
+
+    return _eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
+end
+
+function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
+                            ::typeof(eval!), 
+                            cRef, 
+                            dx,
+                            y,
+                            y_refs, 
+                            x,
+                            u,
+                            u_refs,
+                            t)
+
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
+                           cRef,  dx,  y,  y_refs,  x,  u,  u_refs,  t)
+end
+
+function ChainRulesCore.rrule(::typeof(eval!), 
+                            cRef, 
+                            dx,
+                            y,
+                            y_refs, 
+                            x,
+                            u,
+                            u_refs,
+                            t)
+    
+    return _rrule(cRef, dx, y, y_refs, x, u, u_refs, t)
 end
 
 NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
@@ -603,18 +602,19 @@ function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δt),
     x,
     t)
 
-    Ω, ∂Ω = _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, NoTangent(), NoTangent(), Δt), 
-    eval!, 
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, NoTangent(), NoTangent(), Δt), 
+                           cRef,  dx,  y,  y_refs,  x,     nothing,     nothing,  t)
+end
+
+function ChainRulesCore.rrule(::typeof(eval!), 
     cRef, 
     dx,
     y,
     y_refs, 
     x,
-    nothing,
-    nothing,
     t)
 
-    return Ω, ∂Ω 
+    return _rrule(cRef, dx, y, y_refs, x, nothing, nothing, t)
 end
 
 NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
@@ -663,18 +663,20 @@ function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δu, Δu_ref
                u_refs,
                t)
 
-    Ω, ∂Ω = _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, NoTangent(), Δu, Δu_refs, Δt), 
-               eval!, 
-               cRef, 
-               dx,
-               y,
-               y_refs, 
-               nothing,
-               u,
-               u_refs,
-               t)
-           
-    return Ω, ∂Ω
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, NoTangent(), Δu, Δu_refs, Δt), 
+                           cRef,   dx,  y,  y_refs,     nothing,  u,  u_refs,  t)
+end
+
+function ChainRulesCore.rrule(::typeof(eval!), 
+    cRef, 
+    dx,
+    y,
+    y_refs, 
+    u,
+    u_refs,
+    t)
+
+    return _rrule(cRef, dx, y, y_refs, nothing, u, u_refs, t)
 end
 
 NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
