@@ -128,7 +128,7 @@ Retrieves all the pointers of binary functions.
 
 See also .
 """
-function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
+function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, fmi2Type, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
     # Create uninitialized FMU
     fmu = FMU2(logLevel)
 
@@ -150,16 +150,32 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
     fmu.modelName = fmu.modelDescription.modelName
 
-    if (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:CS)
-        fmu.type = fmi2TypeCoSimulation::fmi2Type
-    elseif (fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription) && type==:ME)
-        fmu.type = fmi2TypeModelExchange::fmi2Type
-    elseif fmi2IsCoSimulation(fmu.modelDescription) && (type===nothing || type==:CS)
-        fmu.type = fmi2TypeCoSimulation::fmi2Type
-    elseif fmi2IsModelExchange(fmu.modelDescription) && (type===nothing || type==:ME)
-        fmu.type = fmi2TypeModelExchange::fmi2Type
-    else
-        @assert false "Unknown FMU type `$type`."
+    if isa(type, fmi2Type)
+        fmu.type = type
+
+    elseif isa(type, Symbol)
+        if type == :ME
+            fmu.type = fmi2TypeModelExchange
+        elseif type == :CS
+            fmu.type = fmi2TypeCoSimulation
+        else
+            @assert "Unknwon type symbol `$(type)`, supported is `:ME` and `:CS`."
+        end
+
+    else # type==nothing
+        if fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription)
+            fmu.type = fmi2TypeCoSimulation
+            logInfo(fmu, "fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.")
+
+        elseif fmi2IsCoSimulation(fmu.modelDescription)
+            fmu.type = fmi2TypeCoSimulation
+
+        elseif fmi2IsModelExchange(fmu.modelDescription)
+            fmu.type = fmi2TypeModelExchange
+
+        else
+            @assert false "FMU neither supports ME nor CS."
+        end
     end
 
     fmuName = fmi2GetModelIdentifier(fmu.modelDescription; type=fmu.type) # tmpName[length(tmpName)]
@@ -200,7 +216,7 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
         osStr = "Mac"
         fmuExt = "dylib"
     else
-        @assert false "fmi2Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS."
+        @assert false "fmi2Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS/architecture."
     end
 
     @assert (length(directories) > 0) "fmi2Load(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
@@ -220,17 +236,10 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
 
     logInfo(fmu, "fmi2Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
 
-    if fmi2IsCoSimulation(fmu.modelDescription) && fmi2IsModelExchange(fmu.modelDescription)
-        logInfo(fmu, "fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.")
-    end
-
     fmu.binaryPath = pathToBinary
     loadBinary(fmu)
 
-    # dependency matrix
-    # fmu.dependencies
-
-    fmu
+    return fmu
 end
 
 function loadBinary(fmu::FMU2)
@@ -410,6 +419,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
         component.instanceName = instanceName
+        component.type = type
 
         if pushComponents
             push!(fmu.components, component)
