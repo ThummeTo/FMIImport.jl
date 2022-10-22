@@ -8,10 +8,12 @@
 # - ForwardDiff- and ChainRulesCore-Sensitivities over FMUs
 # - ToDo: colouring of dependency types (known from model description) for fast jacobian build-ups
 
-using ForwardDiff
-import NonconvexUtils, ChainRulesCore
+using ForwardDiff, ChainRulesCore
+import ForwardDiffChainRules: @ForwardDiff_frule
+#import NonconvexUtils: @ForwardDiff_frule
 import ChainRulesCore: ZeroTangent, NoTangent, @thunk
 
+# check if scalar/vector is ForwardDiff.dual
 function isdual(e)
     return false 
 end
@@ -22,11 +24,29 @@ function isdual(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
     return true
 end
 
+# check types (Tag, Variable, Number) of ForwardDiff.dual scalar/vector
 function fd_eltypes(e::ForwardDiff.Dual{T, V, N}) where {T, V, N}
     return (T, V, N)
 end
 function fd_eltypes(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
     return (T, V, N)
+end
+
+# makes Reals from ForwardDiff.dual scalar/vector
+function undual(e::AbstractArray)
+    return collect(undual(c) for c in e)
+end
+function undual(e::Tuple)
+    return (collect(undual(c) for c in e)...,)
+end
+function undual(e::ForwardDiff.Dual)
+    return ForwardDiff.value(e)
+end
+function undual(::Nothing)
+    return nothing
+end
+function undual(e)
+    return e
 end
 
 # in FMI2 we can use fmi2GetDirectionalDerivative for JVP-computations
@@ -212,7 +232,7 @@ function _eval!(cRef::UInt64,
     # get derivative
     if dx != nothing
         if isdual(dx)
-            @info "dx is dual!"
+            #@info "dx is dual!"
             dx_tmp = collect(ForwardDiff.value(e) for e in dx)
             fmi2GetDerivatives!(c, dx_tmp)
             T, V, N = fd_eltypes(dx)
@@ -225,7 +245,7 @@ function _eval!(cRef::UInt64,
     # get output 
     if y != nothing
         if isdual(y)
-            @info "y is dual!"
+            #@info "y is dual!"
             y_tmp = collect(ForwardDiff.value(e) for e in y)
             fmi2GetReal!(c, y_refs, y_tmp)
             T, V, N = fd_eltypes(y)
@@ -241,7 +261,7 @@ function _eval!(cRef::UInt64,
     return y, dx # [y..., dx...]
 end
 
-function _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
+function _frule(Δtuple, 
     cRef, 
     dx,
     y,
@@ -251,14 +271,26 @@ function _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt),
     u_refs,
     t)
 
+    Δtuple = undual(Δtuple)
+    Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt = Δtuple
+
     ### ToDo: Somehow, ForwardDiff enters with all types beeing Float64, this needs to be corrected.
 
+    cRef = undual(cRef)
     if typeof(cRef) != UInt64
         cRef = UInt64(cRef)
     end
+    
+    t = undual(t)
+    u = undual(u)
+    x = undual(x)
+    
+    y_refs = undual(y_refs)
     if y_refs != nothing
         y_refs = convert(Array{UInt32,1}, y_refs)
     end
+
+    u_refs = undual(u_refs)
     if u_refs != nothing
         u_refs = convert(Array{UInt32,1}, u_refs)
     end
@@ -543,7 +575,7 @@ function ChainRulesCore.rrule(::typeof(eval!),
     return _rrule(cRef, dx, y, y_refs, x, u, u_refs, t)
 end
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
+@ForwardDiff_frule eval!(cRef::UInt64, 
     dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
     y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
     y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -552,7 +584,7 @@ NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,
     u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
     t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
     dx::Union{AbstractVector{<:Real}, Nothing},
     y::Union{AbstractVector{<:Real}, Nothing},
     y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -561,7 +593,7 @@ NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,
     u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
     t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
     dx::Union{AbstractVector{<:Real}, Nothing},
     y::Union{AbstractVector{<:Real}, Nothing},
     y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -570,7 +602,7 @@ NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,
     u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
     t::Union{Real, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
     dx::Union{AbstractVector{<:Real}, Nothing},
     y::Union{AbstractVector{<:Real}, Nothing},
     y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -617,21 +649,21 @@ function ChainRulesCore.rrule(::typeof(eval!),
     return _rrule(cRef, dx, y, y_refs, x, nothing, nothing, t)
 end
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
+@ForwardDiff_frule eval!(cRef::UInt64, 
 dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
 y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
 x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
 t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
 dx::Union{AbstractVector{<:Real}, Nothing},
 y::Union{AbstractVector{<:Real}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
 x::Union{AbstractVector{<:Real}, Nothing}, 
 t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
 dx::Union{AbstractVector{<:Real}, Nothing},
 y::Union{AbstractVector{<:Real}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -679,7 +711,7 @@ function ChainRulesCore.rrule(::typeof(eval!),
     return _rrule(cRef, dx, y, y_refs, nothing, u, u_refs, t)
 end
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64, 
+@ForwardDiff_frule eval!(cRef::UInt64, 
 dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
 y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -687,7 +719,7 @@ u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
 u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
 t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
 dx::Union{AbstractVector{<:Real}, Nothing},
 y::Union{AbstractVector{<:Real}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
@@ -695,7 +727,7 @@ u::Union{AbstractVector{<:Real}, Nothing},
 u_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
 t::Union{ForwardDiff.Dual, Nothing})
 
-NonconvexUtils.@ForwardDiff_frule eval!(cRef::UInt64,  
+@ForwardDiff_frule eval!(cRef::UInt64,  
 dx::Union{AbstractVector{<:Real}, Nothing},
 y::Union{AbstractVector{<:Real}, Nothing},
 y_refs::Union{AbstractVector{fmi2ValueReference}, Nothing},
