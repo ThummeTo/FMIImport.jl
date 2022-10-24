@@ -412,7 +412,7 @@ Informs the FMU that the simulation run is terminated.
 - `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Keywords
-- `soft::Bool=false`: If the Keyword `soft = true` the fmi2Teminate needs to be called in state  `fmi2ComponentStateContinuousTimeMode` or `fmi2ComponentStateEventMode`.
+- `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -458,7 +458,7 @@ Is called by the environment to reset the FMU after a simulation run. The FMU go
 - `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Keywords
-- `soft::Bool=false`: If the Keyword `soft = true` the fmi2Teminate needs to be called in state  `fmi2ComponentStateTerminated` or `fmi2ComponentStateError`.
+- `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -1471,13 +1471,16 @@ end
 
 """
 
-    fmi2SetTime(c::FMU2Component, time::fmi2Real)
+   fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
 
 Set a new time instant and re-initialize caching of variables that depend on time, provided the newly provided time value is different to the previously set time value (variables that depend solely on constants or parameters need not to be newly computed in the sequel, but the previously computed values can be reused).
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `time::fmi2Real`: Argument `time` contains a value of type `fmi2Real` which is a alias type for `Real` data type. `time` sets the independent variable time t.
+
+# Keywords
+- `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -1496,7 +1499,18 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref).
 """
-function fmi2SetTime(c::FMU2Component, time::fmi2Real)
+function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
+
+    # ToDo: Double-check this in the spec.
+    # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)
+    # if !( discrete && c.state == fmi2ComponentStateEventMode && c.eventInfo.newDiscreteStatesNeeded == fmi2False) &&
+    #    !(!discrete && c.state == fmi2ComponentStateContinuousTimeMode)
+    #     if soft
+    #         return fmi2StatusOK
+    #     else
+    #         @warn "fmi2SetTime(...): Called at the wrong time, must be in event mode and `newDiscreteStatesNeeded=false` (if discrete) or in continuous time mode (if continuous)."
+    #     end
+    # end
 
     status = fmi2SetTime(c.fmu.cSetTime,
           c.compAddr, time + c.t_offset)
@@ -1556,7 +1570,7 @@ The model enters Event Mode from the Continuous-Time Mode and discrete-time equa
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Keywords
-- `soft::Bool=false`: If the Keyword `soft = true` the fmi2Teminate needs to be called in state  `fmi2ComponentStateTerminated` or `fmi2ComponentStateError`.
+- `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -1659,7 +1673,7 @@ This function has to be called when changing from Event Mode (after the global e
 
 
 # Keywords
-- `soft::Bool=false`: If the Keyword `soft = true` the fmi2Teminate needs to be called in state `fmi2ComponentStateEventMode`.
+- `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
 
 
 # Returns
