@@ -167,6 +167,7 @@ end
 
     fmi2GetVersion(fmu::FMU2)
 
+Returns the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU.
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
@@ -191,6 +192,8 @@ end
 """
 
     fmi2GetVersion(c::FMU2Component)
+
+Returns the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -232,7 +235,8 @@ Control the use of the logging callback function, version independent.
 - `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
 - `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
-- `categories::Ptr{Nothing}`:
+- `categories::Ptr{Nothing}`:  This is an unordered set of strings representing the possible values of the log categories of the FMU (for example logEvent). The allowed values of categories are defined by the modeling
+environment that generated the FMU.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -327,7 +331,7 @@ end
 Informs the FMU to enter Initialization Mode. Before calling this function, all variables with attribute <ScalarVariable initial = "exact" or "approx"> can be set with the “fmi2SetXXX” functions (the ScalarVariable attributes are defined in the Model Description File, see section 2.2.7). Setting other variables is not allowed. Furthermore, `fmi2SetupExperiment` must be called at least once before calling `fmi2EnterInitializationMode`, in order that `startTime` is defined.
 
 # Arguments
-- `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Argument `c` is a Mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -367,7 +371,7 @@ end
 Informs the FMU to exit Initialization Mode.
 
 # Arguments
-- `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Argument `c` is a Mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -409,7 +413,7 @@ end
 Informs the FMU that the simulation run is terminated.
 
 # Arguments
-- `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Argument `c` is a Mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Keywords
 - `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
@@ -455,7 +459,7 @@ end
 Is called by the environment to reset the FMU after a simulation run. The FMU goes into the same state as if fmi2Instantiate would have been called.All variables have their default values. Before starting a new run, fmi2SetupExperiment and fmi2EnterInitializationMode have to be called.
 
 # Arguments
-- `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `c::FMU2Component`: Argument `c` is a Mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Keywords
 - `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
@@ -511,7 +515,7 @@ end
 
     fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
-Functions to get and set values of variables idetified by their valueReference
+Functions to get and set values of variables idetified by their valueReference.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -548,7 +552,7 @@ end
 
     fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
-Functions to get and set values of variables idetified by their valueReference
+Functions to get and set values of variables idetified by their valueReference.
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vr::AbstractArray{fmi2ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels, called "ValueReference" that define the variable that shall be inquired.
@@ -583,7 +587,7 @@ end
 
     fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
-Writes the integer values of an array of variables in the given field
+Writes the integer values of an array of variables in the given field.
 
 fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar.
 
@@ -624,7 +628,7 @@ end
 
     fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
-Set the values of an array of integer variables
+Set the values of an array of integer variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -662,7 +666,7 @@ end
 
     fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
-Writes the boolean values of an array of variables in the given field
+Writes the boolean values of an array of variables in the given field.
 
 fmi2GetBoolean! is only possible for arrays of values, please use an array instead of a scalar.
 
@@ -702,7 +706,7 @@ end
 
     fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
-Functions to get and set values of variables idetified by their valueReference
+Functions to get and set values of variables idetified by their valueReference.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -738,7 +742,7 @@ end
 
     fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
-Functions to get and set values of variables idetified by their valueReference
+Functions to get and set values of variables idetified by their valueReference.
 
 These functions are especially used to get the actual values of output variables if a model is connected with other
 models.
@@ -778,7 +782,7 @@ end
 
     fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
-Set the values of an array of string variables
+Set the values of an array of string variables.
 
 For the exact rules on which type of variables fmi2SetXXX can be called see FMISpec2.0.2 section 2.2.7 , as well as FMISpec2.0.2 section 3.2.3 in case of ModelExchange and FMISpec2.0.2 section 4.2.4 in case ofCoSimulation.
 
@@ -805,8 +809,6 @@ More detailed:
 See also [`fmi2GetString!`](@ref).
 
 Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
-
-Functions to get and set values of variables idetified by their valueReference
 """
 function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -1040,7 +1042,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
 end
 
 """
-ToDo
+
     fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        nUnknown::Csize_t,
@@ -1527,7 +1529,7 @@ end
                                  x::AbstractArray{fmi2Real},
                                  nx::Csize_t)
 
-Set a new (continuous) state vector and re-initialize caching of variables that depend on the states. Argument nx is the length of vector x and is provided for checking purposes
+Set a new (continuous) state vector and re-initialize caching of variables that depend on the states. Argument nx is the length of vector x and is provided for checking purposes.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
