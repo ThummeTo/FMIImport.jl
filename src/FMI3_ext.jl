@@ -308,7 +308,7 @@ Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateModelExchange
 """
 function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.modelName, type::fmi3Type = fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallBacks::Bool = fmu.executionConfig.externalCallbacks,
-    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
 
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
@@ -316,7 +316,6 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
     instEnv.logStatusDiscard = logStatusDiscard
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
-    instEnv.logStatusPending = logStatusPending
 
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
 
@@ -396,14 +395,13 @@ Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateCoSimulation
 """
 function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-    eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+    eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
     instEnv.logStatusWarning = logStatusWarning
     instEnv.logStatusDiscard = logStatusDiscard
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
-    instEnv.logStatusPending = logStatusPending
 
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     
@@ -488,7 +486,7 @@ Returns the instance of a new FMU component.
 For more information call ?fmi3InstantiateScheduledExecution
 """
 function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
 
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
@@ -496,7 +494,6 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
     instEnv.logStatusDiscard = logStatusDiscard
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
-    instEnv.logStatusPending = logStatusPending
 
     ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     if externalCallbacks
