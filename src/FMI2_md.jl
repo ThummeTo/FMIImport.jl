@@ -336,7 +336,9 @@ function parseUnknwon(node::EzXML.Node)
     end
 end
 
-# ToDo: Comment
+
+# Processes the XML document (nodes) and inserts the respective values into the `md.modelStructure.derivatives` collection of the model description.
+
 function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "Derivatives") "Wrong element name."
     md.modelStructure.derivatives = []
@@ -367,7 +369,8 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
     end
 end
 
-# ToDo: Comment
+# Parse the `modelStructure.initialUnknowns` of the model Description.
+
 function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "InitialUnknowns") "Wrong element name."
     md.modelStructure.initialUnknowns = []
@@ -386,7 +389,7 @@ function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
     end
 end
 
-# ToDo: Comment
+# Parse the `modelStructure.outputs` of the model description.
 function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
     @assert (nodes.name == "Outputs") "Wrong element name."
     md.modelStructure.outputs = []

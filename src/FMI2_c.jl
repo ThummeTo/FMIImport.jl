@@ -1040,7 +1040,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
 end
 
 """
-
+ToDo
     fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        nUnknown::Csize_t,
@@ -1069,9 +1069,9 @@ Computes a linear combination of the partial derivatives of h with respect to th
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vUnknown_ref::AbstracArray{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
-- `nUnknown::Csize_t`:
+- `nUnknown::Csize_t`: Length of the `Unknown` Array.
 - `vKnown_ref::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
-- `nKnown::Csize_t`:
+- `nKnown::Csize_t`: Length of the `Known` Array.
 - `dvKnown::AbstractArray{fmi2Real}`:The vector values Compute the partial derivative with respect to the given entries in vector `vKnown_ref` with the matching evaluate of `dvKnown`.
 - `dvUnknown::AbstractArray{fmi2Real}`: Stores the directional derivative vector values.
 

@@ -576,7 +576,7 @@ See also [`fmi2GetDirectionalDerivative!`](@ref) ,[`fmi2GetDirectionalDerivative
 function fmi2SampleDirectionalDerivative!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
-                                          dvUnknown::AbstractArray, # ToDo: datatype
+                                          dvUnknown::AbstractArray{fmi2Real},
                                           steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     step = 0.0

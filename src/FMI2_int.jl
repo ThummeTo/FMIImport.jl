@@ -10,9 +10,29 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-TODO: FMI specification reference.
 
-Set the DebugLogger for the FMU.
+    fmi2SetDebugLogging(c::FMU2Component)
+
+The function controls debug logging that is output via the logger function callback
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.22]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
+See also [`fmi2SetDebugLogging`](@ref).
 """
 function fmi2SetDebugLogging(c::FMU2Component)
     fmi2SetDebugLogging(c, fmi2False, Unsigned(0), C_NULL)
@@ -313,7 +333,7 @@ function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 
    fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
 
-Set the values of an array of integer variables
+Set the values of an array of integer variables.
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -383,7 +403,7 @@ end
 
    fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
 
-Writes the boolean values of an array of variables in the given field
+Writes the boolean values of an array of variables in the given field.
 
 fmi2GetBoolean! is only possible for arrays of values, please use an array instead of a scalar.
 
@@ -429,7 +449,7 @@ end
 
    fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
-Set the values of an array of boolean variables
+Set the values of an array of boolean variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -505,7 +525,7 @@ end
 
    fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
 
-Writes the string values of an array of variables in the given field
+Writes the string values of an array of variables in the given field.
 
 These functions are especially used to get the actual values of output variables if a model is connected with other
 models.
@@ -547,7 +567,7 @@ end
 
    fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
-Set the values of an array of string variables
+Set the values of an array of string variables.
 
 For the exact rules on which type of variables fmi2SetXXX
 can be called see FMISpec2.0.2 section 2.2.7 , as well as FMISpec2.0.2 section 3.2.3 in case of ModelExchange and FMISpec2.0.2 section 4.2.4 in case of
