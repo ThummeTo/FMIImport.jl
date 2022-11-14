@@ -1,5 +1,3 @@
-# STATUS: all tests are working, couple of todos to improve package
-# ABM: done
 module FMIImport
 
 using FMICore
