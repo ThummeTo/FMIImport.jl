@@ -1,8 +1,3 @@
-# STATUS: todos include adding of missing attributes, saving value references in different array and 
-# selecting data type not based on variable type because fmi3Boolean and fmi3UInt8 use same data type UInt8
-# ABM: done
-
-
 #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
