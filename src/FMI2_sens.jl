@@ -13,62 +13,30 @@ import ForwardDiffChainRules: @ForwardDiff_frule
 #import NonconvexUtils: @ForwardDiff_frule
 import ChainRulesCore: ZeroTangent, NoTangent, @thunk
 
-# check if scalar/vector is ForwardDiff.dual
-function isdual(e)
-    return false 
-end
-function isdual(e::ForwardDiff.Dual{T, V, N}) where {T, V, N}
-    return true
-end
-function isdual(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
-    return true
-end
-
-# check types (Tag, Variable, Number) of ForwardDiff.dual scalar/vector
-function fd_eltypes(e::ForwardDiff.Dual{T, V, N}) where {T, V, N}
-    return (T, V, N)
-end
-function fd_eltypes(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
-    return (T, V, N)
-end
-
-# makes Reals from ForwardDiff.dual scalar/vector
-function undual(e::AbstractArray)
-    return collect(undual(c) for c in e)
-end
-function undual(e::Tuple)
-    return (collect(undual(c) for c in e)...,)
-end
-function undual(e::ForwardDiff.Dual)
-    return ForwardDiff.value(e)
-end
-function undual(::Nothing)
-    return nothing
-end
-function undual(e)
-    return e
-end
-
 # in FMI2 we can use fmi2GetDirectionalDerivative for JVP-computations
-function fmi2JVP!(c::FMU2Component, mtxCache, ∂f_refs, ∂x_refs, seed)
-    if fmi2ProvidesDirectionalDerivative(c.fmu.modelDescription)
-        return fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
-    else
-        if mtxCache == nothing || size(mtxCache) != (length(∂f_refs), length(∂x_refs))
-            mtxCache = zeros(length(∂f_refs), length(∂x_refs))
+function fmi2JVP!(c::FMU2Component, mtxCache::Symbol, ∂f_refs, ∂x_refs, seed)
+
+    if c.fmu.executionConfig.JVPBuiltInDerivatives && fmi2ProvidesDirectionalDerivative(c.fmu.modelDescription)
+        res = getfield(c, resCache)
+        if res == nothing || size(res) != (length(seed),)
+            res = zeros(length(seed))
+            setfield!(c, resCache, res)
         end 
-        c.jacobianUpdate!(mtxCache, c, ∂f_refs, ∂x_refs)
-        return mtxCache * seed
+
+        fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, res, seed)
+        return res
+    else
+        jac = getfield(c, mtxCache)
+        
+        return FMICore.jvp!(jac, seed; ∂f_refs=∂f_refs, ∂x_refs=∂x_refs)
     end
 end
 
 # in FMI2 there is no helper for VJP-computations (but in FMI3) ...
-function fmi2VJP!(c::FMU2Component, mtxCache, ∂f_refs, ∂x_refs, seed)
-    if mtxCache == nothing || size(mtxCache) != (length(∂f_refs), length(∂x_refs))
-        mtxCache = zeros(length(∂f_refs), length(∂x_refs))
-    end 
-    c.jacobianUpdate!(mtxCache, c, ∂f_refs, ∂x_refs)
-    return mtxCache' * seed # this is the same as seed' * mtxCache (VJP)
+function fmi2VJP!(c::FMU2Component, mtxCache::Symbol, ∂f_refs, ∂x_refs, seed)
+
+    jac = getfield(c, mtxCache)  
+    return FMICore.vjp!(jac, seed; ∂f_refs=∂f_refs, ∂x_refs=∂x_refs)
 end
 
 """
@@ -258,7 +226,7 @@ function _eval!(cRef::UInt64,
         end
     end
 
-    return y, dx # [y..., dx...]
+    return y, dx
 end
 
 function _frule(Δtuple, 
@@ -319,14 +287,18 @@ function _frule(Δtuple,
         end
 
         if derivatives && states
-            ∂dx += fmi2JVP!(c, c.A, c.fmu.modelDescription.derivativeValueReferences, c.fmu.modelDescription.stateValueReferences, Δx)
+            ∂dx += fmi2JVP!(c, :A, c.fmu.modelDescription.derivativeValueReferences, c.fmu.modelDescription.stateValueReferences, Δx)
+            c.solution.evals_∂ẋ_∂x += 1
+            #@info "$(Δx)"
         end
 
         if outputs && states
-            ∂y += fmi2JVP!(c, c.C, y_refs, c.fmu.modelDescription.stateValueReferences, Δx)
+            ∂y += fmi2JVP!(c, :C, y_refs, c.fmu.modelDescription.stateValueReferences, Δx)
+            c.solution.evals_∂y_∂x += 1
         end
     end
 
+    
     if Δu != NoTangent() && length(Δu) > 0
 
         if !isa(Δu, AbstractVector{fmi2Real})
@@ -334,53 +306,61 @@ function _frule(Δtuple,
         end
 
         if derivatives && inputs
-            ∂dx += fmi2JVP!(c, c.B, c.fmu.modelDescription.derivativeValueReferences, u_refs, Δu)
+            ∂dx += fmi2JVP!(c, :B, c.fmu.modelDescription.derivativeValueReferences, u_refs, Δu)
+            c.solution.evals_∂ẋ_∂u += 1
         end
 
         if outputs && inputs
-            ∂y += fmi2JVP!(c, c.D, y_refs, u_refs, Δu)
+            ∂y += fmi2JVP!(c, :D, y_refs, u_refs, Δu)
+            c.solution.evals_∂y_∂u += 1
         end
     end
 
-    # partial time derivatives are not part of the FMI standard, so must be sampled in any case
-    if Δt != NoTangent() && t != nothing && times && (derivatives || outputs)
+    if c.fmu.executionConfig.eval_t_gradients
+        # partial time derivatives are not part of the FMI standard, so must be sampled in any case
+        if Δt != NoTangent() && t != nothing && times && (derivatives || outputs)
 
-        dt = 1e-6 # ToDo: Find a better value, e.g. based on the current solver step size
+            dt = 1e-6 # ToDo: Find a better value, e.g. based on the current solver step size
 
-        dx1 = nothing
-        dx2 = nothing
-        y1 = nothing
-        y2 = nothing 
+            dx1 = nothing
+            dx2 = nothing
+            y1 = nothing
+            y2 = nothing 
 
-        if derivatives
-            dx1 = zeros(fmi2Real, length(c.fmu.modelDescription.derivativeValueReferences))
-            dx2 = zeros(fmi2Real, length(c.fmu.modelDescription.derivativeValueReferences))
-            fmi2GetDerivatives!(c, dx1)
+            if derivatives
+                dx1 = zeros(fmi2Real, length(c.fmu.modelDescription.derivativeValueReferences))
+                dx2 = zeros(fmi2Real, length(c.fmu.modelDescription.derivativeValueReferences))
+                fmi2GetDerivatives!(c, dx1)
+            end
+
+            if outputs
+                y1 = zeros(fmi2Real, length(y))
+                y2 = zeros(fmi2Real, length(y))
+                fmi2GetReal!(c, y_refs, y1)
+            end
+
+            fmi2SetTime(c, t + dt; track=false)
+
+            if derivatives
+                fmi2GetDerivatives!(c, dx2)
+
+                ∂dx_t = (dx2-dx1)/dt
+                ∂dx += ∂dx_t * Δt
+
+                c.solution.evals_∂ẋ_∂t += 1
+            end
+
+            if outputs
+                fmi2GetReal!(c, y_refs, y2)
+
+                ∂y_t = (y2-y1)/dt  
+                ∂y += ∂y_t * Δt
+
+                c.solution.evals_∂y_∂t += 1
+            end
+
+            fmi2SetTime(c, t; track=false)
         end
-
-        if outputs
-            y1 = zeros(fmi2Real, length(y))
-            y2 = zeros(fmi2Real, length(y))
-            fmi2GetReal!(c, y_refs, y1)
-        end
-
-        fmi2SetTime(c, t + dt)
-
-        if derivatives
-            fmi2GetDerivatives!(c, dx2)
-
-            ∂dx_t = (dx2-dx1)/dt
-            ∂dx += ∂dx_t * Δt
-        end
-
-        if outputs
-            fmi2GetReal!(c, y_refs, y2)
-
-            ∂y_t = (y2-y1)/dt  
-            ∂y += ∂y_t * Δt
-        end
-
-        fmi2SetTime(c, t)
     end
 
     #@info "frule:   ∂y=$(∂y)   ∂dx=$(∂dx)"
@@ -452,66 +432,76 @@ function _rrule(cRef,
         x_refs = c.fmu.modelDescription.stateValueReferences
 
         if derivatives && states
-            n_dx_x = fmi2VJP!(c, c.A, dx_refs, x_refs, d̄x) 
+            n_dx_x = fmi2VJP!(c, :A, dx_refs, x_refs, d̄x) 
+            c.solution.evals_∂ẋ_∂x += 1
         end
 
         if derivatives && inputs
-            n_dx_u = fmi2VJP!(c, c.B, dx_refs, u_refs, d̄x) 
+            n_dx_u = fmi2VJP!(c, :B, dx_refs, u_refs, d̄x) 
+            c.solution.evals_∂ẋ_∂u += 1
         end
 
         if outputs && states
-            n_y_x = fmi2VJP!(c, c.C, y_refs, x_refs, ȳ) 
+            n_y_x = fmi2VJP!(c, :C, y_refs, x_refs, ȳ) 
+            c.solution.evals_∂y_∂x += 1
         end
 
         if outputs && inputs
-            n_y_u = fmi2VJP!(c, c.D, y_refs, u_refs, ȳ) 
+            n_y_u = fmi2VJP!(c, :D, y_refs, u_refs, ȳ) 
+            c.solution.evals_∂y_∂u += 1
         end
 
-        # sample time partials
-        # in rrule this should be done even if no new time is actively set
-        if (derivatives || outputs) # && times
+        if c.fmu.executionConfig.eval_t_gradients
+            # sample time partials
+            # in rrule this should be done even if no new time is actively set
+            if (derivatives || outputs) # && times
 
-            # if no time is actively set, use the component current time for sampling
-            if !times 
-                t = c.t 
-            end 
+                # if no time is actively set, use the component current time for sampling
+                if !times 
+                    t = c.t 
+                end 
 
-            dt = 1e-6 # ToDo: better value 
+                dt = 1e-6 # ToDo: better value 
 
-            dx1 = nothing
-            dx2 = nothing
-            y1 = nothing
-            y2 = nothing 
+                dx1 = nothing
+                dx2 = nothing
+                y1 = nothing
+                y2 = nothing 
 
-            if derivatives
-                dx1 = zeros(fmi2Real, length(dx_refs))
-                dx2 = zeros(fmi2Real, length(dx_refs))
-                fmi2GetDerivatives!(c, dx1)
+                if derivatives
+                    dx1 = zeros(fmi2Real, length(dx_refs))
+                    dx2 = zeros(fmi2Real, length(dx_refs))
+                    fmi2GetDerivatives!(c, dx1)
+                end
+
+                if outputs
+                    y1 = zeros(fmi2Real, length(y))
+                    y2 = zeros(fmi2Real, length(y))
+                    fmi2GetReal!(c, y_refs, y1)
+                end
+
+                fmi2SetTime(c, t + dt; track=false)
+
+                if derivatives
+                    fmi2GetDerivatives!(c, dx2)
+
+                    ∂dx_t = (dx2-dx1) / dt 
+                    n_dx_t = ∂dx_t' * d̄x
+
+                    c.solution.evals_∂ẋ_∂t += 1
+                end
+
+                if outputs 
+                    fmi2GetReal!(c, y_refs, y2)
+
+                    ∂y_t = (y2-y1) / dt 
+                    n_y_t = ∂y_t' * ȳ 
+
+                    c.solution.evals_∂y_∂t += 1
+                end
+
+                fmi2SetTime(c, t; track=false)
             end
-
-            if outputs
-                y1 = zeros(fmi2Real, length(y))
-                y2 = zeros(fmi2Real, length(y))
-                fmi2GetReal!(c, y_refs, y1)
-            end
-
-            fmi2SetTime(c, t + dt)
-
-            if derivatives
-                fmi2GetDerivatives!(c, dx2)
-
-                ∂dx_t = (dx2-dx1) / dt 
-                n_dx_t = ∂dx_t' * d̄x
-            end
-
-            if outputs 
-                fmi2GetReal!(c, y_refs, y2)
-
-                ∂y_t = (y2-y1) / dt 
-                n_y_t = ∂y_t' * ȳ 
-            end
-
-            fmi2SetTime(c, t)
         end
 
         # write back

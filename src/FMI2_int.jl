@@ -1117,9 +1117,9 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
-function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
+function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}}; kwargs...)
     nx = Csize_t(length(x))
-    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx; kwargs...)
     if status == fmi2StatusOK
         c.x = x
     end

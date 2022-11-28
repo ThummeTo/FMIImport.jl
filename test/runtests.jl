@@ -30,6 +30,9 @@ function runtestsFMI2(exportingTool)
             @testset "Directional derivatives" begin
                 include("FMI2/dir_ders.jl")
             end
+            @testset "Sensitivities" begin
+                include("FMI2/sensitivities.jl")
+            end
         end
 
         @testset "Model Description Parsing" begin

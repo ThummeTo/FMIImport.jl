@@ -1,3 +1,8 @@
+#
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
+
 module FMIImport
 
 using FMICore
@@ -23,8 +28,11 @@ fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2V
 fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
+include("utils.jl")
+
 ### FMI2 ###
 
+include("FMI2_prep.jl")
 include("FMI2_convert.jl")
 include("FMI2_c.jl")
 include("FMI2_int.jl")

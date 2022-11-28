@@ -421,6 +421,13 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         component.instanceName = instanceName
         component.type = type
 
+        updFct = jac -> fmi2GetJacobian!(jac.mtx, component, jac.∂f_refs, jac.∂x_refs)
+
+        component.A = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.B = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.C = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.D = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+
         if pushComponents
             push!(fmu.components, component)
         end
@@ -591,13 +598,13 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
             step = steps[i]
         end
 
-        fmi2SetReal(c, vKnown, origValue - step)
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
         negValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + step)
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
         posValues = fmi2GetReal(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue)
+        fmi2SetReal(c, vKnown, origValue; track=false)
 
         if length(vUnknown_ref) == 1
             dvUnknown[1,i] = (posValues-negValues) ./ (step * 2.0)
