@@ -28,7 +28,7 @@ function prepareSolveFMU(fmu::FMU2,
     x0::Union{AbstractArray{<:Real}, Nothing}=nothing, 
     inputs::Union{Dict{<:Any, <:Any}, Nothing}=nothing, 
     cleanup::Bool=false, 
-    handleEvents=nothing)
+    handleEvents=handleEvents)
 
     if instantiate === nothing 
         instantiate = fmu.executionConfig.instantiate
@@ -157,9 +157,60 @@ function prepareSolveFMU(fmu::FMU2,
     return c, x0
 end
 
+
+# Handles events and returns the values and nominals of the changed continuous states.
+function handleEvents(c::FMU2Component)
+
+    @assert c.state == fmi2ComponentStateEventMode "handleEvents(...): Must be in event mode!"
+
+    #@debug "Handle Events..."
+
+    # trigger the loop
+    c.eventInfo.newDiscreteStatesNeeded = fmi2True
+
+    valuesOfContinuousStatesChanged = fmi2False
+    nominalsOfContinuousStatesChanged = fmi2False
+    nextEventTimeDefined = fmi2False
+    nextEventTime = 0.0
+
+    numCalls = 0
+    while c.eventInfo.newDiscreteStatesNeeded == fmi2True
+        numCalls += 1
+        fmi2NewDiscreteStates!(c, c.eventInfo)
+
+        if c.eventInfo.valuesOfContinuousStatesChanged == fmi2True
+            valuesOfContinuousStatesChanged = fmi2True
+        end
+
+        if c.eventInfo.nominalsOfContinuousStatesChanged == fmi2True
+            nominalsOfContinuousStatesChanged = fmi2True
+        end
+
+        if c.eventInfo.nextEventTimeDefined == fmi2True
+            nextEventTimeDefined = fmi2True
+            nextEventTime = c.eventInfo.nextEventTime
+        end
+
+        if c.eventInfo.terminateSimulation == fmi2True
+            @error "handleEvents(...): FMU throws `terminateSimulation`!"
+        end
+
+        @assert numCalls <= c.fmu.executionConfig.maxNewDiscreteStateCalls "handleEvents(...): `fmi2NewDiscreteStates!` exceeded $(c.fmu.executionConfig.maxNewDiscreteStateCalls) calls, this may be an error in the FMU. If not, you can change the max value for this FMU in `fmu.executionConfig.maxNewDiscreteStateCalls`."
+    end
+
+    c.eventInfo.valuesOfContinuousStatesChanged = valuesOfContinuousStatesChanged
+    c.eventInfo.nominalsOfContinuousStatesChanged = nominalsOfContinuousStatesChanged
+    c.eventInfo.nextEventTimeDefined = nextEventTimeDefined
+    c.eventInfo.nextEventTime = nextEventTime
+
+    @assert fmi2EnterContinuousTimeMode(c) == fmi2StatusOK "FMU is not in state continuous time after event handling."
+
+    return nothing
+end
+
 function prepareSolveFMU(fmu::Vector{FMU2}, c::Vector{Union{Nothing, FMU2Component}}, type::fmi2Type, instantiate::Union{Nothing, Bool}, freeInstance::Union{Nothing, Bool}, terminate::Union{Nothing, Bool}, reset::Union{Nothing, Bool}, setup::Union{Nothing, Bool}, parameters::Union{Vector{Union{Dict{<:Any, <:Any}, Nothing}}, Nothing}, t_start, t_stop, tolerance;
     x0::Union{Vector{Union{Array{<:Real}, Nothing}}, Nothing}=nothing, initFct=nothing, cleanup::Bool=false, 
-    handleEvents=nothing)
+    handleEvents=handleEvents)
 
     ignore_derivatives() do
         for i in 1:length(fmu)
@@ -260,9 +311,8 @@ function prepareSolveFMU(fmu::Vector{FMU2}, c::Vector{Union{Nothing, FMU2Compone
                 end
             end
 
+            c[i].solution = FMU2Solution(c[i])
         end
-
-        c.solution = FMU2Solution(c)
 
     end # ignore_derivatives
 

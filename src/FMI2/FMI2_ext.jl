@@ -364,7 +364,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
 
-            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+            cbLibPath = joinpath(dirname(@__FILE__), "..", "callbackFunctions", "binaries")
             if Sys.iswindows()
                 cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
             elseif Sys.islinux()
@@ -421,7 +421,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         component.instanceName = instanceName
         component.type = type
 
-        updFct = jac -> fmi2GetJacobian!(jac.mtx, component, jac.∂f_refs, jac.∂x_refs)
+        updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
 
         component.A = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
         component.B = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
@@ -691,7 +691,7 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
                           rx::AbstractArray{fmi2ValueReference};
                           steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
-    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
+    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx))."]
 
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))

@@ -32,14 +32,14 @@ include("utils.jl")
 
 ### FMI2 ###
 
-include("FMI2_prep.jl")
-include("FMI2_convert.jl")
-include("FMI2_c.jl")
-include("FMI2_int.jl")
-include("FMI2_ext.jl")
-include("FMI2_md.jl")
-include("FMI2_fmu_to_md.jl")
-include("FMI2_sens.jl")
+include("FMI2/FMI2_prep.jl")
+include("FMI2/FMI2_convert.jl")
+include("FMI2/FMI2_c.jl")
+include("FMI2/FMI2_int.jl")
+include("FMI2/FMI2_ext.jl")
+include("FMI2/FMI2_md.jl")
+include("FMI2/FMI2_fmu_to_md.jl")
+include("FMI2/FMI2_sens.jl")
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
@@ -55,7 +55,7 @@ export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, f
 
 # FMI2_convert.jl
 export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference
-export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
+export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue, fmi2GetSolutionDerivative
 
 # FMI2_int.jl
 # almost everything exported in `FMI2_c.jl`
@@ -89,12 +89,12 @@ export eval!
 
 ### FMI3 ###
 
-include("FMI3_c.jl")
-include("FMI3_convert.jl")
-include("FMI3_int.jl")
-include("FMI3_ext.jl")
-include("FMI3_md.jl")
-include("FMI3_fmu_to_md.jl")
+include("FMI3/FMI3_c.jl")
+include("FMI3/FMI3_convert.jl")
+include("FMI3/FMI3_int.jl")
+include("FMI3/FMI3_ext.jl")
+include("FMI3/FMI3_md.jl")
+include("FMI3/FMI3_fmu_to_md.jl")
 
 # FMI3_c.jl
 export fmi3CallbackLogger, fmi3CallbackIntermediateUpdate, fmi3CallbackClockUpdate

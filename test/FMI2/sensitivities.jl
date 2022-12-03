@@ -13,9 +13,10 @@ fmu = fmi2Load("SpringPendulumExtForce1D", "Dymola", "2022x"; type=:ME) # ENV["E
 fmu.executionConfig.eval_t_gradients = true
 
 # prepare (allocate) an FMU instance
-c, x0 = FMIImport.prepareSolveFMU(fmu, nothing, fmu.type, nothing, nothing, nothing, nothing, nothing, nothing, 0.0, 0.0, nothing; handleEvents=FMI.handleEvents)
+c, x0 = FMIImport.prepareSolveFMU(fmu, nothing, fmu.type, nothing, nothing, nothing, nothing, nothing, nothing, 0.0, 0.0, nothing)
 
 x = [1.0, 1.0]
+x_refs = fmu.modelDescription.stateValueReferences
 u = [2.0]
 u_refs = fmu.modelDescription.inputValueReferences
 y = [0.0, 0.0]
@@ -42,7 +43,7 @@ _f = _x -> fmu(;x=_x)[2]
 _f(x)
 j = ForwardDiff.jacobian(_f, x)
 
-@test c.solution.evals_∂ẋ_∂x == 1
+@test c.solution.evals_∂ẋ_∂x == length(x)
 @test c.solution.evals_∂ẋ_∂u == 0
 @test c.solution.evals_∂y_∂x == 0
 @test c.solution.evals_∂y_∂u == 0
@@ -54,8 +55,8 @@ _f = _u -> fmu(;x=x, u=_u, u_refs=u_refs)[2]
 _f(u)
 j = ForwardDiff.jacobian(_f, u)
 
-@test c.solution.evals_∂ẋ_∂x == 1
-@test c.solution.evals_∂ẋ_∂u == 1
+@test c.solution.evals_∂ẋ_∂x == length(x_refs)+length(u_refs)
+@test c.solution.evals_∂ẋ_∂u == length(u_refs)
 @test c.solution.evals_∂y_∂x == 0
 @test c.solution.evals_∂y_∂u == 0
 @test c.solution.evals_∂ẋ_∂t == 0
@@ -66,9 +67,9 @@ _f = _x -> fmu(;x=_x, y=y, y_refs=y_refs)[1]
 _f(x)
 j = ForwardDiff.jacobian(_f, x)
 
-@test c.solution.evals_∂ẋ_∂x == 1
-@test c.solution.evals_∂ẋ_∂u == 1
-@test c.solution.evals_∂y_∂x == 1
+@test c.solution.evals_∂ẋ_∂x == length(x_refs)+length(u_refs)+length(x_refs)
+@test c.solution.evals_∂ẋ_∂u == length(u_refs)
+@test c.solution.evals_∂y_∂x == length(x_refs)
 @test c.solution.evals_∂y_∂u == 0
 @test c.solution.evals_∂ẋ_∂t == 0
 @test c.solution.evals_∂y_∂t == 0
@@ -78,10 +79,10 @@ _f = _u -> fmu(;x=x, u=_u, u_refs=u_refs, y=y, y_refs=y_refs)[1]
 _f(u)
 j = ForwardDiff.jacobian(_f, u)
 
-@test c.solution.evals_∂ẋ_∂x == 1
-@test c.solution.evals_∂ẋ_∂u == 1
-@test c.solution.evals_∂y_∂x == 1
-@test c.solution.evals_∂y_∂u == 1
+@test c.solution.evals_∂ẋ_∂x == length(x_refs)+length(u_refs)+length(x_refs)+length(u_refs)
+@test c.solution.evals_∂ẋ_∂u == length(u_refs)*2
+@test c.solution.evals_∂y_∂x == length(x_refs)+length(u_refs)
+@test c.solution.evals_∂y_∂u == length(u_refs)
 @test c.solution.evals_∂ẋ_∂t == 0
 @test c.solution.evals_∂y_∂t == 0
 
@@ -90,10 +91,10 @@ _f = _t -> fmu(;x=x, t=_t)[2]
 _f(t)
 j = ForwardDiff.derivative(_f, t)
 
-@test c.solution.evals_∂ẋ_∂x == 1
-@test c.solution.evals_∂ẋ_∂u == 1
-@test c.solution.evals_∂y_∂x == 1
-@test c.solution.evals_∂y_∂u == 1
+@test c.solution.evals_∂ẋ_∂x == length(x_refs)+length(u_refs)+length(x_refs)+length(u_refs)+length(x_refs)
+@test c.solution.evals_∂ẋ_∂u == length(u_refs)*2
+@test c.solution.evals_∂y_∂x == length(x_refs)+length(u_refs)
+@test c.solution.evals_∂y_∂u == length(u_refs)
 @test c.solution.evals_∂ẋ_∂t == 1
 @test c.solution.evals_∂y_∂t == 0
 
@@ -102,10 +103,10 @@ _f = _t -> fmu(;x=x, y=y, y_refs=y_refs, t=_t)[1]
 _f(t)
 j = ForwardDiff.derivative(_f, t)
 
-@test c.solution.evals_∂ẋ_∂x == 1
-@test c.solution.evals_∂ẋ_∂u == 1
-@test c.solution.evals_∂y_∂x == 1
-@test c.solution.evals_∂y_∂u == 1
+@test c.solution.evals_∂ẋ_∂x == length(x_refs)+length(u_refs)+length(x_refs)+length(u_refs)+length(x_refs)
+@test c.solution.evals_∂ẋ_∂u == length(u_refs)*2
+@test c.solution.evals_∂y_∂x == length(x_refs)+length(u_refs)
+@test c.solution.evals_∂y_∂u == length(u_refs)
 @test c.solution.evals_∂ẋ_∂t == 1
 @test c.solution.evals_∂y_∂t == 1
 

@@ -267,7 +267,7 @@ function _frule(Δtuple,
 
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
 
-    outputs = (y != nothing && length(y) > 0)
+    outputs = (y != nothing && length(y_refs) > 0)
     inputs = (u != nothing && length(u) > 0)
     derivatives = (dx != nothing && length(dx) > 0)
     states = (x != nothing && length(x) > 0)
@@ -383,7 +383,7 @@ function _rrule(cRef,
       
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
     
-    outputs = (y != nothing && length(y) > 0)
+    outputs = (y != nothing && length(y_refs) > 0)
     inputs = (u != nothing && length(u) > 0)
     derivatives = (dx != nothing && length(dx) > 0)
     states = (x != nothing && length(x) > 0)
