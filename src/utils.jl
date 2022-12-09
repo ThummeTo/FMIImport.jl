@@ -3,14 +3,9 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# What is included in the file `FMI2_sens.jl`?
-# - calling function for FMU2 and FMU2Component
-# - ForwardDiff- and ChainRulesCore-Sensitivities over FMUs
-# - ToDo: colouring of dependency types (known from model description) for fast jacobian build-ups
-
 import ForwardDiff
 
-# check if scalar/vector is ForwardDiff.dual
+# check if scalar/vector is ForwardDiff.Dual
 function isdual(e)
     return false 
 end
@@ -21,7 +16,7 @@ function isdual(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
     return true
 end
 
-# check types (Tag, Variable, Number) of ForwardDiff.dual scalar/vector
+# check types (Tag, Variable, Number) of ForwardDiff.Dual scalar/vector
 function fd_eltypes(e::ForwardDiff.Dual{T, V, N}) where {T, V, N}
     return (T, V, N)
 end

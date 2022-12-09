@@ -319,7 +319,7 @@ function prepareSolveFMU(fmu::Vector{FMU2}, c::Vector{Union{Nothing, FMU2Compone
     return c, x0
 end
 
-function finishSolveFMU(fmu::FMU2, c::FMU2Component, terminate::Union{Nothing, Bool}, freeInstance::Union{Nothing, Bool}; popComponent::Bool=true)
+function finishSolveFMU(fmu::FMU2, c::FMU2Component, freeInstance::Union{Nothing, Bool}, terminate::Union{Nothing, Bool}; popComponent::Bool=true)
 
     if c == nothing 
         return 

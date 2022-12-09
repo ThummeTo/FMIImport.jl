@@ -370,6 +370,18 @@ function _frule(Δtuple,
     return Ω, ∂Ω 
 end
 
+function isZeroTangent(d)
+    return false
+end
+
+function isZeroTangent(d::ZeroTangent)
+    return true
+end
+
+function isZeroTangent(d::AbstractArray{<:ZeroTangent})
+    return true
+end
+
 function _rrule(cRef, 
     dx,
     y,
@@ -397,6 +409,9 @@ function _rrule(cRef,
 
         ȳ, d̄x = r̄
 
+        outputs = outputs && !isZeroTangent(ȳ)
+        derivatives = derivatives && !isZeroTangent(d̄x)
+
         if !isa(ȳ, AbstractArray)
             ȳ = [ȳ...]
         end
@@ -407,11 +422,11 @@ function _rrule(cRef,
 
         # between building and using the pullback maybe the time, state or inputs where changed, so we need to re-set them
 
-        if states # && c.x != x
+        if states && c.x != x
             fmi2SetContinuousStates(c, x)
         end
 
-        if inputs # && c.u != u
+        if inputs ## && c.u != u
             fmi2SetReal(c, u_refs, u)
         end
 
