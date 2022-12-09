@@ -539,11 +539,26 @@ More detailed:
 
  See also [`fmi2GetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
+function fmi2SetReal(c::FMU2Component, 
+    vr::AbstractArray{fmi2ValueReference}, 
+    nvr::Csize_t, 
+    value::AbstractArray{fmi2Real};
+    track::Bool=true)
 
     status = fmi2SetReal(c.fmu.cSetReal,
                 c.compAddr, vr, nvr, value)
     checkStatus(c, status)
+
+    if track
+        if status == fmi2StatusOK
+            for j in (c.A, c.B, c.C, c.D)
+                if any(collect(v in j.∂f_refs for v in vr))
+                    FMICore.invalidate!(j)
+                end
+            end
+        end
+    end
+
     return status
 end
 
@@ -1468,7 +1483,7 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref).
 """
-function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
+function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::Bool=true, force::Bool=c.fmu.executionConfig.force, time_shift::Bool=c.fmu.executionConfig.autoTimeShift)
 
     # ToDo: Double-check this in the spec.
     # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)
@@ -1481,12 +1496,30 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
     #     end
     # end
 
-    status = fmi2SetTime(c.fmu.cSetTime,
-          c.compAddr, time + c.t_offset)
-    checkStatus(c, status)
-    if status == fmi2StatusOK
-        c.t = time
+    if time_shift
+        time += c.t_offset
     end
+
+    if !force
+        if c.t == time 
+            return fmi2StatusOK
+        end
+    end
+
+    status = fmi2SetTime(c.fmu.cSetTime, c.compAddr, time)
+    checkStatus(c, status)
+
+    if track
+        if status == fmi2StatusOK
+            c.t = time
+
+            FMICore.invalidate!(c.A)
+            FMICore.invalidate!(c.B)
+            FMICore.invalidate!(c.C)
+            FMICore.invalidate!(c.D)
+        end
+    end
+
     return status
 end
 
@@ -1521,11 +1554,29 @@ More detailed:
 See also [`fmi2SetContinuousStates`](@ref).
 """
 function fmi2SetContinuousStates(c::FMU2Component,
-                                 x::AbstractArray{fmi2Real},
-                                 nx::Csize_t)
+    x::AbstractArray{fmi2Real},
+    nx::Csize_t;
+    track::Bool=true,
+    force::Bool=c.fmu.executionConfig.force)
+
+    if !force
+        if c.x == x 
+            return fmi2StatusOK 
+        end
+    end
 
     status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x, nx)
     checkStatus(c, status)
+
+    if track
+        if status == fmi2StatusOK
+            c.x = copy(x)
+
+            FMICore.invalidate!(c.A)
+            FMICore.invalidate!(c.C)
+        end
+    end
+
     return status
 end
 
