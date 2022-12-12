@@ -4,7 +4,7 @@
 #
 
 # What is included in the file `FMI2_ext.jl` (external/additional functions)?
-# - new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+# - new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleJacobian`)
 
 using Libdl
 using ZipFile
@@ -415,11 +415,23 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         logInfo(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
     else
         component = FMU2Component(compAddr, fmu)
-        component.jacobianUpdate! = fmi2GetJacobian!
+        component.jacobianUpdate! = fmi2SampleJacobian!
         component.componentEnvironment = compEnv
         component.callbackFunctions = callbackFunctions
         component.instanceName = instanceName
         component.type = type
+
+        updateFct = nothing
+        if fmi2ProvidesDirectionalDerivative(fmu)
+            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
+        else
+            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
+        end
+
+        component.A = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.B = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.C = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.D = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
         if pushComponents
             push!(fmu.components, component)
@@ -481,7 +493,7 @@ end
 
 """
 
-    fmi2SampleDirectionalDerivative(c::FMU2Component,
+    fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        vKnown_ref::AbstractArray{fmi2ValueReference},
                                        steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
@@ -518,21 +530,21 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi2GetDirectionalDerivative!`](@ref) ,[`fmi2GetDirectionalDerivative`](@ref).
 """
-function fmi2SampleDirectionalDerivative(c::FMU2Component,
+function fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        vKnown_ref::AbstractArray{fmi2ValueReference},
                                        steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
-    dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
+    mtx = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
-    fmi2SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+    fmi2SampleJacobian!(mtx, vUnknown_ref, vKnown_ref, steps)
 
-    dvUnknown
+    return mtx
 end
 
 """
 
-   function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+   function fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
                                           dvUnknown::AbstractArray, # ToDo: datatype
@@ -572,13 +584,16 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi2GetDirectionalDerivative!`](@ref) ,[`fmi2GetDirectionalDerivative`](@ref).
 """
-function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+    c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
-                                          dvUnknown::AbstractArray, # ToDo: datatype
                                           steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     step = 0.0
+
+    negValues = zeros(length(vUnknown_ref))
+    posValues = zeros(length(vUnknown_ref))
 
     for i in 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
@@ -591,18 +606,18 @@ function fmi2SampleDirectionalDerivative!(c::FMU2Component,
             step = steps[i]
         end
 
-        fmi2SetReal(c, vKnown, origValue - step)
-        negValues = fmi2GetReal(c, vUnknown_ref)
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2GetReal!(c, vUnknown_ref, negValues)
 
-        fmi2SetReal(c, vKnown, origValue + step)
-        posValues = fmi2GetReal(c, vUnknown_ref)
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2GetReal!(c, vUnknown_ref, posValues)
 
-        fmi2SetReal(c, vKnown, origValue)
+        fmi2SetReal(c, vKnown, origValue; track=false)
 
         if length(vUnknown_ref) == 1
-            dvUnknown[1,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
         else
-            dvUnknown[:,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
         end
     end
 
@@ -684,14 +699,12 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
                           rx::AbstractArray{fmi2ValueReference};
                           steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
-    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` ($length(rdx)) and `rx` ($length(rx))."]
+    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx))."]
 
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))
         return nothing
     end
-
-    ddsupported = fmi2ProvidesDirectionalDerivative(comp.fmu)
 
     # ToDo: Pick entries based on dependency matrix!
     #depMtx = fmi2GetDependencies(fmu)
@@ -714,21 +727,12 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
         # end
 
         if length(sensitive_rdx) > 0
-            if ddsupported
-                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                #try
-                    fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                #catch e
-                #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
-                #end
-            else
-                # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-                #try
-                    fmi2SampleDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-                #catch e
-                #    jac[sensitive_rdx_inds, i] = fmi2SampleDirectionalDerivative(comp, sensitive_rdx, [rx[i]], steps)
-                #end
-            end
+            # doesn't work because indexed-views can`t be passed by reference (to ccalls)
+            #try
+            fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+            #catch e
+            #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
+            #end   
         end
     end
 
@@ -821,7 +825,7 @@ function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
             jac[:,i] = fmi2GetDirectionalDerivative(comp, rdx, [rx[i]])
         end
     else
-        jac = fmi2SampleDirectionalDerivative(comp, rdx, rx)
+        jac = fmi2SampleJacobian(comp, rdx, rx)
     end
 
     return nothing
@@ -915,7 +919,12 @@ function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     vrs = prepareValueReference(comp, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
     fmi2Get!(comp, vrs, dstArray)
-    return dstArray
+
+    if length(dstArray) == 1
+        return dstArray[1]
+    else
+        return dstArray
+    end
 end
 
 
@@ -986,6 +995,9 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
     end
 
     return retcodes
+end
+function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, src; filter=nothing)
+    fmi2Set(comp, vrs, [src]; filter=filter)
 end
 
 """
@@ -1163,7 +1175,7 @@ end
 
 """
 
-   fmi2SampleDirectionalDerivative(c::FMU2Component,
+   fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
@@ -1187,21 +1199,21 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function fmi2SampleDirectionalDerivative(c::FMU2Component,
+function fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
 
     dvUnknown = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
-    fmi2SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+    fmi2SampleJacobian!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
 
     dvUnknown
 end
 
 """
 
-   fmi2SampleDirectionalDerivative!(c::FMU2Component,
+   fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
@@ -1228,7 +1240,7 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 
 """
-function fmi2SampleDirectionalDerivative!(c::FMU2Component,
+function fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,

@@ -20,15 +20,15 @@ function runtestsFMI2(exportingTool)
     ENV["EXPORTINGVERSION"] = exportingTool[2]
 
     @testset "Testing FMUs exported from $exportingTool" begin
-        @testset "Functions for fmi2Component" begin
+        @testset "Functions for FMU2Component" begin
             @testset "Variable Getters / Setters" begin
                 include("FMI2/getter_setter.jl")
             end
             @testset "State Manipulation" begin
                 include("FMI2/state.jl")
             end
-            @testset "Directional derivatives" begin
-                include("FMI2/dir_ders.jl")
+            @testset "Sensitivities" begin
+                include("FMI2/sensitivities.jl")
             end
         end
 
