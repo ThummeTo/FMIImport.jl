@@ -208,14 +208,14 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2SetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
+function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real}; kwargs...)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
     @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi2SetReal(c, vr, nvr, Array{fmi2Real}(values))
+    fmi2SetReal(c, vr, nvr, Array{fmi2Real}(values); kwargs...)
 end
 
 """
@@ -1117,9 +1117,9 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
-function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
+function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}}; kwargs...)
     nx = Csize_t(length(x))
-    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx)
+    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx; kwargs...)
     if status == fmi2StatusOK
         c.x = x
     end

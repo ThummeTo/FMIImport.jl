@@ -1,3 +1,8 @@
+#
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
+
 module FMIImport
 
 using FMICore
@@ -23,15 +28,18 @@ fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2V
 fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
+include("utils.jl")
+
 ### FMI2 ###
 
-include("FMI2_convert.jl")
-include("FMI2_c.jl")
-include("FMI2_int.jl")
-include("FMI2_ext.jl")
-include("FMI2_md.jl")
-include("FMI2_fmu_to_md.jl")
-include("FMI2_sens.jl")
+include("FMI2/prep.jl")
+include("FMI2/convert.jl")
+include("FMI2/c.jl")
+include("FMI2/int.jl")
+include("FMI2/ext.jl")
+include("FMI2/md.jl")
+include("FMI2/fmu_to_md.jl")
+include("FMI2/sens.jl")
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
@@ -47,7 +55,7 @@ export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, f
 
 # FMI2_convert.jl
 export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference
-export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue
+export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue, fmi2GetSolutionDerivative
 
 # FMI2_int.jl
 # almost everything exported in `FMI2_c.jl`
@@ -58,10 +66,10 @@ export fmi2CompletedIntegratorStep
 
 # FMI2_ext.jl
 export fmi2Unzip, fmi2Load, loadBinary, fmi2Reload, fmi2Unload, fmi2Instantiate!
-export fmi2SampleDirectionalDerivative!
+export fmi2SampleJacobian!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
 export fmi2Get, fmi2Get!, fmi2Set 
-export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleDirectionalDerivative
+export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleJacobian
 export fmi2GetContinuousStates
 
 # FMI2_md.jl
@@ -81,12 +89,12 @@ export eval!
 
 ### FMI3 ###
 
-include("FMI3_c.jl")
-include("FMI3_convert.jl")
-include("FMI3_int.jl")
-include("FMI3_ext.jl")
-include("FMI3_md.jl")
-include("FMI3_fmu_to_md.jl")
+include("FMI3/c.jl")
+include("FMI3/convert.jl")
+include("FMI3/int.jl")
+include("FMI3/ext.jl")
+include("FMI3/md.jl")
+include("FMI3/fmu_to_md.jl")
 
 # FMI3_c.jl
 export fmi3CallbackLogger, fmi3CallbackIntermediateUpdate, fmi3CallbackClockUpdate
@@ -142,7 +150,6 @@ export fmi3GetNumberOfEventIndicatorsMD
 # TODO check if needed
 # everything exported in `FMI2_md.jl`
 
-
 ###
 
 fmi2Struct = Union{FMU2, FMU2Component}
@@ -150,7 +157,7 @@ fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
 
 fmi2StructMD = Union{FMU2, FMU2Component, fmi2ModelDescription}
-fmi3StructMD = Union{FMU3, FMU3Instance, fmi3ModelDescription}
+fmi3StructMD = Union{FMU3, FMU3Instance , fmi3ModelDescription}
 export fmi2StructMD, fmi3StructMD
 
 end # module

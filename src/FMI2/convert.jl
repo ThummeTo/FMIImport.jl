@@ -4,6 +4,7 @@
 #
 
 using ChainRulesCore: ignore_derivatives
+import ForwardDiff
 
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
 function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceFormat)
@@ -208,19 +209,22 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-    index = 0
+    indices = []
 
     if isIndex
-        index = vr
+        if length(vr) == 1
+            indices = [vr]
+        else
+            indices = vr
+        end
     else
         ignore_derivatives() do
-            vr = prepareValueReference(solution.fmu, vr)[1]
+            vr = prepareValueReference(solution.component.fmu, vr)
 
             if solution.states !== nothing
-                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
-                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
-                        index = i
-                        break
+                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
+                    if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                        push!(indices, i)
                     end
                 end
             end
@@ -228,8 +232,57 @@ function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceForm
         end # ignore_derivatives
     end
 
-    if index > 0
-        return collect(u[index] for u in solution.states.u)
+    # found something
+    if length(indices) == length(vr)
+
+        if length(vr) == 1  # single value
+            return collect(u[indices[1]] for u in solution.states.u)
+
+        else # multi value
+            return collect(collect(u[indices[i]] for u in solution.states.u) for i in 1:length(indices))
+
+        end
+    end
+
+    return nothing
+end
+
+"""
+    ToDo: Docu.
+"""
+function fmi2GetSolutionDerivative(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+    indices = []
+
+    if isIndex
+        if length(vr) == 1
+            indices = [vr]
+        else
+            indices = vr
+        end
+    else
+        ignore_derivatives() do
+            vr = prepareValueReference(solution.component.fmu, vr)
+
+            if solution.states !== nothing
+                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
+                    if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                        push!(indices, i)
+                    end
+                end
+            end
+
+        end # ignore_derivatives
+    end
+
+    # found something
+    if length(indices) == length(vr)
+
+        if length(vr) == 1  # single value
+            return collect(ForwardDiff.derivative(t -> solution.states(t)[indices[1]], myt) for myt in solution.states.t)
+
+        else # multi value
+            return collect(collect(ForwardDiff.derivative(t -> solution.states(t)[indices[i]], myt) for myt in solution.states.t) for i in 1:length(indices))
+        end
     end
 
     return nothing
@@ -259,32 +312,42 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-    index = 0
+    indices = []
 
     if isIndex
-        index = vr
+        if length(vr) == 1
+            indices = [vr]
+        else
+            indices = vr
+        end
     else
         ignore_derivatives() do
-            vr = prepareValueReference(solution.fmu, vr)[1]
+            vr = prepareValueReference(solution.component.fmu, vr)
 
             if solution.states !== nothing
-                for i in 1:length(solution.fmu.modelDescription.stateValueReferences)
-                    if solution.fmu.modelDescription.stateValueReferences[i] == vr
-                        index = i
-                        break
+                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
+                    if solution.component.fmu.modelDescription.stateValueReferences[i] ∈ vr
+                        push!(indices, i)
                     end
                 end
             end
 
-            if index > 0
-                return collect(u[index] for u in solution.states.u)
+            # found something
+            if length(indices) == length(vr)
+
+                if length(vr) == 1  # single value
+                    return collect(u[indices[1]] for u in solution.states.u)
+
+                else # multi value
+                    return collect(collect(u[indices[i]] for u in solution.states.u) for i in 1:length(indices))
+
+                end
             end
 
             if solution.values !== nothing
                 for i in 1:length(solution.valueReferences)
-                    if solution.valueReferences[i] == vr
-                        index = i
-                        break
+                    if solution.valueReferences[i] ∈ vr
+                        push!(indices, i)
                     end
                 end
             end
@@ -292,8 +355,16 @@ function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceForm
         end # ignore_derivatives
     end
 
-    if index > 0
-        return collect(v[index] for v in solution.values.saveval)
+    # found something
+    if length(indices) == length(vr)
+
+        if length(vr) == 1  # single value
+            return collect(u[indices[1]] for u in solution.values.saveval)
+
+        else # multi value
+            return collect(collect(u[indices[i]] for u in solution.values.saveval) for i in 1:length(indices))
+
+        end
     end
 
     return nothing
