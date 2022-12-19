@@ -23,7 +23,19 @@ using FMICore: FMU3
 ######################################
 
 """
+
+    fmi3LoadModelDescription(pathToModellDescription::String)
+
 Extract the FMU variables and meta data from the ModelDescription
+
+# Arguments
+- `pathToModellDescription::String`: Contains the path to a file name that is selected to be read and converted to an XML document. In order to better extract the variables and meta data in the further process.
+
+# Returns
+- `md::fmi3ModelDescription`: Retuns a struct which provides the static information of ModelVariables.
+
+# Source
+- [EzXML.jl](https://juliaio.github.io/EzXML.jl/stable/)
 """
 function fmi3LoadModelDescription(pathToModellDescription::String)
     md = fmi3ModelDescription()
@@ -810,7 +822,16 @@ end
 ################################
 
 """
+
+    fmi3GetDefaultStartTime(md::fmi3ModelDescription)
+
 Returns startTime from DefaultExperiment if defined else defaults to nothing.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.startTime::Union{Real,Nothing}`: Returns a real value `startTime` from the DefaultExperiment if defined else defaults to `nothing`.
 """
 function fmi3GetDefaultStartTime(md::fmi3ModelDescription)
     if md.defaultExperiment === nothing 
@@ -820,7 +841,16 @@ function fmi3GetDefaultStartTime(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3GetDefaultStopTime(md::fmi3ModelDescription)
+
 Returns stopTime from DefaultExperiment if defined else defaults to nothing.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.stopTime::Union{Real,Nothing}`: Returns a real value `stopTime` from the DefaultExperiment if defined else defaults to `nothing`.
 """
 function fmi3GetDefaultStopTime(md::fmi3ModelDescription)
     if md.defaultExperiment === nothing 
@@ -830,7 +860,16 @@ function fmi3GetDefaultStopTime(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3GetDefaultTolerance(md::fmi3ModelDescription)
+
 Returns tolerance from DefaultExperiment if defined else defaults to nothing.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.tolerance::Union{Real,Nothing}`: Returns a real value `tolerance` from the DefaultExperiment if defined else defaults to `nothing`.
 """
 function fmi3GetDefaultTolerance(md::fmi3ModelDescription)
     if md.defaultExperiment === nothing 
@@ -840,7 +879,16 @@ function fmi3GetDefaultTolerance(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3GetDefaultStepSize(md::fmi3ModelDescription)
+
 Returns stepSize from DefaultExperiment if defined else defaults to nothing.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.defaultExperiment.stepSize::Union{Real,Nothing}`: Returns a real value `setpSize` from the DefaultExperiment if defined else defaults to `nothing`.
 """
 function fmi3GetDefaultStepSize(md::fmi3ModelDescription)
     if md.defaultExperiment === nothing 
@@ -850,69 +898,159 @@ function fmi3GetDefaultStepSize(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3GetModelName(md::fmi3ModelDescription)
+
 Returns the tag 'modelName' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.modelName::String`: Returns the tag 'modelName' from the model description.
 """
 function fmi3GetModelName(md::fmi3ModelDescription)#, escape::Bool = true)
     md.modelName
 end
 
 """
-Returns the tag 'instantionToken' from the model description.
+
+    fmi3GetInstantiationToken(md::fmi3ModelDescription)
+
+Returns the tag 'instantiationToken' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.instantiationToken::String`: Returns the tag 'instantiationToken' from the model description.
 """
 function fmi3GetInstantiationToken(md::fmi3ModelDescription)
     md.instantiationToken
 end
 
 """
+
+    fmi3GetGenerationTool(md::fmi3ModelDescription)
+
 Returns the tag 'generationtool' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.generationTool::Union{String, Nothing}`: Returns the tag 'generationtool' from the model description.
 """
 function fmi3GetGenerationTool(md::fmi3ModelDescription)
     md.generationTool
 end
 
 """
+
+    fmi3GetGenerationDateAndTime(md::fmi3ModelDescription)
+
 Returns the tag 'generationdateandtime' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.generationDateAndTime::DateTime`: Returns the tag 'generationdateandtime' from the model description.
 """
 function fmi3GetGenerationDateAndTime(md::fmi3ModelDescription)
     md.generationDateAndTime
 end
 
 """
+
+    fmi3GetVariableNamingConvention(md::fmi3ModelDescription)
+
 Returns the tag 'varaiblenamingconvention' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.variableNamingConvention::Union{fmi3VariableNamingConvention, Nothing}`: Returns the tag 'variableNamingConvention' from the model description.
 """
 function fmi3GetVariableNamingConvention(md::fmi3ModelDescription)
     md.variableNamingConvention
 end
 
 """
-Returns the number of EventIndicators from the model description.
+
+    fmi3GetNumberOfEventIndicators(md::fmi3ModelDescription)
+
+Returns the tag 'numberOfEventIndicators' from the model description.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `md.numberOfEventIndicators::Union{UInt, Nothing}`: Returns the tag 'numberOfEventIndicators' from the model description.
 """
 function fmi3GetNumberOfEventIndicators(md::fmi3ModelDescription)
     md.numberOfEventIndicators
 end
 
 """
-TODO
+
+    fmi3GetNumberOfStates(md::fmi3ModelDescription)
+
+Returns the number of states of the FMU.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- Returns the length of the `md.valueReferences::Array{fmi3ValueReference}` corresponding to the number of states of the FMU.
 """
 function fmi3GetNumberOfStates(md::fmi3ModelDescription)
     length(md.stateValueReferences)
 end
 
 """
+
+    fmi3IsCoSimulation(md::fmi3ModelDescription)
+
 Returns true, if the FMU supports co simulation
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports co simulation
 """
 function fmi3IsCoSimulation(md::fmi3ModelDescription)
     return( md.coSimulation !== nothing)
 end
 
 """
+
+    fmi3IsModelExchange(md::fmi3ModelDescription)
+
 Returns true, if the FMU supports model exchange
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports model exchange
 """
 function fmi3IsModelExchange(md::fmi3ModelDescription)
     return( md.modelExchange !== nothing)
 end
 """
+
+    fmi3IsScheduledExecution(md::fmi3ModelDescription)
+
 Returns true, if the FMU supports scheduled execution
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports scheduled execution
 """
 function fmi3IsScheduledExecution(md::fmi3ModelDescription)
     return( md.scheduledExecution !== nothing)
@@ -923,7 +1061,16 @@ end
 ##################################
 
 """
-TODO
+
+    fmi3DependenciesSupported(md::fmi3ModelDescription)
+
+Returns true if the FMU model description contains `dependency` information.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU model description contains `dependency` information.
 """
 function fmi3DependenciesSupported(md::fmi3ModelDescription)
     if md.modelStructure === nothing
@@ -934,7 +1081,16 @@ function fmi3DependenciesSupported(md::fmi3ModelDescription)
 end
 
 """
-TODO
+
+    fmi3DerivativeDependenciesSupported(md::fmi3ModelDescription)
+
+Returns if the FMU model description contains `dependency` information for `derivatives`.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU model description contains `dependency` information for `derivatives`.
 """
 function fmi3DerivativeDependenciesSupported(md::fmi3ModelDescription)
     if !fmi3DependenciesSupported(md)
@@ -950,7 +1106,21 @@ function fmi3DerivativeDependenciesSupported(md::fmi3ModelDescription)
 end
 
 """
-Returns the tag 'modelIdentifier' from CS or ME section.
+
+    fmi3GetModelIdentifier(md::fmi3ModelDescription; type=nothing)
+
+Returns the tag 'modelIdentifier' from CS, ME or SE section.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `type=nothing`: Defines whether a Co-Simulation, Model Exchange or ScheduledExecution is present. (default = nothing)
+
+# Returns
+- `md.modelExchange.modelIdentifier::String`: Returns the tag `modelIdentifier` from ModelExchange section.
+- `md.coSimulation.modelIdentifier::String`: Returns the tag `modelIdentifier` from CoSimulation section.
+- `md.scheduledExecution.modelIdentifier::String`: Returns the tag `modelIdentifier` from ScheduledExecution section.
 """
 function fmi3GetModelIdentifier(md::fmi3ModelDescription; type=nothing)
 
@@ -974,7 +1144,16 @@ function fmi3GetModelIdentifier(md::fmi3ModelDescription; type=nothing)
 end
 
 """
+
+    fmi3CanGetSetState(md::fmi3ModelDescription)
+
 Returns true, if the FMU supports the getting/setting of states
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU supports the getting/setting of states.
 """
 function fmi3CanGetSetState(md::fmi3ModelDescription)
     return (md.coSimulation !== nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange !== nothing && md.modelExchange.canGetAndSetFMUstate)
@@ -982,7 +1161,16 @@ function fmi3CanGetSetState(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3CanSerializeFMUstate(md::fmi3ModelDescription)
+
 Returns true, if the FMU state can be serialized
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU state can be serialized
 """
 function fmi3CanSerializeFMUState(md::fmi3ModelDescription)
     return (md.coSimulation !== nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange !== nothing && md.modelExchange.canSerializeFMUstate)
@@ -990,14 +1178,32 @@ function fmi3CanSerializeFMUState(md::fmi3ModelDescription)
 end
 
 """
+
+    fmi3ProvidesDirectionalDerivatives(md::fmi3ModelDescription)
+
 Returns true, if the FMU provides directional derivatives
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU provides directional derivatives
 """
 function fmi3ProvidesDirectionalDerivatives(md::fmi3ModelDescription)
     return (md.coSimulation !== nothing && md.coSimulation.providesDirectionalDerivatives) || (md.modelExchange !== nothing && md.modelExchange.providesDirectionalDerivatives)
 end
 
 """
+
+    fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
+
 Returns true, if the FMU provides adjoint derivatives
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `::Bool`: Returns true, if the FMU provides adjoint derivatives
 """
 function fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
     return (md.coSimulation !== nothing && md.coSimulation.providesAdjointDerivatives) || (md.modelExchange !== nothing && md.modelExchange.providesAdjointDerivatives)
@@ -1005,7 +1211,19 @@ function fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
 end
 
 """
-TODO
+
+    fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.valueReferences)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}.
 """
 function fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.valueReferences)
     dict = Dict{fmi3ValueReference, Array{String}}()
@@ -1015,12 +1233,37 @@ function fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.valueRe
     return dict
 end
 
+"""
+
+    fmi3GetValueReferencesAndNames(fmu::FMU3)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}.
+"""
 function fmi3GetValueReferencesAndNames(fmu::FMU3)
     fmi3GetValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetNames(md::fmi3ModelDescription; vrs=md.valueReferences, mode=:first)
+
+Returns a array of names corresponding to value references `vrs`
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
 """
 function fmi3GetNames(md::fmi3ModelDescription; vrs=md.valueReferences, mode=:first)
     names = []
@@ -1042,12 +1285,40 @@ function fmi3GetNames(md::fmi3ModelDescription; vrs=md.valueReferences, mode=:fi
     return names
 end
 
+"""
+
+    fmi3GetNames(fmu::FMU3; vrs=md.valueReferences, mode=:first)
+
+Returns a array of names corresponding to value references `vrs`
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+"""
 function fmi3GetNames(fmu::FMU3; kwargs...)
     fmi3GetNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+    fmi3GetModelVariableIndices(md::fmi3ModelDescription; vrs=md.valueReferences)
+
+Returns a array of indices corresponding to value references `vrs`
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+
+# Returns
+- `names::Array{Integer}`: Returns a array of indices corresponding to value references `vrs`
 """
 function fmi3GetModelVariableIndices(md::fmi3ModelDescription; vrs=md.valueReferences)
     indices = []
@@ -1062,151 +1333,504 @@ function fmi3GetModelVariableIndices(md::fmi3ModelDescription; vrs=md.valueRefer
 end
 
 """
-TODO
+
+    fmi3GetInputValueReferencesAndNames(md::fmi3ModelDescription)
+
+Returns a dict with (vrs, names of inputs)
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of inputs)
 """
 function fmi3GetInputValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.inputValueReferences)
 end
 
+"""
+
+    fmi3GetInputValueReferencesAndNames(fmu::FMU3)
+
+Returns a dict with (vrs, names of inputs)
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of inputs)
+"""
 function fmi3GetInputValueReferencesAndNames(fmu::FMU3)
     fmi3GetInputValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetInputNames(md::fmi3ModelDescription; vrs=md.inputvalueReferences, mode=:first)
+
+Returns names of inputs
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.inputvalueReferences`: Additional attribute `inputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
 """
 function fmi3GetInputNames(md::fmi3ModelDescription; kwargs...)
     fmi3GetNames(md; vrs=md.inputValueReferences, kwargs...)
 end
 
+"""
+
+    fmi3GetInputNames(fmu::FMU3; vrs=md.inputValueReferences, mode=:first)
+
+Returns names of inputs
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.inputvalueReferences`: Additional attribute `inputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+"""
 function fmi3GetInputNames(fmu::FMU3; kwargs...)
     fmi3GetInputNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+    fmi3GetOutputValueReferencesAndNames(md::fmi3ModelDescription)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi3ValueReference}`)
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
 """
 function fmi3GetOutputValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.outputValueReferences)
 end
 
+"""
+
+    fmi3GetOutputValueReferencesAndNames(fmu::FMU3)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of value references and their corresponding names
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi3ValueReference}`)
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
+"""
 function fmi3GetOutputValueReferencesAndNames(fmu::FMU3)
     fmi3GetOutputValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetOutputNames(md::fmi3ModelDescription; vrs=md.outputvalueReferences, mode=:first)
+
+Returns names of outputs
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
 """
 function fmi3GetOutputNames(md::fmi3ModelDescription; kwargs...)
     fmi3GetNames(md; vrs=md.outputValueReferences, kwargs...)
 end
 
+"""
+
+    fmi3GetOutputNames(fmu::FMU3; vrs=md.outputvalueReferences, mode=:first)
+
+Returns names of outputs
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi3ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
+"""
 function fmi3GetOutputNames(fmu::FMU3; kwargs...)
     fmi3GetOutputNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+    fmi3GetParameterValueReferencesAndNames(md::fmi3ModelDescription)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of parameterValueReferences and their corresponding names
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
+
+See also ['fmi3GetValueReferencesAndNames'](@ref).
 """
 function fmi3GetParameterValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.parameterValueReferences)
 end
 
+"""
+
+    fmi3GetParameterValueReferencesAndNames(fmu::FMU3)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of parameterValueReferences and their corresponding names
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
+
+See also ['fmi3GetValueReferencesAndNames'](@ref).
+"""
 function fmi3GetParameterValueReferencesAndNames(fmu::FMU3)
     fmi3GetParameterValueReferencesAndNames(fmu.modelDescription)
 end
 
-
 """
-TODO
+
+    fmi3GetParameterNames(md::fmi3ModelDescription; vrs=md.parameterValueReferences, mode=:first)
+
+Returns names of parameters
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.parameterValueReferences`: Additional attribute `parameterValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.parameterValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
 """
 function fmi3GetParameterNames(md::fmi3ModelDescription; kwargs...)
     fmi3GetNames(md; vrs=md.parameterValueReferences, kwargs...)
 end
 
+"""
+
+    fmi3GetParameterNames(fmu::FMU3; vrs=md.parameterValueReferences, mode=:first)
+
+Returns names of parameters
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.parameterValueReferences`: Additional attribute `parameterValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.parameterValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
+"""
 function fmi3GetParameterNames(fmu::FMU3; kwargs...)
     fmi3GetParameterNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+    fmi3GetStateValueReferencesAndNames(md::fmi3ModelDescription)
+
+Returns dict(vrs, names of states)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of state value references and their corresponding names.
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of states)
 """
 function fmi3GetStateValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.stateValueReferences)
 end
+"""
 
+    fmi3GetStateValueReferencesAndNames(fmu::FMU3)
+
+Returns dict(vrs, names of states)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of state value references and their corresponding names.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of states)
+"""
 function fmi3GetStateValueReferencesAndNames(fmu::FMU3)
     fmi3GetStateValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetStateNames(md::fmi3ModelDescription; vrs=md.stateValueReferences, mode=:first)
+
+Returns names of states
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.stateValueReferences`: Additional attribute `parameterValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.stateValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
 """
 function fmi3GetStateNames(md::fmi3ModelDescription; kwargs...)
     fmi3GetNames(md; vrs=md.stateValueReferences, kwargs...)
 end
 
+"""
+
+    fmi3GetStateNames(fmu::FMU3; vrs=md.stateValueReferences, mode=:first)
+
+Returns names of states
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.stateValueReferences`: Additional attribute `parameterValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.stateValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
+"""
 function fmi3GetStateNames(fmu::FMU3; kwargs...)
     fmi3GetStateNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+fmi3GetDerivateValueReferencesAndNames(md::fmi3ModelDescription)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of derivative value references and their corresponding names
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
+See also ['fmi3GetValueReferencesAndNames'](@ref)
 """
 function fmi3GetDerivateValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.derivativeValueReferences)
 end
 
+"""
+
+    fmi3GetDerivateValueReferencesAndNames(fmu::FMU3)
+
+Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of derivative value references and their corresponding names
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{fmi3ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi3ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
+See also ['fmi3GetValueReferencesAndNames'](@ref)
+"""
 function fmi3GetDerivateValueReferencesAndNames(fmu::FMU3)
     fmi3GetDerivateValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetDerivativeNames(md::fmi3ModelDescription; vrs=md.derivativeValueReferences, mode=:first)
+
+Returns names of derivatives
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Keywords
+- `vrs=md.derivativeValueReferences`: Additional attribute `derivativeValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.derivativeValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
 """
 function fmi3GetDerivativeNames(md::fmi3ModelDescription; kwargs...)
     fmi3GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
 end
 
+"""
+
+    fmi3GetDerivativeNames(fmu::FMU3; vrs=md.derivativeValueReferences, mode=:first)
+
+Returns names of derivatives
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `vrs=md.derivativeValueReferences`: Additional attribute `derivativeValueReferences::Array{fmi3ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.derivativeValueReferences::Array{fmi3ValueReference}`)
+- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
+
+# Returns
+- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
+
+See also ['fmi3GetNames'](@ref).
+"""
 function fmi3GetDerivativeNames(fmu::FMU3; kwargs...)
     fmi3GetDerivativeNames(fmu.modelDescription; kwargs...)
 end
 
 """
-TODO
+
+    fmi3GetNamesAndDescriptions(md::fmi3ModelDescription)
+
+Returns a dictionary of variables with their descriptions
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].description::Union{String, Nothing}`). (Creates a tuple (name, description) for each i in 1:length(md.modelVariables))
 """
 function fmi3GetNamesAndDescriptions(md::fmi3ModelDescription)
     Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
 end
 
+"""
+
+    fmi3GetNamesAndDescriptions(fmu::FMU3)
+
+Returns a dictionary of variables with their descriptions
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].description::Union{String, Nothing}`). (Creates a tuple (name, description) for each i in 1:length(md.modelVariables))
+"""
 function fmi3GetNamesAndDescriptions(fmu::FMU3)
     fmi3GetNamesAndDescriptions(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetNamesAndUnits(md::fmi3ModelDescription)
+
+Returns a dictionary of variables with their units
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
+See also [`fmi3GetUnit`](@ref).
 """
 function fmi3GetNamesAndUnits(md::fmi3ModelDescription)
     Dict(md.modelVariables[i].name => fmi3GetUnit(md.modelVariables[i]) for i = 1:length(md.modelVariables))
 end
 
+"""
+
+    fmi3GetNamesAndUnits(fmu::FMU3)
+
+Returns a dictionary of variables with their units
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
+See also [`fmi3GetUnit`](@ref).
+"""
 function fmi3GetNamesAndUnits(fmu::FMU3)
     fmi3GetNamesAndUnits(fmu.modelDescription)
 end
 
 """
-TODO
+
+   fmi3GetNamesAndInitials(md::fmi3ModelDescription)
+
+Returns a dictionary of variables with their initials
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type Cuint. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi3Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
+See also [`fmi3GetInitial`](@ref).
 """
 function fmi3GetNamesAndInitials(md::fmi3ModelDescription)
     Dict(md.modelVariables[i].name => fmi3GetInitial(md.modelVariables[i]) for i = 1:length(md.modelVariables))
 end
 
+"""
+
+   fmi3GetNamesAndInitials(fmu::FMU3)
+
+Returns a dictionary of variables with their initials
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type Cuint. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi3Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
+See also [`fmi3GetInitial`](@ref).
+"""
 function fmi3GetNamesAndInitials(fmu::FMU3)
     fmi3GetNamesAndInitials(fmu.modelDescription)
 end
 
 """
-TODO
+
+    fmi3GetInputNamesAndStarts(md::fmi3ModelDescription)
+
+Returns a dictionary of input variables with their starting values
+
+# Arguments
+- `md::fmi3ModelDescription`: Struct which provides the static information of ModelVariables.
+
+# Returns
+- `dict::Dict{String, Array{fmi3ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi3ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi3ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
+See also ['fmi3GetStartValue'](@ref).
 """
 function fmi3GetInputNamesAndStarts(md::fmi3ModelDescription)
 
@@ -1214,6 +1838,19 @@ function fmi3GetInputNamesAndStarts(md::fmi3ModelDescription)
     Dict(md.modelVariables[i].name => fmi3GetStartValue(md.modelVariables[i]) for i in inputIndices)
 end
 
+"""
+
+    fmi3GetInputNamesAndStarts(md::fmi3ModelDescription)
+
+Returns a dictionary of input variables with their starting values
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Returns
+- `dict::Dict{String, Array{fmi3ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi3ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi3ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
+See also ['fmi3GetStartValue'](@ref).
+"""
 function fmi3GetInputNamesAndStarts(fmu::FMU3)
     fmi3GetInputNamesAndStarts(fmu.modelDescription)
 end
