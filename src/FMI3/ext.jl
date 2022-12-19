@@ -1436,6 +1436,67 @@ function fmi3GetStartValue(mv::fmi3ModelVariable)
 end
 
 """
+TODO
+"""
+function fmi3GetUnit(mv::fmi3ModelVariable)
+    if mv._Float != nothing
+        return mv._Float.unit
+    else
+        return nothing
+    end
+end
+
+"""
+TODO
+"""
+function fmi3GetInitial(mv::fmi3ModelVariable)
+    return mv.initial
+end
+
+"""
+TODO
+"""
+function fmi3SampleDirectionalDerivative(c::FMU3Instance,
+    vUnknown_ref::Array{fmi3ValueReference},
+    vKnown_ref::Array{fmi3ValueReference},
+    steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+
+    dvUnknown = zeros(fmi3Float64, length(vUnknown_ref), length(vKnown_ref))
+
+    fmi3SampleDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, steps)
+
+    dvUnknown
+end
+
+function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
+    vUnknown_ref::Array{fmi3ValueReference},
+    vKnown_ref::Array{fmi3ValueReference},
+    dvUnknown::AbstractArray,
+    steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi3GetFloat64(c, vKnown)
+
+        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
+        negValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
+        posValues = fmi3GetFloat64(c, vUnknown_ref)
+
+        fmi3SetFloat64(c, vKnown, origValue)
+
+        if length(vUnknown_ref) == 1
+            dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
+        else
+            dvUnknown[:,i] = (posValues-negValues) ./ steps[i]
+        end
+    end
+
+    nothing
+end
+
+"""
 
     fmi3GetUnit(mv::fmi3ModelVariable)
 

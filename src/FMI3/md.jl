@@ -1579,7 +1579,6 @@ Returns a dictionary `Dict(fmi3ValueReference, Array{String})` of state value re
 function fmi3GetStateValueReferencesAndNames(md::fmi3ModelDescription)
     fmi3GetValueReferencesAndNames(md::fmi3ModelDescription; vrs=md.stateValueReferences)
 end
-
 """
 
     fmi3GetStateValueReferencesAndNames(fmu::FMU3)

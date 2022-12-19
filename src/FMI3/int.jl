@@ -10,6 +10,15 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
+Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
+
+Set the DebugLogger for the FMU.
+"""
+function fmi3SetDebugLogging(c::FMU3Instance)
+    fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
+end
+
+"""
 
     fmi3SetDebugLogging(c::FMU3Instance)
 
@@ -2066,7 +2075,6 @@ end
         unknowns::AbstractArray{fmi3ValueReference},
         knowns::AbstractArray{fmi3ValueReference},
         seed::AbstractArray{fmi3Float64})
-
 Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
 
 Computes the adjoint derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
@@ -2546,6 +2554,21 @@ function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     derivatives = zeros(fmi3Float64, nx)
     fmi3GetContinuousStateDerivatives!(c, derivatives)
     return derivatives
+end
+
+"""
+Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
+
+Compute state derivatives at the current time instant and for the current states.
+
+For more information call ?fmi3GetContinuousDerivatives
+"""
+function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::AbstractArray{fmi3Float64})
+    status = fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+    if status == fmi3StatusOK
+        c.ẋ = derivatives
+    end
+    return status
 end
 
 """
