@@ -10,7 +10,7 @@
 import FMIImport.FMICore: fmi3FMUState
 
 myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
-inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
+inst = fmi3InstantiateModelExchange!(myFMU; loggingOn=true)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
