@@ -52,7 +52,7 @@ end
 
 """
 
-   fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
+    fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
 
 Returns an array of ValueReferences coresponding to the variable names.
 
@@ -83,7 +83,7 @@ end
 
 """
 
-   fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
+    fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
 
 Returns the model variable(s) fitting the value reference.
 
@@ -110,23 +110,18 @@ function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2V
 end
 
 """
-   fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 
-   fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
+    fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
-- `fmu::FMU2`:  Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 - `name::String`: Argument `names` contains a String or a list of Strings. For each string ("variable name"), the corresponding value reference is searched in the given modelDescription.
-- `name::Union{String, AbstractArray{String}}`: Argument `names` contains a Strings or AbstractArray{String}. For that, the corresponding value reference is searched in the given modelDescription.
+
 # Returns
 - `reference::md.stringValueReferences`: Return `references` is an array of `ValueReference` coresponding to the variable name.
-For input parameter `name::Sting`:
-- `reference::md.stringValueReferences`: Return `references` is an array of `ValueReference` coresponding to the variable name.
-For input parameter `name::AbstractArray{String}`
-- `ar::Array{fmi2ScalarVariable}`: Return `ar` is an array of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr.
+
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -144,7 +139,25 @@ function fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 end
 
 """
+
+    fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
+
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
+
+# Arguments
+- `fmu::FMU2`:  Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `name::Union{String, AbstractArray{String}}`: Argument `names` contains a Strings or AbstractArray{String}. For that, the corresponding value reference is searched in the given modelDescription.
+
+# Returns
+For input parameter `name::Sting`:
+- `reference::md.stringValueReferences`: Return `references` is an array of `ValueReference` coresponding to the variable name.
+For input parameter `name::AbstractArray{String}`
+- `ar::Array{fmi2ScalarVariable}`: Return `ar` is an array of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
+See also [`fmi2StringToValueReference`](@ref)
 """
 function fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
     fmi2StringToValueReference(fmu.modelDescription, name)
@@ -152,18 +165,11 @@ end
 
 """
 
-   fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
-
-   fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
-
-   fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
+    fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
 
 # Arguments
 - `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 - `reference::fmi2ValueReference`: The argument `references` is a variable of the type `ValueReference`.
-- `reference::Int64`: Argument `references` is a variable of the type `Int64`.
-- `reference::Union{fmi2ValueReference, Int64}`: Argument `references` of the type `fmi2ValueReference` or `Int64`.
 
 # Return
 - `md.stringValueReferences::Dict{String, fmi2ValueReference}`: Returns a dictionary `md.stringValueReferences` that constructs a hash table with keys of type String and values of type fmi2ValueReference.
@@ -175,10 +181,41 @@ end
 function fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
     [k for (k,v) in md.stringValueReferences if v == reference]
 end
+
+"""
+
+    fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
+
+# Arguments
+- `md::fmi2ModelDescription`: Argument `md` stores all static information related to an FMU. Especially, the FMU variables and their attributes such as name, unit, default initial value, etc..
+- `reference::Int64`: Argument `references` is a variable of the type `Int64`.
+
+# Return
+- `md.stringValueReferences::Dict{String, fmi2ValueReference}`: Returns a dictionary `md.stringValueReferences` that constructs a hash table with keys of type String and values of type fmi2ValueReference.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+"""
 function fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
     fmi2ValueReferenceToString(md, fmi2ValueReference(reference))
 end
 
+"""
+
+    fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `reference::Union{fmi2ValueReference, Int64}`: Argument `references` of the type `fmi2ValueReference` or `Int64`.
+
+# Return
+- `md.stringValueReferences::Dict{String, fmi2ValueReference}`: Returns a dictionary `md.stringValueReferences` that constructs a hash table with keys of type String and values of type fmi2ValueReference.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+"""
 function fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
     fmi2ValueReferenceToString(fmu.modelDescription, reference)
 end
@@ -186,7 +223,7 @@ end
 
 """
 
-   fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+      fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution state.
 
@@ -290,7 +327,7 @@ end
 
 """
 
-   fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+    fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution values.
 
@@ -372,7 +409,7 @@ end
 
 """
 
-   fmi2GetSolutionTime(solution::FMU2Solution)
+     fmi2GetSolutionTime(solution::FMU2Solution)
 
 Returns the Solution time.
 
@@ -399,3 +436,4 @@ function fmi2GetSolutionTime(solution::FMU2Solution)
         return nothing
     end
 end
+"""

@@ -10,17 +10,41 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-TODO: FMI specification reference.
 
-Set the DebugLogger for the FMU.
+     fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
+
+Control the use of the logging callback function, version independent.
+
+# Arguments
+- `c::FMU2Component`: Argument `c` is a mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
+- `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
+- `categories::Ptr{Nothing}`: This is an unordered set of strings representing the possible values of the log categories of the FMU (for example logEvent). The allowed values of categories are defined by the modeling
+environment that generated the FMU.
+
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+- `fmi2OK`: all well
+- `fmi2Warning`: things are not quite right, but the computation can continue
+- `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+- `fmi2Error`: the communication step could not be carried out at all
+- `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+- `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.2[p.22]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
+See also [`fmi2SetDebugLogging`](@ref).
 """
-function fmi2SetDebugLogging(c::FMU2Component)
-    fmi2SetDebugLogging(c, fmi2False, Unsigned(0), C_NULL)
+function fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
+    fmi2SetDebugLogging(c, (loggingOn==fmi2True), nCategories, categories)
 end
 
 """
 
-   fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+    fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
 
 Setup the simulation but without defining all of the parameters.
 
@@ -28,7 +52,7 @@ Setup the simulation but without defining all of the parameters.
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
 More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
  - `c::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
- - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+ - `c::FMU2Component`: Mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `startTime::Union{Real, Nothing} = nothing`: `startTime` is a real number which sets the value of starting time of the experiment. The default value is set automatically if doing nothing (default = `nothing`).
 - `stopTime::Union{Real, Nothing} = nothing`: `stopTime` is a real number which sets the value of ending time of the experiment. The default value is set automatically if doing nothing (default = `nothing`).
 
@@ -103,7 +127,7 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `values::Array{fm2Real}`: returns values of an array of fmi2Real variables with the dimension of fmi2ValueReferenceFormat length.
+- `values::Array{fm2Real}`: Returns values of an array of fmi2Real variables with the dimension of fmi2ValueReferenceFormat length.
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -129,12 +153,12 @@ end
 
 """
 
-   fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
+    fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
 
 
 Get the values of an array of fmi2Real variables.
 
-rites the real values of an array of variables in the given field
+Writes the real values of an array of variables in the given field
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -177,10 +201,10 @@ end
 
 """
 
-   fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
+    fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
 
 
-Set the values of an array of real variables
+Set the values of an array of real variables.
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -220,9 +244,9 @@ end
 
 """
 
-   fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
+    fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
-Returns the integer values of an array of variables
+Returns the integer values of an array of variables.
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -260,9 +284,9 @@ end
 
 """
 
-   fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
+    fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
 
-Writes the integer values of an array of variables in the given field
+Writes the integer values of an array of variables in the given field.
 
 fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar.
 
@@ -307,13 +331,13 @@ function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 end
 function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Integer)
     @assert false "fmi2GetInteger! is only possible for arrays of values, please use an array instead of a scalar."
-end
-
 """
+
+
 
    fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
 
-Set the values of an array of integer variables
+Set the values of an array of integer variables.
 
 # Arguments
 - `c::fmi2Struct`:  Representative for an FMU in the FMI 2.0.2 Standard.
@@ -347,7 +371,7 @@ end
 
 """
 
-   fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
+    fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2Boolean variables.
 
@@ -381,9 +405,9 @@ end
 
 """
 
-   fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
+    fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
 
-Writes the boolean values of an array of variables in the given field
+Writes the boolean values of an array of variables in the given field.
 
 fmi2GetBoolean! is only possible for arrays of values, please use an array instead of a scalar.
 
@@ -427,9 +451,9 @@ end
 
 """
 
-   fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
+    fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
-Set the values of an array of boolean variables
+Set the values of an array of boolean variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -465,7 +489,7 @@ end
 
 """
 
-   fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
+    fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2String variables.
 
@@ -503,9 +527,9 @@ end
 
 """
 
-   fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
+    fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
 
-Writes the string values of an array of variables in the given field
+Writes the string values of an array of variables in the given field.
 
 These functions are especially used to get the actual values of output variables if a model is connected with other
 models.
@@ -545,9 +569,9 @@ end
 
 """
 
-   fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
+    fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
-Set the values of an array of string variables
+Set the values of an array of string variables.
 
 For the exact rules on which type of variables fmi2SetXXX
 can be called see FMISpec2.0.2 section 2.2.7 , as well as FMISpec2.0.2 section 3.2.3 in case of ModelExchange and FMISpec2.0.2 section 4.2.4 in case of
@@ -592,7 +616,7 @@ end
 
 """
 
-   fmi2GetFMUstate(c::FMU2Component)
+    fmi2GetFMUstate(c::FMU2Component)
 
 Makes a copy of the internal FMU state and returns a pointer to this copy.
 
@@ -619,9 +643,9 @@ end
 
 """
 
-   fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
+    fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
 
-Free the memory for the allocated FMU state
+Free the memory for the allocated FMU state.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -647,7 +671,7 @@ end
 
 """
 
-   fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
+    fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
 
 Returns the size of the byte vector in which the FMUstate can be stored.
 
@@ -675,7 +699,7 @@ end
 
 """
 
-   fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
+    fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
 
 Serializes the data referenced by the pointer FMUstate and copies this data into the byte vector serializedState of length size to be provided by the environment.
 
@@ -707,9 +731,9 @@ end
 
 """
 
-   fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArray{fmi2Byte})
+    fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArray{fmi2Byte})
 
-Deserialize the data in the serializedState fmi2Byte field
+Deserialize the data in the serializedState fmi2Byte field.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -739,7 +763,7 @@ end
 
 """
 
-   fmi2GetDirectionalDerivative(c::FMU2Component,
+    fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
                                       dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
@@ -783,7 +807,7 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
                                       dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
-    nUnknown = Csize_t(length(vUnknown_ref))     
+    nUnknown = Csize_t(length(vUnknown_ref))
 
     dvUnknown = zeros(fmi2Real, nUnknown)
     status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, dvKnown)
@@ -793,11 +817,11 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
 end
 
 """
-TODO -> Arguments
-    fmiGetDirectionalDerivative!(c::FMU2Component,
+
+     fmi2GetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray,
+                                      dvUnknown::AbstractArray{fmi2Real},
                                       dvKnown::Union{Array{fmi2Real}, Nothing} = nothing)
 
 Wrapper Function call to compute the partial derivative with respect to the variables `vKnown_ref`.
@@ -846,7 +870,7 @@ See also [`fmi2GetDirectionalDerivative`](@ref).
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray, # ToDo: Data-type
+                                      dvUnknown::AbstractArray{}, # ToDo: Data-type
                                       dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
     nKnown = Csize_t(length(vKnown_ref))
@@ -863,12 +887,12 @@ end
 
 """
 
-   fmi2GetDirectionalDerivative(c::FMU2Component,
+    fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::fmi2ValueReference,
                                       vKnown_ref::fmi2ValueReference,
                                       dvKnown::fmi2Real = 1.0)
 
-Direct function call to compute the partial derivative with respect to `vKnown_ref`.                           
+Direct function call to compute the partial derivative with respect to `vKnown_ref`.
 
 Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns.The
 precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
@@ -912,7 +936,7 @@ end
 # CoSimulation specific functions
 """
 
-   fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+     fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -953,13 +977,13 @@ end
 
 """
 
-   fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
+    fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
 
 Sets the n-th time derivative of real input variables.
 
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that t define the variables whose derivatives shall be set.
+- `vr::Array{fmi2ValueReference}`: Argument `vr` is an array of `nvr` value handels called "ValueReference" that defines the variables whose derivatives shall be set.
 - `order::Array{fmi2Integer}`: Argument `order` is an array of fmi2Integer values witch specifys the corresponding order of derivative of the real input variable.
 
 # Returns
@@ -992,10 +1016,10 @@ end
 
 """
 
-    fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+     fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
 
 
-Does one step in the CoSimulation FMU
+Does one step in the CoSimulation FMU.
 
 # Arguments
 - `C::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -1052,7 +1076,7 @@ end
 
 """
 
-    fmiSetTime(c::FMU2Component, t::Real)
+     fmiSetTime(c::FMU2Component, t::Real)
 
 Set a new time instant and re-initialize caching of variables that depend on time.
 
@@ -1128,9 +1152,9 @@ end
 
 """
 
-   fmi2NewDiscreteStates(c::FMU2Component)
+     fmi2NewDiscreteStates(c::FMU2Component)
 
-Returns the next discrete states
+Returns the next discrete states.
 
 # Arguments
  - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -1160,9 +1184,9 @@ end
 
 """
 
-    fmiCompletedIntegratorStep(c::FMU2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+     fmiCompletedIntegratorStep(c::FMU2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
 
-This function must be called by the environment after every completed step
+This function must be called by the environment after every completed step.
 
 # Arguments
 - `C::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -1201,7 +1225,7 @@ end
 
 """
 
-   fmi2GetDerivatives(c::FMU2Component)
+     fmi2GetDerivatives(c::FMU2Component)
 
 Compute state derivatives at the current time instant and for the current states.
 
@@ -1227,7 +1251,7 @@ end
 
 """
 
-   fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
+     fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
 
 Compute state derivatives at the current time instant and for the current states.
 
@@ -1261,9 +1285,10 @@ end
 
 """
 
-   fmi2GetEventIndicators(c::FMU2Component)
+     fmi2GetEventIndicators(c::FMU2Component)
 
-Returns the event indicators of the FMU
+Returns the event indicators of the FMU.
+
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
@@ -1284,7 +1309,10 @@ function fmi2GetEventIndicators(c::FMU2Component)
 end
 
 """
-Returns the event indicators of the FMU
+
+     fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
+
+Returns the event indicators of the FMU.
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `eventIndicators::AbstractArray{fmi2Real}`:The event indicators are in an AbstractArray represented by an array of "fmi2Real" values.
@@ -1304,7 +1332,7 @@ end
 
 """
 
-   fmi2GetContinuousStates(c::FMU2Component)
+    fmi2GetContinuousStates(c::FMU2Component)
 
 Return the new (continuous) state vector x
 # Arguments
@@ -1327,9 +1355,9 @@ end
 
 """
 
-   fmi2GetNominalsOfContinuousStates(c::FMU2Component)
+    fmi2GetNominalsOfContinuousStates(c::FMU2Component)
 
-Return the new (continuous) state vector x
+Return the new (continuous) state vector x.
 
 # Arguments
  - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
@@ -1350,7 +1378,30 @@ function fmi2GetNominalsOfContinuousStates(c::FMU2Component)
 end
 
 """
-ToDo
+
+    fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
+
+Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `s::fmi2StatusKind`: The enumeration `fmi2StatusKind` defines which status is inquired.
+The following status information can be retrieved from a slave:
+  - `fmi2DoStepStatus::fmi2Status`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers `fmi2Pending` if the computation is not finished. Otherwise the function returns the result of the asynchronously executed `fmi2DoStep` call.
+  - `fmi2PendingStatus::fmi2String`: Can be called when the `fmi2DoStep` function returned `fmi2Pending`. The function delivers a string which informs about the status of the currently running asynchronous `fmi2DoStep` computation
+  - `fmi2LastSuccessfulTime:: fmi2Real`: Returns the end time of the last successfully completed communication step. Can be called after fmi2DoStep(..) returned fmi2Discard.
+  - `fmi2Terminated::fmi2Boolean`: Returns `fmi2True`, if the slave wants to terminate the simulation. Can be called after fmi2DoStep(..) returned `fmi2Discard`. Use fmi2LastSuccessfulTime to determine the time instant at which the slave terminated.
+- `value::Ref{fmi2Status}`: The `value` argument points to a status flag that was requested.
+# Returns
+- `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
+More detailed:
+  - `fmi2OK`: all well
+  - `fmi2Warning`: things are not quite right, but the computation can continue
+  - `fmi2Discard`: if the slave computed successfully only a subinterval of the communication step
+  - `fmi2Error`: the communication step could not be carried out at all
+  - `fmi2Fatal`: if an error occurred which corrupted the FMU irreparably
+  - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
+-`value::Union{nothing; fmi2Boolean}`: If the slave dont want to terminate the simulation `nothing` ist returned. Howerver, if the slave wants to end the simulation the first value of the value array will be returned.
 """
 function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
     rtype = nothing
