@@ -428,10 +428,10 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
             updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
         end
 
-        component.A = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.B = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.C = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.D = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
         if pushComponents
             push!(fmu.components, component)
@@ -537,7 +537,7 @@ function fmi2SampleJacobian(c::FMU2Component,
 
     mtx = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
-    fmi2SampleJacobian!(mtx, vUnknown_ref, vKnown_ref, steps)
+    fmi2SampleJacobian!(c, vUnknown_ref, vKnown_ref, steps)
 
     return mtx
 end
@@ -1109,11 +1109,9 @@ function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.f
 end
 
 """
-
 Returns the start/default value for a given value reference.
-
+ToDo: Doc-string.
 """
-
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
     if mv._Real != nothing
         return mv._Real.start

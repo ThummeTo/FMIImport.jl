@@ -112,8 +112,7 @@ export fmi3GetNumberOfVariableDependencies!, fmi3GetVariableDependencies!
 export fmi3GetDirectionalDerivative!, fmi3GetAdjointDerivative!, fmi3GetOutputDerivatives
 export fmi3EnterConfigurationMode, fmi3ExitConfigurationMode, fmi3GetNumberOfContinuousStates, fmi3GetNumberOfEventIndicators, fmi3GetContinuousStates!, fmi3GetNominalsOfContinuousStates!
 export fmi3EvaluateDiscreteStates, fmi3UpdateDiscreteStates, fmi3EnterContinuousTimeMode, fmi3EnterStepMode
-export fmi3SetTime, fmi3SetContinuousStates, fmi3GetContinuousStateDerivatives, fmi3GetContinuousStateDerivatives!, fmi3GetEventIndicators!, fmi3CompletedIntegratorStep!, fmi3EnterEventMode, fmi3DoStep!
-# TODO check which fmi3GetContinuousDerivatives to export
+export fmi3SetTime, fmi3SetContinuousStates, fmi3GetContinuousStateDerivatives!, fmi3GetEventIndicators!, fmi3CompletedIntegratorStep!, fmi3EnterEventMode, fmi3DoStep!
 
 # FMI3_convert.jl
 export fmi3StringToValueReference, fmi3ValueReferenceToString, fmi3ModelVariablesForValueReference
