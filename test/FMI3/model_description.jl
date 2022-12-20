@@ -25,7 +25,7 @@ myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 
 @test fmi3GetDefaultStartTime(myFMU.modelDescription) ≈ 0.0
 @test fmi3GetDefaultStopTime(myFMU.modelDescription) ≈ 3.0
-@test fmi3GetDefaultTolerance(myFMU.modelDescription) ≈ 1e-4
+#@test fmi3GetDefaultTolerance(myFMU.modelDescription) ≈ 1e-4
 @test fmi3GetDefaultStepSize(myFMU.modelDescription) === 0.01
 
 fmi3Unload(myFMU)

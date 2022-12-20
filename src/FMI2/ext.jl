@@ -428,10 +428,10 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
             updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
         end
 
-        component.A = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.B = FMICore.FMU2Jacobian(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.C = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.D = FMICore.FMU2Jacobian(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
         if pushComponents
             push!(fmu.components, component)
