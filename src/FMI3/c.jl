@@ -193,7 +193,7 @@ function fmi3GetVersion(fmu::FMU3)
 
     fmi3Version = fmi3GetVersion(fmu.cGetVersion)
 
-    unsafe_string(fmi3Version)
+    return unsafe_string(fmi3Version)
 end
 
 """
@@ -304,6 +304,7 @@ function fmi3EnterInitializationMode(c::FMU3Instance, toleranceDefined::fmi3Bool
     startTime::fmi3Float64,
     stopTimeDefined::fmi3Boolean,
     stopTime::fmi3Float64)
+
     if c.state != fmi3InstanceStateInstantiated
         @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
     end
@@ -357,6 +358,7 @@ function fmi3ExitInitializationMode(c::FMU3Instance)
             c.state = fmi3InstanceStateEventMode
         end
     end 
+
     return status
 end
 
@@ -402,6 +404,7 @@ function fmi3Terminate(c::FMU3Instance; soft::Bool=false)
     if status == fmi3StatusOK 
         c.state = fmi3InstanceStateTerminated
     end 
+    
     return status
 end
 

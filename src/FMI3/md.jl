@@ -60,14 +60,11 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
     md.modelExchange = nothing
     md.coSimulation = nothing
     md.scheduledExecution = nothing
+    md.defaultExperiment = nothing
 
     # additionals 
     md.valueReferences = []
     md.valueReferenceIndicies = Dict{UInt, UInt}()
-
-    md.defaultStartTime = 0.0
-    md.defaultStopTime = 1.0
-    md.defaultTolerance = 0.0001
 
     for node in eachelement(root)
         if node.name == "CoSimulation" || node.name == "ModelExchange" || node.name == "ScheduledExecution"
@@ -131,7 +128,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
             md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
             md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
-            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance"; onfail = md.defaultTolerance)
+            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance"; onfail = md.defaultExperiment.tolerance)
             md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
         end
     end
@@ -195,8 +192,29 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
     for node in eachelement(nodes)
         name = node["name"]
         valueReference = parse(fmi3ValueReference, (node["valueReference"]))
+        causality = nothing 
+        variability = nothing 
+        initial = nothing
+
+        if haskey(node, "causality")
+            causality = fmi3StringToCausality(node["causality"])
+
+            if causality == fmi3CausalityOutput
+                push!(md.outputValueReferences, valueReference)
+            elseif causality == fmi3CausalityInput
+                push!(md.inputValueReferences, valueReference)
+            end
+        end
+
+        if haskey(node, "variability")
+            variability = fmi3StringToVariability(node["variability"])
+        end
+
+        if haskey(node, "initial")
+            initial = fmi3StringToInitial(node["initial"])
+        end
         
-        modelVariables[index] = fmi3ModelVariable(name, valueReference)
+        modelVariables[index] = fmi3ModelVariable(name, valueReference, causality, variability, initial)
 
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)
@@ -205,22 +223,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         if haskey(node, "description")
             modelVariables[index].description = node["description"]
         end
-        if haskey(node, "causality")
-            modelVariables[index].causality = fmi3StringToCausality(node["causality"])
-
-            if modelVariables[index].causality == fmi3CausalityOutput
-                push!(md.outputValueReferences, valueReference)
-            elseif modelVariables[index].causality == fmi3CausalityInput
-                push!(md.inputValueReferences, valueReference)
-            end
-        end
-        if haskey(node, "variability")
-            modelVariables[index].variability = fmi3StringToVariability(node["variability"])
-        end
-
-        if haskey(node, "initial")
-            modelVariables[index].initial = fmi3StringToInitial(node["initial"])
-        end
+        
         modelVariables[index].datatype = fmi3SetDatatypeVariables(node, md)
 
         # type node
