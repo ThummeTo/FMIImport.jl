@@ -60,8 +60,7 @@ function fmi3CallbackLogger(_instanceEnvironment::Ptr{FMU3InstanceEnvironment},
 
     if status == fmi3StatusOK && instanceEnvironment.logStatusOK
         @info "[$status][$category][$instanceName]: $message"
-    elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning) ||
-           (status == fmi3StatusPending && instanceEnvironment.logStatusPending)
+    elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning)
         @warn "[$status][$category][$instanceName]: $message"
     elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
            (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
