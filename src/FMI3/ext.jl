@@ -1199,7 +1199,6 @@ More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 # Keywords
 - `filter=nothing`: whether the individual values of "fmi3Variable" are to be stored
-
 # Returns
 - `retcodes::Array{fmi3Status}`: Returns an array of length length(vrs) with Type `fmi3Status`. Type `fmi3Status` is an enumeration and indicates the success of the function call.
 More detailed:
