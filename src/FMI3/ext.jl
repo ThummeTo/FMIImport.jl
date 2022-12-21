@@ -1418,7 +1418,7 @@ More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec3.0: 2.4.7 Model Variables
 """
 
-function fmi3GetStartValue(mv::fmi3ModelVariable)
+function fmi3GetStartValue(mv::fmi3Variable)
     # TODO check datatype
     # if mv._Real != nothing
     #     return mv._Real.start
@@ -1438,19 +1438,12 @@ end
 """
 TODO
 """
-function fmi3GetUnit(mv::fmi3ModelVariable)
-    if mv._Float != nothing
-        return mv._Float.unit
+function fmi3GetInitial(mv::fmi3Variable)
+    if hasproperty(variable, :initial)
+        return mv.initial
     else
         return nothing
     end
-end
-
-"""
-TODO
-"""
-function fmi3GetInitial(mv::fmi3ModelVariable)
-    return mv.initial
 end
 
 """
@@ -1498,23 +1491,23 @@ end
 
 """
 
-    fmi3GetUnit(mv::fmi3ModelVariable)
+    fmi3GetUnit(mv::fmi3Variable)
 
 Returns the `unit` entry of the corresponding model variable.
 
 # Arguments
-- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `mv::fmi3Variable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Float.unit`: Returns the `unit` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+- `mv.unit`: Returns the `unit` entry of the corresponding ModelVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.4.7 Model Variables
 
 """
-function fmi3GetUnit(mv::fmi3ModelVariable)
-    if mv._Float !== nothing
-        return mv._Float.unit
+function fmi3GetUnit(mv::fmi3Variable)
+    if hasproperty(variable, :unit)
+        return mv.unit
     else
         return nothing
     end
@@ -1522,20 +1515,24 @@ end
 
 """
 
-    fmi3GetInitial(mv::fmi3ModelVariable)
+    fmi3GetInitial(mv::fmi3Variable)
 
 Returns the `inital` entry of the corresponding model variable.
 
 # Arguments
-- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `mv::fmi3Variable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Float.initial`: Returns the `inital` entry of the corresponding ModelVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+- `mv.initial`: Returns the `inital` entry of the corresponding ModelVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.4.7 Model Variables
 """
-function fmi3GetInitial(mv::fmi3ModelVariable)
-    return mv.initial
+function fmi3GetInitial(mv::fmi3Variable)
+    if hasproperty(variable, :initial)
+        return mv.initial
+    else
+        return nothing
+    end
 end

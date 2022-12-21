@@ -60,14 +60,11 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
     md.modelExchange = nothing
     md.coSimulation = nothing
     md.scheduledExecution = nothing
+    md.defaultExperiment = nothing
 
     # additionals 
     md.valueReferences = []
     md.valueReferenceIndicies = Dict{UInt, UInt}()
-
-    md.defaultStartTime = 0.0
-    md.defaultStopTime = 1.0
-    md.defaultTolerance = 0.0001
 
     for node in eachelement(root)
         if node.name == "CoSimulation" || node.name == "ModelExchange" || node.name == "ScheduledExecution"
@@ -119,7 +116,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
             md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
             md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
-            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance"; onfail = md.defaultTolerance)
+            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance")
             md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
         end
     end
