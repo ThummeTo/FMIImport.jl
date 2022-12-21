@@ -10,15 +10,6 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-Source: FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
-
-Set the DebugLogger for the FMU.
-"""
-function fmi3SetDebugLogging(c::FMU3Instance)
-    fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
-end
-
-"""
 
     fmi3SetDebugLogging(c::FMU3Instance)
 
@@ -2554,21 +2545,6 @@ function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     derivatives = zeros(fmi3Float64, nx)
     fmi3GetContinuousStateDerivatives!(c, derivatives)
     return derivatives
-end
-
-"""
-Source: FMISpec3.0, Version D5ef1c1: 3.2.1. State: Continuous-Time Mode
-
-Compute state derivatives at the current time instant and for the current states.
-
-For more information call ?fmi3GetContinuousDerivatives
-"""
-function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::AbstractArray{fmi3Float64})
-    status = fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
-    if status == fmi3StatusOK
-        c.ẋ = derivatives
-    end
-    return status
 end
 
 """

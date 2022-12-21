@@ -1,7 +1,7 @@
 name = "FMIImport"
 uuid = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>", "JK <josef.kircher@student.uni-augsburg.de>"]
-version = "0.13.1"
+version = "0.14.0"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -16,7 +16,7 @@ ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 [compat]
 ChainRulesCore = "1.15.0"
 EzXML = "1.1.0"
-FMICore = "0.14.1"
+FMICore = "0.15.0"
 ForwardDiff = "0.10.32"
 ForwardDiffChainRules = "0.1.1"
 ZipFile = "0.10.0"

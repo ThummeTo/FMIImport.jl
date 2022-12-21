@@ -1073,13 +1073,13 @@ end
 """
     fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::AbstractArray)
 
-Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
+Stores the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
 
 # Arguments
 - `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vrs::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
 More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
-- `dstArray::AbstractArray`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` has the same length as `vrs`.
+- `dstArray::AbstractArray`: Stores the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` has the same length as `vrs`.
 
 # Returns
 - `retcodes::Array{fmi3Status}`: Returns an array of length length(vrs) with Type `fmi3Status`. Type `fmi3Status` is an enumeration and indicates the success of the function call.
@@ -1164,7 +1164,7 @@ end
     fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
 
 
-Returns the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference in an array.
+Returns the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference in an array.
 
 # Arguments
 - `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
@@ -1172,7 +1172,7 @@ Returns the specific value of `fmi3ModelVariable` containing the modelVariables 
 More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- `dstArray::Array{Any,1}(undef, length(vrs))`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` is a 1-Dimensional Array that has the same length as `vrs`.
+- `dstArray::Array{Any,1}(undef, length(vrs))`: Stores the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `dstArray` is a 1-Dimensional Array that has the same length as `vrs`.
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1189,17 +1189,16 @@ end
 """
     fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
 
-Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
+Stores the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference and returns an array that indicates the Status.
 
 # Arguments
 - `inst::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vrs::fmi3ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
 More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
-- `srcArray::AbstractArray`: Stores the specific value of `fmi3ModelVariable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
+- `srcArray::AbstractArray`: Stores the specific value of `fmi3Variable` containing the modelVariables with the identical fmi3ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
 
 # Keywords
-- `filter=nothing`: whether the individual values of "fmi3ModelVariable" are to be stored
-
+- `filter=nothing`: whether the individual values of "fmi3Variable" are to be stored
 # Returns
 - `retcodes::Array{fmi3Status}`: Returns an array of length length(vrs) with Type `fmi3Status`. Type `fmi3Status` is an enumeration and indicates the success of the function call.
 More detailed:
@@ -1396,12 +1395,12 @@ end
 
 """
 
-    fmi3GetStartValue(mv::fmi3ModelVariable)
+    fmi3GetStartValue(mv::fmi3Variable)
 
 Returns the start/default value for a given value reference.
 
 # Arguments
-- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of "ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `mv::fmi3Variable`: The “ModelVariables” element consists of an ordered set of "ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
 - `vrs::fmi3ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
 More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi3ValueReference, Array{fmi3ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
@@ -1418,7 +1417,7 @@ More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec3.0: 2.4.7 Model Variables
 """
 
-function fmi3GetStartValue(mv::fmi3ModelVariable)
+function fmi3GetStartValue(mv::fmi3Variable)
     # TODO check datatype
     # if mv._Real != nothing
     #     return mv._Real.start
@@ -1438,7 +1437,7 @@ end
 """
 TODO
 """
-function fmi3GetUnit(mv::fmi3ModelVariable)
+function fmi3GetUnit(mv::fmi3Variable)
     if mv._Float != nothing
         return mv._Float.unit
     else
@@ -1449,7 +1448,7 @@ end
 """
 TODO
 """
-function fmi3GetInitial(mv::fmi3ModelVariable)
+function fmi3GetInitial(mv::fmi3Variable)
     return mv.initial
 end
 
@@ -1498,12 +1497,12 @@ end
 
 """
 
-    fmi3GetUnit(mv::fmi3ModelVariable)
+    fmi3GetUnit(mv::fmi3Variable)
 
 Returns the `unit` entry of the corresponding model variable.
 
 # Arguments
-- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `mv::fmi3Variable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
 - `mv._Float.unit`: Returns the `unit` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
@@ -1512,7 +1511,7 @@ Returns the `unit` entry of the corresponding model variable.
 - FMISpec3.0: 2.4.7 Model Variables
 
 """
-function fmi3GetUnit(mv::fmi3ModelVariable)
+function fmi3GetUnit(mv::fmi3Variable)
     if mv._Float !== nothing
         return mv._Float.unit
     else
@@ -1522,12 +1521,12 @@ end
 
 """
 
-    fmi3GetInitial(mv::fmi3ModelVariable)
+    fmi3GetInitial(mv::fmi3Variable)
 
 Returns the `inital` entry of the corresponding model variable.
 
 # Arguments
-- `mv::fmi3ModelVariable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
+- `mv::fmi3Variable`: The “ModelVariables” element consists of an ordered set of “ModelVariable” elements. A “ModelVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
 - `mv._Float.initial`: Returns the `inital` entry of the corresponding ModelVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
@@ -1536,6 +1535,6 @@ Returns the `inital` entry of the corresponding model variable.
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.4.7 Model Variables
 """
-function fmi3GetInitial(mv::fmi3ModelVariable)
+function fmi3GetInitial(mv::fmi3Variable)
     return mv.initial
 end

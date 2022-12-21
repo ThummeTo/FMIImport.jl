@@ -13,7 +13,7 @@ using EzXML
 
 
 using FMICore: fmi3ModelDescriptionModelExchange, fmi3ModelDescriptionCoSimulation, fmi3ModelDescriptionDefaultExperiment
-using FMICore: fmi3ModelDescriptionFloat, fmi3ModelDescriptionBoolean, fmi3ModelDescriptionInteger, fmi3ModelDescriptionString, fmi3ModelDescriptionEnumeration
+using FMICore: mvFloat32, mvFloat64, mvInt8, mvUInt8, mvInt16, mvUInt16, mvInt32, mvUInt32, mvInt64, mvUInt64, mvBoolean, mvString, mvBinary, mvClock, mvEnumeration
 using FMICore: fmi3ModelDescriptionModelStructure
 using FMICore: fmi3DependencyKind
 ######################################
@@ -111,19 +111,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.modelStructure = fmi3ModelDescriptionModelStructure()
 
             parseModelStructure(node, md)
-            # for element in eachelement(node)
-            #     if element.name == "ContinuousStateDerivative" 
-            #         parseContinuousStateDerivatives(element, md)
-            #     elseif element.name == "InitialUnknowns"
-            #         parseInitialUnknowns(element, md)
-            #     elseif element.name == "Outputs"
-            #         parseOutputs(element, md)
-            #     elseif element.name == "EventIndicator"
-            #         parseEventIndicator(element, md)
-            #     else
-            #         @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
-            #     end
-            # end
+            
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
             md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
@@ -140,8 +128,10 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
 
     # check all intermediateUpdate variables
     for variable in md.modelVariables
-        if Bool(variable.datatype.intermediateUpdate)
-            push!(md.intermediateUpdateValueReferences, variable.valueReference)
+        if hasproperty(variable, :intermediateUpdate)
+            if Bool(variable.intermediateUpdate)
+                push!(md.intermediateUpdateValueReferences, variable.valueReference)
+            end
         end
     end
 
@@ -152,49 +142,66 @@ end
 # [Sec. 1b] helpers for load function #
 #######################################
 
-# Returns the indices of the state derivatives.
-function fmi3getDerivativeIndices(node::EzXML.Node)
-    indices = []
-    for element in eachelement(node)
-        if element.name == "InitialUnknown"
-            ind = parse(Int, element["valueReference"])
-            der = nothing 
-            derKind = nothing 
-
-            if haskey(element, "dependencies")
-                der = split(element["dependencies"], " ")
-
-                if der[1] == ""
-                    der = fmi3Int32[]
-                else
-                    der = collect(parse(fmi3Int32, e) for e in der)
-                end
-            end 
-
-            if haskey(element, "dependenciesKind")
-                derKind = split(element["dependenciesKind"], " ")
-            end 
-
-            push!(indices, (ind, der, derKind))
-        end
-    end
-    sort!(indices, rev=true)
-end
-
 # Parses the model variables of the FMU model description.
 function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
     numberOfVariables = 0
     for node in eachelement(nodes)
         numberOfVariables += 1
     end
-    modelVariables = Array{fmi3ModelVariable}(undef, numberOfVariables)
+    modelVariables = Array{fmi3Variable}(undef, numberOfVariables)
     index = 1
     for node in eachelement(nodes)
         name = node["name"]
         valueReference = parse(fmi3ValueReference, (node["valueReference"]))
-        causality = nothing 
-        variability = nothing 
-        initial = nothing
+        
+        # type node
+        typenode = nothing
+        typename = node.name
+
+        if typename == "Float32"
+            modelVariables[index] = mvFloat32(name, valueReference)
+        elseif typename == "Float64"
+            modelVariables[index] = mvFloat64(name, valueReference)
+        elseif typename == "Int8"
+            modelVariables[index] = mvInt8(name, valueReference)
+        elseif typename == "UInt8"
+            modelVariables[index] = mvUInt8(name, valueReference)
+        elseif typename == "Int16"
+            modelVariables[index] = mvInt16(name, valueReference)
+        elseif typename == "UInt16"
+            modelVariables[index] = mvUInt16(name, valueReference)
+        elseif typename == "Int32"
+            modelVariables[index] = mvInt32(name, valueReference)
+        elseif typename == "UInt32"
+            modelVariables[index] = mvUInt32(name, valueReference)
+        elseif typename == "Int64"
+            modelVariables[index] = mvInt64(name, valueReference)
+        elseif typename == "UInt64"
+            modelVariables[index] = mvUInt64(name, valueReference)
+        elseif typename == "Boolean"
+            modelVariables[index] = mvBoolean(name, valueReference)
+        elseif typename == "String"
+            modelVariables[index] = mvString(name, valueReference)
+        elseif typename == "Binary"
+            modelVariables[index] = mvBinary(name, valueReference)
+        elseif typename == "Clock"
+            modelVariables[index] = mvClock(name, valueReference)
+        elseif typename == "Enumeration"
+            modelVariables[index] = mvEnumeration(name, valueReference)
+        else 
+            @warn "Unknown data type `$(typename)`."
+            # tODO how to handle unknown types
+        end
+        
+        # modelVariables[index] = fmi3Variable(name, valueReference)
+
+        if !(valueReference in md.valueReferences)
+            push!(md.valueReferences, valueReference)
+        end
+
+        if haskey(node, "description")
+            modelVariables[index].description = node["description"]
+        end
 
         if haskey(node, "causality")
             causality = fmi3StringToCausality(node["causality"])
@@ -210,87 +217,181 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
             variability = fmi3StringToVariability(node["variability"])
         end
 
-        if haskey(node, "initial")
-            initial = fmi3StringToInitial(node["initial"])
+        if haskey(node, "canHandleMultipleSetPerTimeInstant")
+            modelVariables[index].canHandleMultipleSetPerTimeInstant = fmi3parseBoolean(node["canHandleMultipleSetPerTimeInstant"])
+        end
+
+        if haskey(node, "annotations")
+            modelVariables[index].annotations = node["annotations"]
+        end
+
+        if haskey(node, "clocks")
+            modelVariables[index].clocks = fmi3parseArrayValueReferences(node["clocks"])
+        end
+
+        if haskey(node, "intermediateUpdate") && typename != "Clock" && typename != "String"
+            modelVariables[index].intermediateUpdate = fmi3parseBoolean(node["intermediateUpdate"])
         end
         
-        modelVariables[index] = fmi3ModelVariable(name, valueReference, causality, variability, initial)
-
-        if !(valueReference in md.valueReferences)
-            push!(md.valueReferences, valueReference)
+        if haskey(node, "previous") && typename != "Clock" && typename != "String"
+            modelVariables[index].previous = fmi3parseBoolean(node["previous"])
         end
 
-        if haskey(node, "description")
-            modelVariables[index].description = node["description"]
+        if haskey(node, "initial") && typename != "Clock" && typename != "String" && typename != "Enumeration"
+            modelVariables[index].initial = fmi3StringToInitial(node["initial"])
         end
         
-        modelVariables[index].datatype = fmi3SetDatatypeVariables(node, md)
+        if haskey(node, "quantity") && typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+            modelVariables[index].quantity = node["quantity"]
+        end
+        
+        if haskey(node, "unit") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].unit = node["unit"]
+        end
+        
+        if haskey(node, "displayUnit") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].displayUnit = node["displayUnit"]
+        end
+        
+        if haskey(node, "declaredType") && typename != "String"
+            modelVariables[index].declaredType = node["declaredType"]
+        end
 
-        # type node
-        typenode = nothing
-        typename = node.name
+        if haskey(node, "min") && typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+            if typename == "Float32"
+                modelVariables[index].min = parse(fmi3Float32, node["min"])
+            elseif typename == "Float64"
+                modelVariables[index].min = parse(fmi3Float32, node["min"])
+            elseif typename == "Int8"
+                modelVariables[index].min = parse(fmi3Int8, node["min"])
+            elseif typename == "UInt8"
+                modelVariables[index].min = parse(fmi3UInt8, node["min"])
+            elseif typename == "Int16"
+                modelVariables[index].min = parse(fmi3Int16, node["min"])
+            elseif typename == "UInt16"
+                modelVariables[index].min = parse(fmi3UInt16, node["min"])
+            elseif typename == "Int32"
+                modelVariables[index].min = parse(fmi3Int32, node["min"])
+            elseif typename == "UInt32"
+                modelVariables[index].min = parse(fmi3UInt32, node["min"])
+            elseif typename == "Int64"
+                modelVariables[index].min = parse(fmi3Int64, node["min"])
+            elseif typename == "UInt64"
+                modelVariables[index].min = parse(fmi3UInt64, node["min"])  
+            end
+        end
 
-        if typename == "Float32" || typename == "Float64"
-            modelVariables[index]._Float = fmi3ModelDescriptionFloat()
-            typenode = modelVariables[index]._Float
-            if haskey(node, "quantity")
-                typenode.quantity = node["quantity"]
+        if haskey(node, "max") && typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+            if typename == "Float32"
+                modelVariables[index].max = parse(fmi3Float32, node["max"])
+            elseif typename == "Float64"
+                modelVariables[index].max = parse(fmi3Float32, node["max"])
+            elseif typename == "Int8"
+                modelVariables[index].max = parse(fmi3Int8, node["max"])
+            elseif typename == "UInt8"
+                modelVariables[index].max = parse(fmi3UInt8, node["max"])
+            elseif typename == "Int16"
+                modelVariables[index].max = parse(fmi3Int16, node["max"])
+            elseif typename == "UInt16"
+                modelVariables[index].max = parse(fmi3UInt16, node["max"])
+            elseif typename == "Int32"
+                modelVariables[index].max = parse(fmi3Int32, node["max"])
+            elseif typename == "UInt32"
+                modelVariables[index].max = parse(fmi3UInt32, node["max"])
+            elseif typename == "Int64"
+                modelVariables[index].max = parse(fmi3Int64, node["max"])
+            elseif typename == "UInt64"
+                modelVariables[index].max = parse(fmi3UInt64, node["max"]) 
             end
-            if haskey(node, "unit")
-                typenode.unit = node["unit"]
+        end
+
+        if haskey(node, "nominal") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].nominal = parse(Real, node["nominal"])
+        end
+        
+        if haskey(node, "unbounded") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].unbounded = fmi3parseBoolean(node["nominal"])
+        end
+
+        if haskey(node, "start") && typename != "Binary" && typename != "Clock"
+            if node.firstelement !== nothing && node.firstelement.name == "Dimension"
+                substrings = split(node["start"], " ")
+                if typename == "Float32"
+                    modelVariables[index].start = Array{fmi3Float32}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3Float32, string))
+                    end
+                elseif typename == "Float64"
+                    modelVariables[index].start = Array{fmi3Float64}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3Float64, string))
+                    end
+                elseif typename == "Int32"
+                    modelVariables[index].start = Array{fmi3Int32}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3Int32, string))
+                    end
+                elseif typename == "UInt32"
+                    modelVariables[index].start = Array{fmi3UInt32}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3UInt32, string))
+                    end
+                elseif typename == "Int64"
+                    modelVariables[index].start = Array{fmi3Int64}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3Int64, string))
+                    end
+                elseif typename == "UInt64"
+                    modelVariables[index].start = Array{fmi3UInt64}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parse(fmi3UInt64, string))
+                    end
+                else
+                    @warn "More array variable types not implemented yet!"
+                end
+            else
+                if typename == "Float32"
+                    modelVariables[index].start = parse(fmi3Float32, node["start"])
+                elseif typename == "Float64"
+                    modelVariables[index].start = parse(fmi3Float32, node["start"])
+                elseif typename == "Int8"
+                    modelVariables[index].start = parse(fmi3Int8, node["start"])
+                elseif typename == "UInt8"
+                    modelVariables[index].start = parse(fmi3UInt8, node["start"])
+                elseif typename == "Int16"
+                    modelVariables[index].start = parse(fmi3Int16, node["start"])
+                elseif typename == "UInt16"
+                    modelVariables[index].start = parse(fmi3UInt16, node["start"])
+                elseif typename == "Int32"
+                    modelVariables[index].start = parse(fmi3Int32, node["start"])
+                elseif typename == "UInt32"
+                    modelVariables[index].start = parse(fmi3UInt32, node["start"])
+                elseif typename == "Int64"
+                    modelVariables[index].start = parse(fmi3Int64, node["start"])
+                elseif typename == "UInt64"
+                    modelVariables[index].start = parse(fmi3UInt64, node["start"]) 
+                elseif typename == "Boolean"
+                    modelVariables[index].start = parseFMI3Boolean(node["start"])
+                elseif typename == "Binary"
+                    modelVariables[index].start = pointer(node["start"])
+                elseif typename == "String"
+                    modelVariables[index].start = parse(fmi3String, node["start"])
+                elseif typename == "Enum"
+                    for i in 1:length(md.enumerations)
+                        if modelVariables[index].declaredType == md.enumerations[i][1] # identify the enum by the name
+                            modelVariables[index].start = md.enumerations[i][1 + parse(Int, node["start"])] # find the enum value and set it
+                        end
+                    end
+                end
             end
-            if haskey(node, "displayUnit")
-                typenode.displayUnit = node["displayUnit"]
-            end
-            if haskey(node, "relativeQuantity")
-                typenode.relativeQuantity = fmi3parseBoolean(node["relativeQuantity"])
-            end
-            if haskey(node, "min")
-                typenode.min = fmi3parseFloat(node["min"])
-            end
-            if haskey(node, "max")
-                typenode.max = fmi3parseFloat(node["max"])
-            end
-            if haskey(node, "nominal")
-                typenode.nominal = fmi3parseFloat(node["nominal"])
-            end
-            if haskey(node, "unbounded")
-                typenode.unbounded = fmi3parseBoolean(node["unbounded"])
-            end
-            if haskey(node, "start")
-                typenode.start = fmi3parseFloat(node["start"])
-            end
-            if haskey(node, "derivative")
-                typenode.derivative = parse(UInt, node["derivative"])
-            end
-        elseif typename == "String"
-            modelVariables[index]._String = fmi3ModelDescriptionString()
-            typenode = modelVariables[index]._String
-            if haskey(node, "start")
-                modelVariables[index]._String.start = node["start"]
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Boolean"
-            modelVariables[index]._Boolean = fmi3ModelDescriptionBoolean()
-            typenode = modelVariables[index]._Boolean
-            if haskey(node, "start")
-                modelVariables[index]._Boolean.start = fmi3parseBoolean(node["start"])
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Int32"
-            modelVariables[index]._Integer = fmi3ModelDescriptionInteger()
-            typenode = modelVariables[index]._Integer
-            if haskey(node, "start")
-                modelVariables[index]._Integer.start = fmi3parseInteger(node["start"])
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Enumeration"
-            modelVariables[index]._Enumeration = fmi3ModelDescriptionEnumeration()
-            typenode = modelVariables[index]._Enumeration
-            # ToDo: Save start value
-            # ToDo: remaining attributes
-        else 
-            @warn "Unknown data type `$(typename)`."
+        end
+
+        if haskey(node, "derivative") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].derivative = parse(fmi3ValueReference, node["derivative"])
+        end
+        
+        if haskey(node, "reinit") && (typename == "Float32" || typename == "Float64")
+            modelVariables[index].reinit = parseFMI3Boolean(node["reinit"])
         end
         
         md.stringValueReferences[name] = valueReference
@@ -323,7 +424,7 @@ function parseModelStructure(nodes::EzXML.Node, md::fmi3ModelDescription)
                 derSV = fmi3ModelVariablesForValueReference(md, fmi3ValueReference(fmi3parseInteger(node["valueReference"])))[1]
                 # derSV = md.modelVariables[varDep.index]
                 derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV._Float.derivative].valueReference
+                stateVR = md.modelVariables[derSV.derivative].valueReference
     
                 if stateVR ∉ md.stateValueReferences
                     push!(md.stateValueReferences, stateVR)
@@ -374,7 +475,7 @@ function parseDependencies(node::EzXML.Node)
         end
     end
 
-    if varDep.dependencies != nothing && varDep.dependenciesKind != nothing
+    if varDep.dependencies !== nothing && varDep.dependenciesKind !== nothing
         if length(varDep.dependencies) != length(varDep.dependenciesKind)
             @warn "Length of field dependencies ($(length(varDep.dependencies))) doesn't match length of dependenciesKind ($(length(varDep.dependenciesKind)))."   
         end
@@ -394,7 +495,7 @@ function parseContinuousStateDerivative(nodes::EzXML.Node, md::fmi3ModelDescript
                 # find states and derivatives
                 derSV = md.modelVariables[varDep.index]
                 derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV._Float.derivative].valueReference
+                stateVR = md.modelVariables[derSV.derivative].valueReference
 
                 if stateVR ∉ md.stateValueReferences
                     push!(md.stateValueReferences, stateVR)
@@ -416,51 +517,9 @@ function parseContinuousStateDerivative(nodes::EzXML.Node, md::fmi3ModelDescript
     end
 end
 
-function parseInitialUnknowns(node::EzXML.Node, md::fmi3ModelDescription)
-    @assert (node.name == "InitialUnknowns") "Wrong element name."
-    for node in eachelement(nodes)
-        if node.name == "Unknown"
-            if haskey(node, "index")
-                varDep = parseUnknwon(node)
-
-                push!(md.modelStructure.initialUnknowns, varDep)
-            else 
-                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
-            end
-        else 
-            @warn "Unknown entry in `ModelStructure.InitialUnknowns` named `$(node.name)`."
-        end 
-    end
-end
-
-function parseOutputs(nodes::EzXML.Node, md::fmi3ModelDescription)
-    @assert (nodes.name == "Outputs") "Wrong element name."
-    md.modelStructure.outputs = []
-    for node in eachelement(nodes)
-        if node.name == "Unknown"
-            if haskey(node, "index")
-                varDep = parseUnknwon(node)
-
-                # find outputs
-                outVR = md.modelVariables[varDep.index].valueReference
-                
-                if outVR ∉ md.outputValueReferences
-                    push!(md.outputValueReferences, outVR)
-                end
-
-                push!(md.modelStructure.outputs, varDep)
-            else 
-                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
-            end
-        else 
-            @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
-        end 
-    end
-end
-
 # Parses a real value represented by a string.
 function fmi3parseFloat(s::Union{String, SubString{String}}; onfail=nothing)
-    if onfail == nothing
+    if onfail === nothing
         return parse(fmi3Float64, s)
     else
         try
@@ -501,7 +560,7 @@ end
 
 # Parses an Integer value represented by a string.
 function fmi3parseInteger(s::Union{String, SubString{String}}; onfail=nothing)
-    if onfail == nothing
+    if onfail === nothing
         return parse(Int, s)
     else
         try
@@ -537,222 +596,16 @@ function parseFMI3Boolean(s::Union{String, SubString{String}})
     end
 end
 
-# set the datatype and attributes of an model variable
-function fmi3SetDatatypeVariables(node::EzXML.Node, md::fmi3ModelDescription)
-    type = fmi3DatatypeVariable()
-    typename = node.name
-    type.canHandleMultipleSet = nothing
-    type.intermediateUpdate = fmi3False
-    type.previous = nothing
-    type.clocks = nothing
-    type.declaredType = nothing
-    type.start = nothing
-    type.min = nothing
-    type.max = nothing
-    type.initial = nothing
-    type.quantity = nothing
-    type.unit = nothing
-    type.displayUnit = nothing
-    type.relativeQuantity = nothing
-    type.nominal = nothing
-    type.unbounded = nothing
-    type.derivative = nothing
-    type.reinit = nothing
-    type.mimeType = nothing
-    type.maxSize = nothing
-    type.datatype = nothing
+# Parses a Bool value represented by a string.
+function fmi3parseArrayValueReferences(s::Union{String, SubString{String}})
+    references = Array{fmi3ValueReference}(undef, 0)
+    substrings = split(s, " ")
 
-    # TODO fmi3Boolean, fmi3UInt8 are the same datatype so they get recognized the same
-    if typename == "Float32"
-        type.datatype = fmi3Float32
-    elseif typename == "Float64"
-        type.datatype = fmi3Float64
-    elseif typename == "Int8"
-        type.datatype = fmi3Int8
-    elseif typename == "UInt8"
-        type.datatype = fmi3UInt8
-    elseif typename == "Int16"
-        type.datatype = fmi3Int16
-    elseif typename == "UInt16"
-        type.datatype = fmi3UInt16
-    elseif typename == "Int32"
-        type.datatype = fmi3Int32
-    elseif typename == "UInt32"
-        type.datatype = fmi3UInt32
-    elseif typename == "Int64"
-        type.datatype = fmi3Int64
-    elseif typename == "UInt64"
-        type.datatype = fmi3UInt64
-    elseif typename == "Boolean"
-        type.datatype = fmi3Boolean
-    elseif typename == "Binary" 
-        type.datatype = fmi3Binary
-    elseif typename == "Char"
-        type.datatype = fmi3Char
-    elseif typename == "String"
-        type.datatype = fmi3String
-    elseif typename == "Byte"
-        type.datatype = fmi3Byte
-    elseif typename == "Enum"
-        type.datatype = fmi3Enum
-    else
-        @warn "Datatype for the variable $(node["name"]) is unknown!"
+    for string in substrings
+        push!(references, parse(fmi3ValueReferenceFormat, string))
     end
-
-    if haskey(node, "declaredType")
-        type.declaredType = node["declaredType"]
-    end
-
-    # if haskey(node, "initial")
-    #     for i in 0:(length(instances(fmi3initial))-1)
-    #         if "fmi3" * node["initial"] == string(fmi3initial(i))
-    #             type.initial = fmi3initial(i)
-    #         end
-    #     end
-    # end
-
-    if haskey(node, "start")
-        if node.firstelement !== nothing && node.firstelement.name == "Dimension"
-            substrings = split(node["start"], " ")
-            if typename == "Float32"
-                type.start = Array{fmi3Float32}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3Float32, string))
-                end
-            elseif typename == "Float64"
-                type.start = Array{fmi3Float64}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3Float64, string))
-                end
-            elseif typename == "Int32"
-                type.start = Array{fmi3Int32}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3Int32, string))
-                end
-            elseif typename == "UInt32"
-                type.start = Array{fmi3UInt32}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3UInt32, string))
-                end
-            elseif typename == "Int64"
-                type.start = Array{fmi3Int64}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3Int64, string))
-                end
-            elseif typename == "UInt64"
-                type.start = Array{fmi3UInt64}(undef, 0)
-                for string in substrings
-                    push!(type.start, parse(fmi3UInt64, string))
-                end
-            else
-                @warn "More array variable types not implemented yet!"
-            end
-        else
-            if typename == "Float32"
-                type.start = parse(fmi3Float32, node["start"])
-            elseif typename == "Float64"
-                type.start = parse(fmi3Float32, node["start"])
-            elseif typename == "Int8"
-                type.start = parse(fmi3Int8, node["start"])
-            elseif typename == "UInt8"
-                type.start = parse(fmi3UInt8, node["start"])
-            elseif typename == "Int16"
-                type.start = parse(fmi3Int16, node["start"])
-            elseif typename == "UInt16"
-                type.start = parse(fmi3UInt16, node["start"])
-            elseif typename == "Int32"
-                type.start = parse(fmi3Int32, node["start"])
-            elseif typename == "UInt32"
-                type.start = parse(fmi3UInt32, node["start"])
-            elseif typename == "Int64"
-                type.start = parse(fmi3Int64, node["start"])
-            elseif typename == "UInt64"
-                type.start = parse(fmi3UInt64, node["start"]) 
-            elseif typename == "Boolean"
-                type.start = parseFMI3Boolean(node["start"])
-            elseif typename == "Binary"
-                type.start = pointer(node["start"])
-            elseif typename == "Char"
-                type.start = parse(fmi3Char, node["start"])
-            elseif typename == "String"
-                type.start = parse(fmi3String, node["start"])
-            elseif typename == "Byte"
-                type.start = parse(fmi3Byte, node["start"])
-            elseif typename == "Enum"
-                for i in 1:length(md.enumerations)
-                    if type.declaredType == md.enumerations[i][1] # identify the enum by the name
-                        type.start = md.enumerations[i][1 + parse(Int, node["start"])] # find the enum value and set it
-                    end
-                end
-            else
-                @warn "setDatatypeVariables(...) unimplemented start value type $typename"
-                type.start = node["start"]
-            end
-        end
-    end
-    if haskey(node, "intermediateUpdate")
-        type.intermediateUpdate = fmi3True
-    end
-
-    if haskey(node, "min") && (type.datatype != fmi3Binary || type.datatype != fmiBoolean)
-        if type.datatype == fmi3Float32 || type.datatype == fmi3Float64
-            type.min = parse(fmi3Float64, node["min"])
-        elseif type.datatype == fmi3Enum
-            type.min = parse(fmi3Int64, node["min"])
-        elseif type.datatype == fmi3Int8 || type.datatype == fmi3Int16 || type.datatype == fmi3Int32 || type.datatype == fmi3Int64
-            type.min = parse(fmi3Int32, node["min"])
-        else
-            type.min = parse(fmi3UInt32, node["min"])
-        end
-    end
-    if haskey(node, "max") && (type.datatype != fmi3Binary || type.datatype != fmiBoolean)
-        if type.datatype == fmi3Float32 || type.datatype == fmi3Float64
-            type.max = parse(fmi3Float64, node["max"])
-        elseif type.datatype == fmi3Enum
-            type.max = parse(fmi3Int64, node["max"])
-        elseif type.datatype == fmi3Int8 || type.datatype == fmi3Int16 || type.datatype == fmi3Int32 || type.datatype == fmi3Int64
-            type.max = parse(fmi3Int32, node["max"])
-        else
-            type.max = parse(fmi3UInt32, node["max"])
-        end
-    end
-    if haskey(node, "quantity") && (type.datatype != Boolean || type.datatype != fmi3Binary)
-        type.quantity = node["quantity"]
-    end
-    if haskey(node, "unit") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.unit = node["unit"]
-    end
-    if haskey(node, "displayUnit") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.displayUnit = node["displayUnit"]
-    end
-    if haskey(node, "relativeQuantity") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.relativeQuantity = parseFMI3Boolean(node["relativeQuantity"])
-    else
-        type.relativeQuantity = fmi3False
-    end
-    if haskey(node, "nominal") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.nominal = parse(fmi3Float64, node["nominal"])
-    end
-    if haskey(node, "unbounded") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.unbounded = parseFMI3Boolean(node["unbounded"])
-    else
-        type.unbounded = fmi3False
-    end
-    if haskey(node, "derivative") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.derivative = parse(fmi3UInt32, node["derivative"])
-    end
-    if haskey(node, "reinit") && (type.datatype == fmi3Float32 || type.datatype == fmi3Float64)
-        type.reinit = parseFMI3Boolean(node["reinit"])
-    end
-    if haskey(node, "mimeType") && type.datatype == fmi3Binary
-        type.mimeType = node["mimeType"]
-    else
-        type.mimeType = "application/octet"
-    end
-    if haskey(node, "maxSize") && type.datatype == fmi3Binary
-        type.maxSize = parse(fmi3UInt32, node["maxSize"])
-    end
-    type
+    
+    return references
 end
 
 #=
@@ -762,6 +615,7 @@ Example:
 "enum1name" "value1"    "value2"
 "enum2name" "value1"    "value2"
 =#
+# TODO unused
 function fmi3createEnum(node::EzXML.Node)
     enum = 1
     idx = 1
@@ -790,7 +644,7 @@ end
 Returns startTime from DefaultExperiment if defined else defaults to nothing.
 """
 function fmi3GetDefaultStartTime(md::fmi3ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment === nothing 
         return nothing
     end
     return md.defaultExperiment.startTime
@@ -800,7 +654,7 @@ end
 Returns stopTime from DefaultExperiment if defined else defaults to nothing.
 """
 function fmi3GetDefaultStopTime(md::fmi3ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment === nothing 
         return nothing
     end
     return md.defaultExperiment.stopTime
@@ -810,7 +664,7 @@ end
 Returns tolerance from DefaultExperiment if defined else defaults to nothing.
 """
 function fmi3GetDefaultTolerance(md::fmi3ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment === nothing 
         return nothing
     end
     return md.defaultExperiment.tolerance
@@ -820,7 +674,7 @@ end
 Returns stepSize from DefaultExperiment if defined else defaults to nothing.
 """
 function fmi3GetDefaultStepSize(md::fmi3ModelDescription)
-    if md.defaultExperiment == nothing 
+    if md.defaultExperiment === nothing 
         return nothing
     end
     return md.defaultExperiment.stepSize
@@ -909,7 +763,7 @@ end
 Returns true, if the FMU supports the getting/setting of states
 """
 function fmi3CanGetSetState(md::fmi3ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange != nothing && md.modelExchange.canGetAndSetFMUstate)
+    return (md.coSimulation !== nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange !== nothing && md.modelExchange.canGetAndSetFMUstate)
 
 end
 
@@ -917,7 +771,7 @@ end
 Returns true, if the FMU state can be serialized
 """
 function fmi3CanSerializeFMUState(md::fmi3ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange != nothing && md.modelExchange.canSerializeFMUstate)
+    return (md.coSimulation !== nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange !== nothing && md.modelExchange.canSerializeFMUstate)
 
 end
 
@@ -925,13 +779,13 @@ end
 Returns true, if the FMU provides directional derivatives
 """
 function fmi3ProvidesDirectionalDerivatives(md::fmi3ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivatives) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivatives)
+    return (md.coSimulation !== nothing && md.coSimulation.providesDirectionalDerivatives) || (md.modelExchange !== nothing && md.modelExchange.providesDirectionalDerivatives)
 end
 
 """
 Returns true, if the FMU provides adjoint derivatives
 """
 function fmi3ProvidesAdjointDerivatives(md::fmi3ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.providesAdjointDerivatives) || (md.modelExchange != nothing && md.modelExchange.providesAdjointDerivatives)
+    return (md.coSimulation !== nothing && md.coSimulation.providesAdjointDerivatives) || (md.modelExchange !== nothing && md.modelExchange.providesAdjointDerivatives)
 
 end
