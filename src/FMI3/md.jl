@@ -148,7 +148,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
     for node in eachelement(nodes)
         numberOfVariables += 1
     end
-    modelVariables = Array{fmi3ModelVariable}(undef, numberOfVariables)
+    modelVariables = Array{fmi3Variable}(undef, numberOfVariables)
     index = 1
     for node in eachelement(nodes)
         name = node["name"]
@@ -193,7 +193,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
             # tODO how to handle unknown types
         end
         
-        # modelVariables[index] = fmi3ModelVariable(name, valueReference)
+        # modelVariables[index] = fmi3Variable(name, valueReference)
 
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)

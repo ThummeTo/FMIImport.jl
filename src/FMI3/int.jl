@@ -38,9 +38,6 @@ See also [`fmi3SetDebugLogging`](@ref).
 function fmi3SetDebugLogging(c::FMU3Instance)
     fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
 end
-function fmi3SetDebugLogging(c::FMU3Instance)
-    fmi3SetDebugLogging(c, fmi3False, Unsigned(0), C_NULL)
-end
 
 """
 
