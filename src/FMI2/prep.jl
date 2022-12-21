@@ -59,11 +59,13 @@ function prepareSolveFMU(fmu::FMU2,
 
         c = fmi2Instantiate!(fmu; type=type)
     else # use existing instance
-        if c === nothing && length(fmu.components) > 0
-            c = fmu.components[end]
-        else
-            @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi2Instantiate(fmu)` to prevent this message."
-            c = fmi2Instantiate!(fmu; type=type)
+        if c === nothing
+            if length(fmu.components) > 0
+                c = fmu.components[end]
+            else
+                @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi2Instantiate(fmu)` to prevent this message."
+                c = fmi2Instantiate!(fmu; type=type)
+            end
         end
     end
 
@@ -249,7 +251,12 @@ function prepareSolveFMU(fmu::Vector{FMU2}, c::Vector{Union{Nothing, FMU2Compone
                 @debug "[NEW INST]"
             else
                 if c[i] === nothing
-                    c[i] = fmu[i].components[end]
+                    if length(fmu[i].components) > 0
+                        c[i] = fmu[i].components[end]
+                    else
+                        @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi2Instantiate(fmu)` to prevent this message."
+                        c[i] = fmi2Instantiate!(fmu[i]; type=type)
+                    end
                 end
             end
 
