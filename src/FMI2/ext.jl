@@ -872,19 +872,19 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
         mv = fmi2ModelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
 
-        if mv._Real != nothing
+        if mv.Real != nothing
             #@assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi2GetReal(comp, vr)
-        elseif mv._Integer != nothing
+        elseif mv.Integer != nothing
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi2GetInteger(comp, vr)
-        elseif mv._Boolean != nothing
+        elseif mv.Boolean != nothing
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi2GetBoolean(comp, vr)
-        elseif mv._String != nothing
+        elseif mv.String != nothing
             #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi2GetString(comp, vr)
-        elseif mv._Enumeration != nothing
+        elseif mv.Enumeration != nothing
             @warn "fmi2Get!(...): Currently not implemented for fmi2Enum."
         else
             @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
@@ -973,19 +973,19 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
         if filter === nothing || filter(mv)
 
-            if mv._Real != nothing
+            if mv.Real != nothing
                 @assert isa(srcArray[i], Real) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
-            elseif mv._Integer != nothing
+            elseif mv.Integer != nothing
                 @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
-            elseif mv._Boolean != nothing
+            elseif mv.Boolean != nothing
                 @assert isa(srcArray[i], Union{Real, Bool}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
-            elseif mv._String != nothing
+            elseif mv.String != nothing
                 @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
-            elseif mv._Enumeration != nothing
+            elseif mv.Enumeration != nothing
                 @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
             else
                 @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
@@ -1025,11 +1025,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - second optional function:`starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
 - third optional function: `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
 - forth optional function:
- - `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
- - `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
- - `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
- - `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
- - `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
+ - `mv.Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
+ - `mv.Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
+ - `mv.Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
+ - `mv.String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
+ - `mv.Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
 
 
 # Source
@@ -1086,16 +1086,16 @@ function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.f
             @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
         end
 
-        if mvs[1]._Real != nothing
-            push!(starts, mvs[1]._Real.start)
-        elseif mvs[1]._Integer != nothing
-            push!(starts, mvs[1]._Integer.start)
-        elseif mvs[1]._Boolean != nothing
-            push!(starts, mvs[1]._Boolean.start)
-        elseif mvs[1]._String != nothing
-            push!(starts, mvs[1]._String.start)
-        elseif mvs[1]._Enumeration != nothing
-            push!(starts, mvs[1]._Enumeration.start)
+        if mvs[1].Real != nothing
+            push!(starts, mvs[1].Real.start)
+        elseif mvs[1].Integer != nothing
+            push!(starts, mvs[1].Integer.start)
+        elseif mvs[1].Boolean != nothing
+            push!(starts, mvs[1].Boolean.start)
+        elseif mvs[1].String != nothing
+            push!(starts, mvs[1].String.start)
+        elseif mvs[1].Enumeration != nothing
+            push!(starts, mvs[1].Enumeration.start)
         else
             @assert false "fmi2GetStartValue(...): Value reference $(vr) has no data type."
         end
@@ -1115,16 +1115,16 @@ Returns the start/default value for a given value reference.
 """
 
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
-    if mv._Real != nothing
-        return mv._Real.start
-    elseif mv._Integer != nothing
-        return mv._Integer.start
-    elseif mv._Boolean != nothing
-        return mv._Boolean.start
-    elseif mv._String != nothing
-        return mv._String.start
-    elseif mv._Enumeration != nothing
-        return mv._Enumeration.start
+    if mv.Real != nothing
+        return mv.Real.start
+    elseif mv.Integer != nothing
+        return mv.Integer.start
+    elseif mv.Boolean != nothing
+        return mv.Boolean.start
+    elseif mv.String != nothing
+        return mv.String.start
+    elseif mv.Enumeration != nothing
+        return mv.Enumeration.start
     else
         @assert false "fmi2GetStartValue(...): Variable $(mv) has no data type."
     end
@@ -1140,14 +1140,14 @@ Returns the `unit` entry of the corresponding model variable.
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Real.unit`: Returns the `unit` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+- `mv.Real.unit`: Returns the `unit` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetUnit(mv::fmi2ScalarVariable)
-    if mv._Real != nothing
-        return mv._Real.unit
+    if mv.Real != nothing
+        return mv.Real.unit
     else
         return nothing
     end
@@ -1163,7 +1163,7 @@ Returns the `inital` entry of the corresponding model variable.
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Returns
-- `mv._Real.unit`: Returns the `inital` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
+- `mv.Real.unit`: Returns the `inital` entry of the corresponding ScalarVariable representing a variable of the primitive type Real. Otherwise `nothing` is returned.
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)

@@ -222,8 +222,8 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
         typename = node.firstelement.name
 
         if typename == "Real"
-            scalarVariables[index]._Real = fmi2ModelDescriptionReal()
-            typenode = scalarVariables[index]._Real
+            scalarVariables[index].Real = fmi2ModelDescriptionReal()
+            typenode = scalarVariables[index].Real
             if haskey(node.firstelement, "quantity")
                 typenode.quantity = node.firstelement["quantity"]
             end
@@ -255,29 +255,29 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
                 typenode.derivative = parse(UInt, node.firstelement["derivative"])
             end
         elseif typename == "String"
-            scalarVariables[index]._String = fmi2ModelDescriptionString()
-            typenode = scalarVariables[index]._String
+            scalarVariables[index].String = fmi2ModelDescriptionString()
+            typenode = scalarVariables[index].String
             if haskey(node.firstelement, "start")
-                scalarVariables[index]._String.start = node.firstelement["start"]
+                scalarVariables[index].String.start = node.firstelement["start"]
             end
             # ToDo: remaining attributes
         elseif typename == "Boolean"
-            scalarVariables[index]._Boolean = fmi2ModelDescriptionBoolean()
-            typenode = scalarVariables[index]._Boolean
+            scalarVariables[index].Boolean = fmi2ModelDescriptionBoolean()
+            typenode = scalarVariables[index].Boolean
             if haskey(node.firstelement, "start")
-                scalarVariables[index]._Boolean.start = parseFMI2Boolean(node.firstelement["start"])
+                scalarVariables[index].Boolean.start = parseFMI2Boolean(node.firstelement["start"])
             end
             # ToDo: remaining attributes
         elseif typename == "Integer"
-            scalarVariables[index]._Integer = fmi2ModelDescriptionInteger()
-            typenode = scalarVariables[index]._Integer
+            scalarVariables[index].Integer = fmi2ModelDescriptionInteger()
+            typenode = scalarVariables[index].Integer
             if haskey(node.firstelement, "start")
-                scalarVariables[index]._Integer.start = parseInteger(node.firstelement["start"])
+                scalarVariables[index].Integer.start = parseInteger(node.firstelement["start"])
             end
             # ToDo: remaining attributes
         elseif typename == "Enumeration"
-            scalarVariables[index]._Enumeration = fmi2ModelDescriptionEnumeration()
-            typenode = scalarVariables[index]._Enumeration
+            scalarVariables[index].Enumeration = fmi2ModelDescriptionEnumeration()
+            typenode = scalarVariables[index].Enumeration
             # ToDo: Save start value
             # ToDo: remaining attributes
         else
@@ -348,7 +348,7 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
                 # find states and derivatives
                 derSV = md.modelVariables[varDep.index]
                 derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV._Real.derivative].valueReference
+                stateVR = md.modelVariables[derSV.Real.derivative].valueReference
 
                 if stateVR ∉ md.stateValueReferences
                     push!(md.stateValueReferences, stateVR)
@@ -515,7 +515,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
 
     if typename == "Real"
         type.datatype = fmi2Real
-        sv._Real = fmi2ModelDescriptionReal()
+        sv.Real = fmi2ModelDescriptionReal()
     elseif typename == "String"
         type.datatype = fmi2String
     elseif typename == "Boolean"
@@ -535,7 +535,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
     if haskey(typenode, "start")
         if typename == "Real"
             type.start = parse(fmi2Real, typenode["start"])
-            sv._Real.start = type.start
+            sv.Real.start = type.start
         elseif typename == "Integer"
             type.start = parse(fmi2Integer, typenode["start"])
         elseif typename == "Boolean"
@@ -589,7 +589,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
     if haskey(typenode, "derivative") && type.datatype == fmi2Real
         type.derivative = parse(fmi2Integer, typenode["derivative"])
         if typename == "Real"
-            sv._Real.derivative = type.derivative
+            sv.Real.derivative = type.derivative
         end
     end
     if haskey(typenode, "reinit") && type.datatype == fmi2Real
@@ -1396,7 +1396,7 @@ Returns a dictionary of variables with their units
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 
 # Returns
-- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
+- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
 See also [`fmi2GetUnit`](@ref).
 """
 function fmi2GetNamesAndUnits(md::fmi2ModelDescription)

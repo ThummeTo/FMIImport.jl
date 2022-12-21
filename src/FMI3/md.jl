@@ -116,7 +116,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
             md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
             md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
-            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance")
+            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance"; onfail = md.defaultExperiment.tolerance)
             md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
         end
     end
@@ -204,17 +204,17 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         end
 
         if haskey(node, "causality")
-            modelVariables[index].causality = fmi3StringToCausality(node["causality"])
+            causality = fmi3StringToCausality(node["causality"])
 
-            if modelVariables[index].causality == fmi3CausalityOutput
+            if causality == fmi3CausalityOutput
                 push!(md.outputValueReferences, valueReference)
-            elseif modelVariables[index].causality == fmi3CausalityInput
+            elseif causality == fmi3CausalityInput
                 push!(md.inputValueReferences, valueReference)
             end
         end
 
         if haskey(node, "variability")
-            modelVariables[index].variability = fmi3StringToVariability(node["variability"])
+            variability = fmi3StringToVariability(node["variability"])
         end
 
         if haskey(node, "canHandleMultipleSetPerTimeInstant")
