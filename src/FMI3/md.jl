@@ -148,7 +148,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
     for node in eachelement(nodes)
         numberOfVariables += 1
     end
-    modelVariables = Array{fmi3Variable}(undef, numberOfVariables)
+    modelVariables = Array{fmi3ModelVariable}(undef, numberOfVariables)
     index = 1
     for node in eachelement(nodes)
         name = node["name"]
