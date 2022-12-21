@@ -5,7 +5,7 @@
 
 fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
 
-inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
+inst = fmi3InstantiateModelExchange!(myFMU; loggingOn=false)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
