@@ -1225,53 +1225,64 @@ function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Ar
         mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
         # TODO future refactor
-        if mv.datatype.datatype == fmi3Float32 
+        if isa(mv, FMICore.mvFloat32) 
             #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             fmi3SetFloat32(inst, vr, srcArray[i])
-        elseif mv.datatype.datatype == fmi3Float64 
+        elseif isa(mv, FMICore.mvFloat64)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetFloat64(inst, vr, srcArray[i])
-        elseif mv.datatype.datatype == fmi3Int8 
+        elseif isa(mv, FMICore.mvInt8) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetInt8(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3Int16 
+        elseif isa(mv, FMICore.mvInt16) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetInt16(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3Int32 
+        elseif isa(mv, FMICore.mvInt32) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetInt32(inst, vr, Int32(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3SetInt64 
+        elseif isa(mv, FMICore.mvInt64) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetInt64(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3UInt8 
+        elseif isa(mv, FMICore.mvUInt8) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetUInt8(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3UInt16 
+        elseif isa(mv, FMICore.mvUInt16) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetUInt16(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3UInt32 
+        elseif isa(mv, FMICore.mvUInt32) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetUInt32(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3SetUInt64 
+        elseif isa(mv, FMICore.mvUInt64) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             fmi3SetUInt64(inst, vr, Integer(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3Boolean 
+        elseif isa(mv, FMICore.mvBoolean) 
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             fmi3SetBoolean(inst, vr, Bool(srcArray[i]))
-        elseif mv.datatype.datatype == fmi3String 
+        elseif isa(mv, FMICore.mvString) 
             #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             fmi3SetString(inst, vr, srcArray[i])
-        elseif mv.datatype.datatype == fmi3Binary 
+        elseif isa(mv, FMICore.mvBinary) 
             #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             fmi3SetBinary(inst, vr, Csize_t(length(srcArray[i])), pointer(srcArray[i])) # TODO fix this
-        elseif mv.datatype.datatype == fmi3Enum 
+        elseif isa(mv, FMICore.mvEnumeration)
             @warn "fmi3Set!(...): Currently not implemented for fmi3Enum."
         else 
-            @assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
+            @assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(typeof(mv))`."
         end
     end
     
     return retcodes
+end
+
+"""
+ToDo: DocString 
+"""
+function fmi3Set(inst::FMU3Instance, vr::Union{fmi3ValueReference, String}, value)
+    vrs = prepareValueReference(inst, vr)
+
+    ret = fmi3Set(inst, vrs, [value])
+
+    return ret[1]
 end
 
 """
@@ -1459,13 +1470,13 @@ function fmi3SampleDirectionalDerivative!(c::FMU3Instance,
         vKnown = vKnown_ref[i]
         origValue = fmi3GetFloat64(c, vKnown)
 
-        fmi2SetReal(c, vKnown, origValue - steps[i]*0.5)
+        fmi3Set(c, vKnown, origValue - steps[i]*0.5)
         negValues = fmi3GetFloat64(c, vUnknown_ref)
 
-        fmi2SetReal(c, vKnown, origValue + steps[i]*0.5)
+        fmi3Set(c, vKnown, origValue + steps[i]*0.5)
         posValues = fmi3GetFloat64(c, vUnknown_ref)
 
-        fmi3SetFloat64(c, vKnown, origValue)
+        fmi3Set(c, vKnown, origValue)
 
         if length(vUnknown_ref) == 1
             dvUnknown[1,i] = (posValues-negValues) ./ steps[i]
