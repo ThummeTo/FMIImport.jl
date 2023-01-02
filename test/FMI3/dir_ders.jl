@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
 
 inst = fmi3InstantiateModelExchange!(myFMU; loggingOn=true)
 @test inst != 0

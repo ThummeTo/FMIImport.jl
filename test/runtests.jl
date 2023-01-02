@@ -73,8 +73,7 @@ function runtestsFMI3(exportingTool)
                 include("FMI3/state.jl")
             end
             @testset "Directional derivatives" begin
-                #include("FMI3/dir_ders.jl")
-                @warn "Skipping directional derivative testing."
+                include("FMI3/dir_ders.jl")
             end
         end
 

@@ -6,7 +6,7 @@
 import FMIImport: fmi2StatusError, fmi2StatusOK
 
 myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU.executionConfig.assertOnWarning = true
+myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
 comp = fmi2Instantiate!(myFMU; loggingOn=true, externalCallbacks=true)
@@ -83,4 +83,5 @@ end
 #@test output == ""
 
 # cleanup
+myFMU.executionConfig.assertOnError = true
 fmi2Unload(myFMU)

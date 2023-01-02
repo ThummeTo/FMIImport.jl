@@ -6,6 +6,7 @@
 import FMIImport: fmi3StatusError
 
 myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
@@ -43,10 +44,10 @@ open(joinpath(pwd(), "stdout"), "w") do out
     end 
 end
 
-if VERSION >= v"1.7.0"
-    output = read(joinpath(pwd(), "stdout"), String)
-    @test startswith(output, "Logging: Error During Test at ")
+output = read(joinpath(pwd(), "stdout"), String)
+@test output == ""
 
+if VERSION >= v"1.7.0"
     output = read(joinpath(pwd(), "stderr"), String)
     @test startswith(output, "┌ Warning: fmi3ExitInitializationMode(...): Needs to be called in state `fmi3InstanceStateInitializationMode`.\n")
 end 
@@ -73,4 +74,5 @@ end
 #@test output == ""
 
 # cleanup
+myFMU.executionConfig.assertOnError = true
 fmi3Unload(myFMU)
