@@ -20,7 +20,6 @@ function fmi2JVP!(c::FMU2Component, mtxCache::Symbol, ∂f_refs, ∂x_refs, seed
         jac = getfield(c, mtxCache)
         if jac.b == nothing || size(jac.b) != (length(seed),)
             jac.b = zeros(length(seed))
-            setfield!(c, resCache, res)
         end 
 
         fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jac.b, seed)
