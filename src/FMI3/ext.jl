@@ -1437,24 +1437,6 @@ end
 """
 TODO
 """
-function fmi3GetUnit(mv::fmi3Variable)
-    if mv._Float != nothing
-        return mv._Float.unit
-    else
-        return nothing
-    end
-end
-
-"""
-TODO
-"""
-function fmi3GetInitial(mv::fmi3Variable)
-    return mv.initial
-end
-
-"""
-TODO
-"""
 function fmi3SampleDirectionalDerivative(c::FMU3Instance,
     vUnknown_ref::Array{fmi3ValueReference},
     vKnown_ref::Array{fmi3ValueReference},
