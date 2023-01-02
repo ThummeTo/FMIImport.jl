@@ -56,6 +56,24 @@ D = [0.0; 1.0]
 dx_t = [0.0, 0.0]
 y_t = [0.0, 0.0]
 
+# Test build-in derivatives (slow) only for jacobian A
+fmu.executionConfig.JVPBuiltInDerivatives = true
+
+_f = _x -> fmu(;x=_x)[2]
+_f(x)
+j_fwd = ForwardDiff.jacobian(_f, x)
+j_zyg = Zygote.jacobian(_f, x)[1]
+j_smp = fmi2SampleJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences)
+j_get = fmi2GetJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences)
+
+@test isapprox(j_fwd, A; atol=atol)
+@test isapprox(j_zyg, A; atol=atol)
+@test isapprox(j_smp, A; atol=atol)
+@test isapprox(j_get, A; atol=atol)
+
+fmu.executionConfig.JVPBuiltInDerivatives = false
+reset!(c)
+
 # Jacobian A=∂dx/∂x
 _f = _x -> fmu(;x=_x)[2]
 _f(x)

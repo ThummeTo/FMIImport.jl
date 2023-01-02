@@ -6,6 +6,7 @@
 import FMIImport: fmi3StatusError
 
 myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
@@ -42,6 +43,7 @@ open(joinpath(pwd(), "stdout"), "w") do out
         end
     end 
 end
+
 output = read(joinpath(pwd(), "stdout"), String)
 @test output == ""
 
@@ -72,4 +74,5 @@ end
 #@test output == ""
 
 # cleanup
+myFMU.executionConfig.assertOnError = true
 fmi3Unload(myFMU)

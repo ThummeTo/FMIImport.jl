@@ -3,9 +3,9 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
 
-inst = fmi3InstantiateModelExchange!(myFMU; loggingOn=false)
+inst = fmi3InstantiateModelExchange!(myFMU; loggingOn=true)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
@@ -40,10 +40,10 @@ for i in 1:numStates
 end
 
 # Bug in the FMU
-# jac = fmi3GetJacobian(inst, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-# @test jac ≈ hcat(targetValues...)
+jac = fmi3GetJacobian(inst, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+@test jac ≈ hcat(targetValues...)
 
-# jac = fmi3SampleDirectionalDerivative(inst, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
-# @test jac ≈ hcat(targetValues...)
+jac = fmi3SampleDirectionalDerivative(inst, myFMU.modelDescription.derivativeValueReferences, myFMU.modelDescription.stateValueReferences)
+@test jac ≈ hcat(targetValues...)
 
 fmi3Unload(myFMU)
