@@ -1585,7 +1585,9 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
-"""fmi2NewDiscreteStates!
+"""
+
+fmi2NewDiscreteStates!
 function fmi2SetContinuousStates(c::FMU2Component,
     x::AbstractArray{fmi2Real},
     nx::Csize_t;
