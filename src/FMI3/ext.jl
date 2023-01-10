@@ -1107,49 +1107,46 @@ function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::A
         mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
         # TODO change if dataytype is elimnated
-        if mv.datatype.datatype == fmi3Float32 
+        if typeof(mv) == mvFloat32 
             #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetFloat32(inst, vr)
-        elseif mv.datatype.datatype == fmi3Float64 
+        elseif typeof(mv) == mvFloat64
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetFloat64(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int8 
+        elseif typeof(mv) == mvInt8  
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt8(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int16 
+        elseif typeof(mv) == mvInt16
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt16(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int32 
+        elseif typeof(mv) == mvInt32 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt32(inst, vr)
-        elseif mv.datatype.datatype == fmi3GetInt64 
+        elseif typeof(mv) == mvInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt64(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt8 
+        elseif typeof(mv) == mvUInt8
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt8(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt16 
+        elseif typeof(mv) == mvUInt16 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt16(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt32 
+        elseif typeof(mv) == mvUInt32
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt32(inst, vr)
-        elseif mv.datatype.datatype == fmi3GetUInt64 
+        elseif typeof(mv) == mvUInt64 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt64(inst, vr)
-        elseif mv.datatype.datatype == fmi3Boolean 
+        elseif typeof(mv) == mvBoolean 
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetBoolean(inst, vr)
-        elseif mv.datatype.datatype == fmi3String 
+        elseif typeof(mv) == mvString
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetString(inst, vr)
-        elseif mv.datatype.datatype == fmi3String 
-            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetString(inst, vr)
-        elseif mv.datatype.datatype == fmi3Binary 
+        elseif typeof(mv) == mvBinary
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetBinary(inst, vr)
-        elseif mv.datatype.datatype == fmi3Enum 
+        elseif typeof(mv) == mvEnumeration
             @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
         else 
             @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
@@ -1183,7 +1180,12 @@ function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
     vrs = prepareValueReference(inst, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
     fmi3Get!(inst, vrs, dstArray)
-    return dstArray
+
+    if length(dstArray) == 1
+        return dstArray[1]
+    else
+        return dstArray
+    end
 end
 
 """
