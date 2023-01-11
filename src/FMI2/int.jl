@@ -1114,7 +1114,6 @@ end
 
 """
 
-
     fmiSetContinuousStates(c::FMU2Component,
                                  x::Union{AbstractArray{Float32},AbstractArray{Float64}})
 
@@ -1309,7 +1308,7 @@ end
 
 """
 
-     fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
+    fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
 
 Returns the event indicators of the FMU.
 # Arguments

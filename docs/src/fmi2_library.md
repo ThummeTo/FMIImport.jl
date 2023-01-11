@@ -56,7 +56,6 @@ fmi2GetNamesAndInitials
 fmi2GetInputNamesAndStarts
 fmi2GetVersion
 fmi2GetTypesPlatform
-fmi2Info
 ```
 
 ###  Creation, Destruction and Logging of FMU Instances
@@ -73,9 +72,6 @@ fmi2SetDebugLogging
 This section documents functions that deal with initialization, termination, resetting of an FMU.
 
 ```@docs
-fmiSimulate
-fmiSimulateCS
-fmiSimulateME
 fmi2SetupExperiment
 fmi2EnterInitializationMode
 fmi2ExitInitializationMode
@@ -91,8 +87,8 @@ have identical values but other parts of the variable definition might be differ
 attributes)].
 
 ```@docs
-fmiGet
-fmiGet!
+fmi2Get
+fmi2Get!
 fmiSet
 fmi2GetReal
 fmi2GetReal!
@@ -135,8 +131,8 @@ directional derivatives. This function can be used to construct the desired part
 fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
 fmi2GetRealOutputDerivatives!
-fmi2SampleDirectionalDerivative
-fmi2SampleDirectionalDerivative!
+fmi2SampleJacobian
+fmi2SampleJacobian!
 ```
 
 ## FMI for Model Exchange
@@ -213,7 +209,7 @@ fmi2GetStringStatus!
 ```
 
 ## add  functions
-These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleJacobian`)
 
 ### Opening and closing FMUs
 ```@docs
@@ -238,8 +234,8 @@ fmi2GetSolutionTime
 
 ```@docs
 fmi2Instantiate!
-fmi2SampleDirectionalDerivative
-fmi2SampleDirectionalDerivative!
+fmi2SampleJacobian
+fmi2SampleJacobian!
 fmi2GetJacobian
 fmi2GetJacobian!
 fmi2GetFullJacobian
@@ -250,8 +246,6 @@ fmi2Set
 fmi2GetStartValue
 fmi2GetUnit
 fmi2GetInitial
-fmi2SampleDirectionalDerivative
-fmi2SampleDirectionalDerivative!
 ```
 
 
