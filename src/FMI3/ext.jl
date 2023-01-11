@@ -1143,7 +1143,7 @@ function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::A
         elseif isa(mv, FMICore.mvString)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetString(inst, vr)
-        elseif tisa(mv, FMICore.mvBinary)
+        elseif isa(mv, FMICore.mvBinary)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetBinary(inst, vr)
         elseif isa(mv, FMICore.mvEnumeration)
