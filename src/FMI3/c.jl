@@ -355,7 +355,7 @@ function fmi3ExitInitializationMode(c::FMU3Instance)
         elseif fmi3IsScheduledExecution(c.fmu)
             c.state = fmi3InstanceStateClockActivationMode
         else
-            c.state = fmi3InstancesEventMode
+            c.state = fmi3InstanceStateEventMode
         end
     end 
 
