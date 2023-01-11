@@ -52,7 +52,7 @@ end
 
 """
 
-   fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
+    fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
 
 Returns an array of ValueReferences coresponding to the variable names.
 
