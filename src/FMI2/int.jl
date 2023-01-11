@@ -11,7 +11,7 @@
 
 """
 
-     fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
+    fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
 
 Control the use of the logging callback function, version independent.
 

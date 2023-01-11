@@ -452,7 +452,7 @@ end
 
 """
 
-   fmi2Reset(c::FMU2Component; soft::Bool=false)
+    fmi2Reset(c::FMU2Component; soft::Bool=false)
 
 Is called by the environment to reset the FMU after a simulation run. The FMU goes into the same state as if fmi2Instantiate would have been called.All variables have their default values. Before starting a new run, fmi2SetupExperiment and fmi2EnterInitializationMode have to be called.
 
@@ -548,7 +548,7 @@ end
 
 """
 
-   fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
+    fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
 Functions to get and set values of variables idetified by their valueReference
 # Arguments
@@ -677,7 +677,7 @@ end
 
 """
 
-   fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
+    fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
 Writes the boolean values of an array of variables in the given field
 
@@ -717,7 +717,7 @@ end
 
 """
 
-   fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
+    fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
 Functions to get and set values of variables idetified by their valueReference
 
@@ -753,7 +753,7 @@ end
 
 """
 
-   fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
+    fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
 Functions to get and set values of variables idetified by their valueReference
 
@@ -793,7 +793,7 @@ end
 
 """
 
-   fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
+    fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
 Set the values of an array of string variables
 
@@ -835,7 +835,7 @@ end
 
 """
 
-   fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
+    fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
 Makes a copy of the internal FMU state and returns a pointer to this copy.
 
@@ -870,7 +870,7 @@ end
 
 """
 
-   fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
+    fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
 
 Copies the content of the previously copied FMUstate back and uses it as actual new FMU state.
 
@@ -910,7 +910,7 @@ end
 
 """
 
-   fmi2FreeFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
+    fmi2FreeFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
 Frees all memory and other resources allocated with the fmi2GetFMUstate call for this FMUstate.
 
@@ -945,7 +945,7 @@ end
 
 """
 
-   fmi2SerializedFMUstateSize!(c::FMU2Component, FMUstate::fmi2FMUstate, size::Ref{Csize_t})
+    fmi2SerializedFMUstateSize!(c::FMU2Component, FMUstate::fmi2FMUstate, size::Ref{Csize_t})
 
 Stores the size of the byte vector in the given referenced Address, in order that FMUstate can be stored in it.
 # Argument
@@ -980,7 +980,7 @@ end
 
 """
 
-   fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
+    fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
 
 Serializes the data which is referenced by pointer `FMUstate` and copies this data in to the byte vector `serializedState` of length `size`, that must be provided by the environment.
 
@@ -1018,7 +1018,7 @@ end
 
 """
 
-   fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
+    fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
 
 Deserializes the byte vector serializedState of length size, constructs a copy of the FMU state and stores the FMU state in the given address of the reference `FMUstate`, the pointer to this copy.
 
@@ -1127,7 +1127,7 @@ end
 # Functions specificly for isCoSimulation
 """
 
-   fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+    fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -1166,7 +1166,7 @@ end
 
 """
 
-   fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+    fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -1205,7 +1205,7 @@ end
 
 """
 
-   fmi2DoStep(c::FMU2Component, currentCommunicationPoint::fmi2Real, communicationStepSize::fmi2Real, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+    fmi2DoStep(c::FMU2Component, currentCommunicationPoint::fmi2Real, communicationStepSize::fmi2Real, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
 
 The computation of a time step is started.
 
@@ -1243,7 +1243,7 @@ end
 
 """
 
-   fmi2CancelStep(c::FMU2Component)
+    fmi2CancelStep(c::FMU2Component)
 
 Can be called if `fmi2DoStep` returned `fmi2Pending` in order to stop the current asynchronous execution.
 
@@ -1276,7 +1276,7 @@ end
 
 """
 
-   fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) 
+    fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) 
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1326,7 +1326,7 @@ end
 
 """
 
-   fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Real})
+    fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Real})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1366,7 +1366,7 @@ end
 
 """
 
-   fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Integer})
+    fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Integer})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1446,7 +1446,7 @@ end
 
 """
 
-   fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
+    fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1488,7 +1488,7 @@ end
 
 """
 
-   fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
+    fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
 
 Set a new time instant and re-initialize caching of variables that depend on time, provided the newly provided time value is different to the previously set time value (variables that depend solely on constants or parameters need not to be newly computed in the sequel, but the previously computed values can be reused).
 
@@ -1558,7 +1558,7 @@ end
 
 """
 
-   fmi2SetContinuousStates(c::FMU2Component,
+    fmi2SetContinuousStates(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
                                  nx::Csize_t)
 
@@ -1718,7 +1718,7 @@ end
 
 """
 
-   fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
+    fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
 
 The model enters Continuous-Time Mode and all discrete-time equations become inactive and all relations are “frozen”.
 This function has to be called when changing from Event Mode (after the global event iteration in Event Mode over all involved FMUs and other models has converged) into Continuous-Time Mode.

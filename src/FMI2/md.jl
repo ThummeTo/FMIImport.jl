@@ -1038,7 +1038,7 @@ end
 
 """
 
-     fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
+    fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`.
 
@@ -1074,7 +1074,7 @@ end
 
 """
 
-     fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
+    fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`.
 
@@ -1278,7 +1278,7 @@ end
 
 """
 
-     fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
+    fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
 

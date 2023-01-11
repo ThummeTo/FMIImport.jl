@@ -664,7 +664,7 @@ end
 
 """
 
-    function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
+    fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
                           comp::FMU2Component,
                           rdx::AbstractArray{fmi2ValueReference},
                           rx::AbstractArray{fmi2ValueReference};
@@ -996,6 +996,7 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     return retcodes
 end
+
 function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, src; filter=nothing)
     fmi2Set(comp, vrs, [src]; filter=filter)
 end
