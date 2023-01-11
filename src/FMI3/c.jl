@@ -166,7 +166,7 @@ Removes the component from the FMUs component list.
 function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 
     if popInstance
-        ind = findall(x->x==c, c.fmu.instances)
+        ind = findall(x->x.compAddr==c.compAddr, c.fmu.instances)
         @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
         deleteat!(c.fmu.instances, ind)
     end
@@ -355,7 +355,7 @@ function fmi3ExitInitializationMode(c::FMU3Instance)
         elseif fmi3IsScheduledExecution(c.fmu)
             c.state = fmi3InstanceStateClockActivationMode
         else
-            c.state = fmi3InstanceStateEventMode
+            c.state = fmi3InstanceStateContinuousTimeMode
         end
     end 
 
