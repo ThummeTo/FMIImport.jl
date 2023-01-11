@@ -116,16 +116,13 @@ end
 
 """
 
-   fmi2GetTypesPlatform(fmu::FMU2)
-
-   fmi2GetTypesPlatform(c::FMU2Component)
+    fmi2GetTypesPlatform(fmu::FMU2)
 
 Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
 The standard header file, as documented in this specification, has fmi2TypesPlatform set to “default” (so this function usually returns “default”).
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Returns
 - Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
@@ -142,6 +139,28 @@ function fmi2GetTypesPlatform(fmu::FMU2)
     unsafe_string(typesPlatform)
 end
 # special case
+
+
+
+"""
+
+    fmi2GetTypesPlatform(c::FMU2Component)
+
+Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
+The standard header file, as documented in this specification, has fmi2TypesPlatform set to “default” (so this function usually returns “default”).
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
+"""
+
 function fmi2GetTypesPlatform(c::FMU2Component)
     fmi2GetTypesPlatform(c.fmu)
 end
@@ -150,11 +169,10 @@ end
 
     fmi2GetVersion(fmu::FMU2)
 
-    fmi2GetVersion(c::FMU2Component)
+Returns the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU.
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 
 # Returns
 - Returns a string from the address of a C-style (NUL-terminated) string. The string represents the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU. The function returns “fmiVersion” which is defined in this header file. The standard header file as documented in this specification has version “2.0”
@@ -172,6 +190,25 @@ function fmi2GetVersion(fmu::FMU2)
     unsafe_string(fmi2Version)
 end
 # special case
+"""
+
+    fmi2GetVersion(c::FMU2Component)
+
+Returns the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- Returns a string from the address of a C-style (NUL-terminated) string. The string represents the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU. The function returns “fmiVersion” which is defined in this header file. The standard header file as documented in this specification has version “2.0”
+
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
+"""
+
 function fmi2GetVersion(c::FMU2Component)
     fmi2GetVersion(c.fmu)
 end
@@ -352,9 +389,6 @@ More detailed:
 - FMISpec2.0.2[p.22]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
 See also [`fmi2EnterInitializationMode`](@ref).
-
-
-
 """
 function fmi2ExitInitializationMode(c::FMU2Component)
 
@@ -1023,9 +1057,8 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
 end
 
 """
-ToDo Arguments
 
-function fmi2GetDirectionalDerivative!(c::FMU2Component,
+    fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        nUnknown::Csize_t,
                                        vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -1053,9 +1086,9 @@ Computes a linear combination of the partial derivatives of h with respect to th
 # Arguments
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vUnknown_ref::AbstracArray{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
-- `nUnknown::Csize_t`:
+- `nUnknown::Csize_t`: Length of the `Unknown` Array.
 - `vKnown_ref::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
-- `nKnown::Csize_t`:
+- `nKnown::Csize_t`: Length of the `Known` Array.
 - `dvKnown::AbstractArray{fmi2Real}`:The vector values Compute the partial derivative with respect to the given entries in vector `vKnown_ref` with the matching evaluate of `dvKnown`.
 - `dvUnknown::AbstractArray{fmi2Real}`: Stores the directional derivative vector values.
 
@@ -1553,6 +1586,8 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
+
+fmi2NewDiscreteStates!
 function fmi2SetContinuousStates(c::FMU2Component,
     x::AbstractArray{fmi2Real},
     nx::Csize_t;
@@ -1582,7 +1617,7 @@ end
 
 """
 
-   fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
+    fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
 
 The model enters Event Mode from the Continuous-Time Mode and discrete-time equations may become active (and relations are not “frozen”).
 
@@ -1630,7 +1665,7 @@ end
 
 """
 
-   fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
+    fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
 
 The FMU is in Event Mode and the super dense time is incremented by this call.
 
@@ -1734,10 +1769,10 @@ end
 
 """
 
-   fmi2CompletedIntegratorStep!(c::FMU2Component,
-                                      noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                      enterEventMode::Ref{fmi2Boolean},
-                                      terminateSimulation::Ref{fmi2Boolean})
+    fmi2CompletedIntegratorStep!(c::FMU2Component,
+                                    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+                                    enterEventMode::Ref{fmi2Boolean},
+                                    terminateSimulation::Ref{fmi2Boolean})
 
 This function must be called by the environment after every completed step of the integrator provided the capability flag completedIntegratorStepNotNeeded = false.
 
@@ -1775,7 +1810,7 @@ end
 
 """
 
-   fmi2GetDerivatives!(c::FMU2Component,
+    fmi2GetDerivatives!(c::FMU2Component,
                        derivatives::AbstractArray{fmi2Real},
                        nx::Csize_t)
 
@@ -1816,7 +1851,7 @@ end
 
 """
 
-   fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
+    fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
 Compute event indicators at the current time instant and for the current states.
 
@@ -1851,9 +1886,9 @@ end
 
 """
 
-   fmi2GetContinuousStates!(c::FMU2Component,
-                                 x::AbstractArray{fmi2Real},
-                                 nx::Csize_t)
+    fmi2GetContinuousStates!(c::FMU2Component,
+                                x::AbstractArray{fmi2Real},
+                                nx::Csize_t)
 
 Stores the new (continuous) state vector in x.
 
@@ -1890,7 +1925,7 @@ end
 
 """
 
-   fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
+    fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
 
 Stores the nominal values of the continuous states in x_nominal.
 
