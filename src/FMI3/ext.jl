@@ -36,7 +36,7 @@ function fmi3Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
     (fileName, fileExt) = splitext(fileNameExt)
         
     if unpackPath === nothing
-        # cleanup=true leads to issues with automatic testing on linux server.
+        # cleanup=true leads to issues with automatic testing on linux server. TODO
         unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
     end
 
@@ -1382,20 +1382,11 @@ function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat = c.fm
         if length(mvs) == 0
             @warn "fmi3GetStartValue(...): Found no model variable with value reference $(vr)."
         end
-        # TODO check datatype
-        # if mvs[1]._Real != nothing
-        #     push!(starts, mvs[1]._Real.start)
-        # elseif mvs[1]._Integer != nothing
-        #     push!(starts, mvs[1]._Integer.start)
-        # elseif mvs[1]._Boolean != nothing
-        #     push!(starts, mvs[1]._Boolean.start)
-        # elseif mvs[1]._String != nothing
-        #     push!(starts, mvs[1]._String.start)
-        # elseif mvs[1]._Enumeration != nothing
-        #     push!(starts, mvs[1]._Enumeration.start)
-        # else
-        #     @assert false "fmi3GetStartValue(...): Value reference $(vr) has no data type."
-        # end
+        for mv in mvs
+            if hasproperty(mv, :start)
+                push!(starts, mv.start)
+            end
+        end
     end
 
     if length(vrs) == 1
@@ -1430,20 +1421,9 @@ More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1
 """
 
 function fmi3GetStartValue(mv::fmi3Variable)
-    # TODO check datatype
-    # if mv._Real != nothing
-    #     return mv._Real.start
-    # elseif mv._Integer != nothing
-    #     return mv._Integer.start
-    # elseif mv._Boolean != nothing
-    #     return mv._Boolean.start
-    # elseif mv._String != nothing
-    #     return mv._String.start
-    # elseif mv._Enumeration != nothing
-    #     return mv._Enumeration.start
-    # else
-    #     @assert false "fmi3GetStartValue(...): Variable $(mv) has no data type."
-    # end
+    if hasproperty(mv, :start)
+        return mv.start
+    end
 end
 
 """
