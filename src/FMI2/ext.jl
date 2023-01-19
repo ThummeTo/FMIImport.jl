@@ -12,7 +12,7 @@ import Downloads
 
 """
 
-   fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
+    fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
 Create a copy of the .fmu file as a .zip folder and unzips it.
 Returns the paths to the zipped and unzipped folders.
@@ -106,7 +106,7 @@ end
 
 """
 
-   fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
+    fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
 
 Sets the properties of the fmu by reading the modelDescription.xml.
 Retrieves all the pointers of binary functions.
@@ -318,7 +318,7 @@ end
 
 """
 
-    function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
 Create a new instance of the given fmu, adds a logger if logginOn == true.
@@ -443,7 +443,7 @@ end
 
 """
 
-   fmi2Reload(fmu::FMU2)
+    fmi2Reload(fmu::FMU2)
 
 Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
 
@@ -461,7 +461,7 @@ end
 
 """
 
-   function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
+    fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 
 Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
@@ -509,7 +509,7 @@ Computes the directional derivatives of an FMU. An FMU has different Modes and i
    - Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Outputs>` with type Real and variability = `discrete`.
    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><Derivatives>` is present, also the variables listed here as state derivatives.
 - `v_known`: Real input variables of function h that changes its value in the actual Mode.
-- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
+- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes.
 
 Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
 
@@ -544,7 +544,7 @@ end
 
 """
 
-   function fmi2SampleJacobian!(c::FMU2Component,
+    function fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
                                           dvUnknown::AbstractArray, # ToDo: datatype
@@ -664,7 +664,7 @@ end
 
 """
 
-    function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
+    fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
                           comp::FMU2Component,
                           rdx::AbstractArray{fmi2ValueReference},
                           rx::AbstractArray{fmi2ValueReference};
@@ -741,7 +741,7 @@ end
 
 """
 
-   fmi2GetFullJacobian(comp::FMU2Component,
+    fmi2GetFullJacobian(comp::FMU2Component,
                              rdx::AbstractArray{fmi2ValueReference},
                              rx::AbstractArray{fmi2ValueReference};
                              steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
@@ -833,7 +833,7 @@ end
 
 """
 
-   fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
+    fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
 
@@ -896,7 +896,7 @@ end
 
 """
 
-   fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
+    fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
 
 
 Returns the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference in an array.
@@ -930,7 +930,7 @@ end
 
 """
 
-   fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
+    fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
 
@@ -996,41 +996,24 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
 
     return retcodes
 end
+
 function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, src; filter=nothing)
     fmi2Set(comp, vrs, [src]; filter=filter)
 end
 
 """
 
-   fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
-
-   fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
-
-   fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
-
-   fmi2GetStartValue(mv::fmi2ScalarVariable)
+    fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 
 Returns the start/default value for a given value reference.
 
 # Arguments
 - `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `mv::fmi2ScalarVariable`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 - `vrs::fmi2ValueReferenceFormat = md.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
 More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
 
 # Returns
-- first optional function: `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
-- second optional function:`starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
-- third optional function: `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
-- forth optional function:
- - `mv.Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
- - `mv.Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
- - `mv.Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
- - `mv.String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
- - `mv.Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
-
+- `starts::Array{fmi2ValueReferenceFormat}`: start/default value for a given value reference
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1060,14 +1043,40 @@ function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceForm
 end
 
 """
+
+    fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
+
 Returns the start/default value for a given value reference.
+
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+- `vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
     fmi2GetStartValue(fmu.modelDescription, vrs)
 end
 
 """
+
+    fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
+
 Returns the start/default value for a given value reference.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences`: wildcards for how a user can pass a fmi[X]ValueReference (default = md.valueReferences)
+More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1}, fmi2ValueReference, Array{fmi2ValueReference,1}, Int64, Array{Int64,1}, Symbol}`
+
+# Returns
+- `starts::fmi2ValueReferenceFormat`: start/default value for a given value reference
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1110,8 +1119,24 @@ end
 
 """
 
+    fmi2GetStartValue(mv::fmi2ScalarVariable)
+
 Returns the start/default value for a given value reference.
 
+# Arguments
+- `mv::fmi2ScalarVariable`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
+
+# Returns
+- `mv._Real.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Real.
+- `mv._Integer.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Integer.
+- `mv._Boolean.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Boolean.
+- `mv._String.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type String.
+- `mv._Enumeration.start`: start/default value for a given ScalarVariable. In this case representing a variable of primitive type Enumeration.
+
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
@@ -1132,7 +1157,7 @@ end
 
 """
 
-   fmi2GetUnit(mv::fmi2ScalarVariable)
+    fmi2GetUnit(mv::fmi2ScalarVariable)
 
 Returns the `unit` entry of the corresponding model variable.
 
@@ -1154,7 +1179,6 @@ function fmi2GetUnit(mv::fmi2ScalarVariable)
 end
 
 """
-
    fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
 
 Returns the `unit` of the corresponding model variable `mv` as a `fmi2Unit` if it is
@@ -1174,9 +1198,9 @@ function fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
     end
     return nothing
 end
-"""
 
-   fmi2GetInitial(mv::fmi2ScalarVariable)
+"""
+    fmi2GetInitial(mv::fmi2ScalarVariable)
 
 Returns the `inital` entry of the corresponding model variable.
 
@@ -1196,7 +1220,7 @@ end
 
 """
 
-   fmi2SampleJacobian(c::FMU2Component,
+    fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
                                        steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5)
@@ -1210,11 +1234,10 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 - `str::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vUnknown_ref::Array{fmi2ValueReference}`:  Argument `vUnKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
 - `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
-- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`:
-- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing`:
+- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`: current time stepssize
 
 # Returns
-- `dvUnknown::Arrya{fmi2Real}`:
+- `dvUnknown::Arrya{fmi2Real}`: stores the samples of the directional derivative
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
@@ -1234,7 +1257,7 @@ end
 
 """
 
-   fmi2SampleJacobian!(c::FMU2Component,
+    fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},
                                           dvUnknown::AbstractArray,
@@ -1250,8 +1273,7 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 - `vUnknown_ref::Array{fmi2ValueReference}`:  Argument `vUnKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
 - `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
 - `dvUnknown::AbstractArray`: stores the samples of the directional derivative
-- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`:
-- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing`:
+- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`: current time stepsize
 
 # Returns
 - `nothing `

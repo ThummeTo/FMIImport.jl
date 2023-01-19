@@ -8,7 +8,7 @@
 
 """
 
-   fmi2GetNumberOfStates(fmu::FMU2)
+    fmi2GetNumberOfStates(fmu::FMU2)
 
 Returns the number of states of the FMU.
 
@@ -24,7 +24,7 @@ end
 
 """
 
-   function fmi2GetModelName(fmu::FMU2)
+    function fmi2GetModelName(fmu::FMU2)
 
 Returns the tag 'modelName' from the model description.
 
@@ -41,7 +41,7 @@ end
 
 """
 
-   fmi2GetGUID(fmu::FMU2)
+    fmi2GetGUID(fmu::FMU2)
 
 Returns the tag 'guid' from the model description.
 
@@ -58,7 +58,7 @@ end
 
 """
 
-   fmi2GetGenerationTool(fmu::FMU2)
+    fmi2GetGenerationTool(fmu::FMU2)
 
 Returns the tag 'generationtool' from the model description.
 
@@ -75,7 +75,7 @@ end
 
 """
 
-   fmi2GetGenerationDateAndTime(fmu::FMU2)
+    fmi2GetGenerationDateAndTime(fmu::FMU2)
 
 Returns the tag 'generationdateandtime' from the model description.
 
@@ -92,7 +92,7 @@ end
 
 """
 
-   fmi2GetVariableNamingConvention(fmu::FMU2)
+    fmi2GetVariableNamingConvention(fmu::FMU2)
 
 Returns the tag 'varaiblenamingconvention' from the model description.
 
@@ -109,7 +109,7 @@ end
 
 """
 
-   fmi2GetNumberOfEventIndicators(fmu::FMU2)
+    fmi2GetNumberOfEventIndicators(fmu::FMU2)
 
 Returns the tag 'numberOfEventIndicators' from the model description.
 
@@ -126,7 +126,7 @@ end
 
 """
 
-   fmi2CanGetSetState(fmu::FMU2)
+    fmi2CanGetSetState(fmu::FMU2)
 
 Returns true, if the FMU supports the getting/setting of states
 
@@ -143,7 +143,7 @@ end
 
 """
 
-   fmi2CanSerializeFMUstate(fmu::FMU2)
+    fmi2CanSerializeFMUstate(fmu::FMU2)
 
 Returns true, if the FMU state can be serialized
 
@@ -160,7 +160,7 @@ end
 
 """
 
-   fmi2ProvidesDirectionalDerivative(fmu::FMU2)
+    fmi2ProvidesDirectionalDerivative(fmu::FMU2)
 
 Returns true, if the FMU provides directional derivatives
 
@@ -177,7 +177,7 @@ end
 
 """
 
-   fmi2IsCoSimulation(fmu::FMU2)
+    fmi2IsCoSimulation(fmu::FMU2)
 
 Returns true, if the FMU supports co simulation
 
@@ -194,7 +194,7 @@ end
 
 """
 
-   fmi2IsModelExchange(fmu::FMU2)
+    fmi2IsModelExchange(fmu::FMU2)
 
 Returns true, if the FMU supports model exchange
 
