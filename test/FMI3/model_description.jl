@@ -5,17 +5,17 @@
 
 import FMIImport.FMICore: fmi3VariableNamingConventionFlat
 
-myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
 
-@test fmi3GetVersion(myFMU) == "3.0-beta.5"
+@test fmi3GetVersion(myFMU) == "3.0"
 
 @test fmi3GetModelName(myFMU) == "BouncingBall"
 @test fmi3GetVariableNamingConvention(myFMU) == fmi3VariableNamingConventionFlat
 @test fmi3IsCoSimulation(myFMU) == true
 @test fmi3IsModelExchange(myFMU) == true
 # TODO scheduledExecution
-@test fmi3GetInstantiationToken(myFMU) == "{8c4e810f-3df3-4a00-8276-176fa3c9f003}" # TODO update
-@test fmi3GetGenerationTool(myFMU) == "Reference FMUs (0278b1e)"
+@test fmi3GetInstantiationToken(myFMU) == "{1AE5E10D-9521-4DE3-80B9-D0EAAA7D5AF1}" # TODO update
+@test fmi3GetGenerationTool(myFMU) == "Reference FMUs (v0.0.20)"
 @test fmi3GetGenerationDateAndTime(myFMU) == "[Unknown generation date and time]"
 @test fmi3GetNumberOfEventIndicators(myFMU) == 1
 @test fmi3CanGetSetState(myFMU) == true

@@ -7,7 +7,7 @@
 # Prepare FMU #
 ###############
 
-myFMU = fmi3Load("Feedthrough", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("Feedthrough", "ModelicaReferenceFMUs", "0.0.20")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
@@ -15,12 +15,19 @@ inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 # TODO check the value references used and adjust them
 # TODO add clocks
 
-float32ValueReferences = ["real_discrete_out", "Float_32_continuous_output"]
-float64ValueReferences = ["real_discrete_in", "real_tunable_param"]
-integerValueReferences = ["int_in", "int_out"]
-booleanValueReferences = ["bool_in", "bool_out"]
-stringValueReferences = ["string_param", "string_param"]
-binaryValueReferences = ["binary_in", "binary_out"]
+float32ValueReferences = ["Float32_discrete_input", "Float_32_continuous_output"]
+float64ValueReferences = ["Float64_discrete_input", "Float64_tunable_parameter"]
+int8ValueReferences = ["Int8_input", "Int8_output"]
+int16ValueReferences = ["Int16_input", "Int16_output"]
+int32ValueReferences = ["Int32_input", "Int32_output"]
+int64ValueReferences = ["Int64_input", "Int64_output"]
+uint8ValueReferences = ["UInt8_input", "UInt8_output"]
+uint16ValueReferences = ["UInt16_input", "UInt16_output"]
+uint32ValueReferences = ["UInt32_input", "UInt32_output"]
+uint64ValueReferences = ["UInt64_input", "UInt64_output"]
+booleanValueReferences = ["Boolean_input", "Boolean_output"]
+stringValueReferences = ["String_parameter", "String_parameter"]
+binaryValueReferences = ["Binary_input", "Binary_output"]
 
 #########################
 # Testing Single Values #
@@ -36,58 +43,48 @@ cacheInteger = 0
 cacheBoolean = false
 cacheString = ""
 
-# TODO not contained in the FMU
-# @test fmi3SetFloat32(inst, float32ValueReferences[1], Float32(rndReal)) == 0
-# @test fmi3GetFloat32(inst, float32ValueReferences[1]) == rndReal
-# @test fmi3SetFloat32(inst, realValueReferences[1], -rndReal) == 0
-# @test fmi3GetFloat32(inst, realValueReferences[1]) == -rndReal
+@test fmi3SetFloat32(inst, float32ValueReferences[1], Float32(rndReal)) == 0
+@test fmi3GetFloat32(inst, float32ValueReferences[1]) == Float32(rndReal)
+@test fmi3SetFloat32(inst, float32ValueReferences[1], Float32(-rndReal)) == 0
+@test fmi3GetFloat32(inst, float32ValueReferences[1]) == Float32(-rndReal)
 
 @test fmi3SetFloat64(inst, float64ValueReferences[1], rndReal) == 0
 @test fmi3GetFloat64(inst, float64ValueReferences[1]) == rndReal
 @test fmi3SetFloat64(inst, float64ValueReferences[1], -rndReal) == 0
 @test fmi3GetFloat64(inst, float64ValueReferences[1]) == -rndReal
 
+@test fmi3SetInt8(inst, int8ValueReferences[1], Int8(rndInteger)) == 0
+@test fmi3GetInt8(inst, int8ValueReferences[1]) == Int8(rndInteger)
+@test fmi3SetInt8(inst, int8ValueReferences[1], Int8(-rndInteger)) == 0
+@test fmi3GetInt8(inst, int8ValueReferences[1]) == Int8(-rndInteger)
+
+@test fmi3SetInt16(inst, int16ValueReferences[1], Int16(rndInteger)) == 0
+@test fmi3GetInt16(inst, int16ValueReferences[1]) == Int16(rndInteger)
+@test fmi3SetInt16(inst, int16ValueReferences[1], Int16(-rndInteger)) == 0
+@test fmi3GetInt16(inst, int16ValueReferences[1]) == Int16(-rndInteger)
+
+@test fmi3SetInt32(inst, int32ValueReferences[1], Int32(rndInteger)) == 0
+@test fmi3GetInt32(inst, int32ValueReferences[1]) == rndInteger
+@test fmi3SetInt32(inst, int32ValueReferences[1], Int32(-rndInteger)) == 0
+@test fmi3GetInt32(inst, int32ValueReferences[1]) == -rndInteger
+
 # TODO not contained in the FMU
-# @test fmi3SetInt8(inst, integerValueReferences[1], rndInteger) == 0
-# @test fmi3GetInt8(inst, integerValueReferences[1]) == rndInteger
-# @test fmi3SetInt8(inst, integerValueReferences[1], -rndInteger) == 0
-# @test fmi3GetInt8(inst, integerValueReferences[1]) == -rndInteger
+@test fmi3SetInt64(inst, int64ValueReferences[1], Int64(rndInteger)) == 0
+@test fmi3GetInt64(inst, int64ValueReferences[1]) == Int64(rndInteger)
+@test fmi3SetInt64(inst, int64ValueReferences[1], Int64(-rndInteger)) == 0
+@test fmi3GetInt64(inst, int64ValueReferences[1]) == Int64(-rndInteger)
 
-# @test fmi3SetInt16(inst, integerValueReferences[2], rndInteger) == 0
-# @test fmi3GetInt16(inst, integerValueReferences[2]) == rndInteger
-# @test fmi3SetInt16(inst, integerValueReferences[2], -rndInteger) == 0
-# @test fmi3GetInt16(inst, integerValueReferences[2]) == -rndInteger
+@test fmi3SetUInt8(inst, uint8ValueReferences[1], UInt8(rndInteger)) == 0
+@test fmi3GetUInt8(inst, uint8ValueReferences[1]) == UInt8(rndInteger)
 
-@test fmi3SetInt32(inst, integerValueReferences[1], Int32(rndInteger)) == 0
-@test fmi3GetInt32(inst, integerValueReferences[1]) == rndInteger
-@test fmi3SetInt32(inst, integerValueReferences[1], Int32(-rndInteger)) == 0
-@test fmi3GetInt32(inst, integerValueReferences[1]) == -rndInteger
+@test fmi3SetUInt16(inst, uint16ValueReferences[1], UInt16(rndInteger)) == 0
+@test fmi3GetUInt16(inst, uint16ValueReferences[1]) == UInt16(rndInteger)
 
-# TODO not contained in the FMU
-# @test fmi3SetInt64(inst, integerValueReferences[1], rndInteger) == 0
-# @test fmi3GetInt64(inst, integerValueReferences[1]) == rndInteger
-# @test fmi3SetInt64(inst, integerValueReferences[4], -rndInteger) == 0
-# @test fmi3GetInt64(inst, integerValueReferences[4]) == -rndInteger
+@test fmi3SetUInt32(inst, uint32ValueReferences[1], UInt32(rndInteger)) == 0
+@test fmi3GetUInt32(inst, uint32ValueReferences[1]) == UInt32(rndInteger)
 
-# @test fmi3SetUInt8(inst, integerValueReferences[5], rndInteger) == 0
-# @test fmi3GetUInt8(inst, integerValueReferences[5]) == rndInteger
-# @test fmi3SetUInt8(inst, integerValueReferences[5], -rndInteger) == 0
-# @test fmi3GetUInt8(inst, integerValueReferences[5]) == -rndInteger
-
-# @test fmi3SetUInt16(inst, integerValueReferences[6], rndInteger) == 0
-# @test fmi3GetUInt16(inst, integerValueReferences[6]) == rndInteger
-# @test fmi3SetUInt16(inst, integerValueReferences[6], -rndInteger) == 0
-# @test fmi3GetUInt16(inst, integerValueReferences[6]) == -rndInteger
-
-# @test fmi3SetUInt32(inst, integerValueReferences[7], rndInteger) == 0
-# @test fmi3GetUInt32(inst, integerValueReferences[7]) == rndInteger
-# @test fmi3SetUInt32(inst, integerValueReferences[7], -rndInteger) == 0
-# @test fmi3GetUInt32(inst, integerValueReferences[7]) == -rndInteger
-
-# @test fmi3SetUInt64(inst, integerValueReferences[8], rndInteger) == 0
-# @test fmi3GetUInt64(inst, integerValueReferences[8]) == rndInteger
-# @test fmi3SetUInt64(inst, integerValueReferences[8], -rndInteger) == 0
-# @test fmi3GetUInt64(inst, integerValueReferences[8]) == -rndInteger
+@test fmi3SetUInt64(inst, uint64ValueReferences[1], UInt64(rndInteger)) == 0
+@test fmi3GetUInt64(inst, uint64ValueReferences[1]) == UInt64(rndInteger)
 
 @test fmi3SetBoolean(inst, booleanValueReferences[1], rndBoolean) == 0
 @test fmi3GetBoolean(inst, booleanValueReferences[1]) == rndBoolean
