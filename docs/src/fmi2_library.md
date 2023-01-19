@@ -1,23 +1,17 @@
-# [Library Functions](@id library)
+# [FMI2 Library Functions](@id library)
 
-```@index
-```
-
-
-## FMI 2
-
-### FMI Common Concepts for Model Exchange and Co-Simulation
+## FMI2 Common Concepts for Model Exchange and Co-Simulation
 In both cases, FMI defines an input/output block of a dynamic model where the distribution of the block, the
-platform dependent header file, several access functions, as well as the schema files are identical
+platform dependent header file, several access functions, as well as the schema files are identical.
 
-#### Reading the model description
-This section documents functions to inquire information about the model description of an FMU
+### Reading the model description
+This section documents functions to inquire information about the model description of an FMU.
 
-##### load/parse the FMI model description
+#### Load/Parse the FMI model description
 ```@docs
 fmi2LoadModelDescription
 ```
-##### get value functions
+#### Get value functions
 ```@docs
 fmi2GetDefaultStartTime
 fmi2GetDefaultStopTime
@@ -34,7 +28,7 @@ fmi2IsCoSimulation
 fmi2IsModelExchange
 ```
 
-##### information functions
+#### Information functions
 
 ```@docs
 fmi2DependenciesSupported
@@ -62,11 +56,10 @@ fmi2GetNamesAndInitials
 fmi2GetInputNamesAndStarts
 fmi2GetVersion
 fmi2GetTypesPlatform
-fmi2Info
 ```
 
 ###  Creation, Destruction and Logging of FMU Instances
-This section documents functions that deal with instantiation, destruction and logging of FMUs
+This section documents functions that deal with instantiation, destruction and logging of FMUs.
 
 ```@docs
 fmi2Instantiate!
@@ -79,9 +72,6 @@ fmi2SetDebugLogging
 This section documents functions that deal with initialization, termination, resetting of an FMU.
 
 ```@docs
-fmiSimulate
-fmiSimulateCS
-fmiSimulateME
 fmi2SetupExperiment
 fmi2EnterInitializationMode
 fmi2ExitInitializationMode
@@ -97,8 +87,8 @@ have identical values but other parts of the variable definition might be differ
 attributes)].
 
 ```@docs
-fmiGet
-fmiGet!
+fmi2Get
+fmi2Get!
 fmiSet
 fmi2GetReal
 fmi2GetReal!
@@ -116,15 +106,19 @@ fmi2SetString
 
 
 ### Getting and Setting the Complete FMU State
-The FMU has an internal state consisting of all values that are needed to continue a simulation. This internal state consists especially of the values of the continuous-time states, iteration variables, parameter values, input values, delay buffers, file identifiers, and FMU internal status information. With the functionsof this section, the internal FMU state can be copied and the pointer to this copy is returned to the environment. The FMU state copy can be set as actual FMU state, in order to continue the simulationfrom it.
+The FMU has an internal state consisting of all values that are needed to continue a simulation. This internal state consists especially of the values of the continuous-time states, iteration variables, parameter values, input values, delay buffers, file identifiers, and FMU internal status information. With the functions of this section, the internal FMU state can be copied and the pointer to this copy is returned to the environment. The FMU state copy can be set as actual FMU state, in order to continue the simulation from it.
 
 ```@docs
-fmiGetFMUstat
-fmiSetFMUstate
-fmiFreeFMUstate!
-fmiSerializedFMUstateSize!
-fmiSerializeFMUstate!
-fmiDeSerializeFMUstate!
+fmi2GetFMUstate
+fmi2GetFMUstate!
+fmi2SetFMUstate
+fmi2FreeFMUstate!
+fmi2SerializedFMUstateSize
+fmi2SerializedFMUstateSize!
+fmi2SerializeFMUstate
+fmi2SerializeFMUstate!
+fmi2DeSerializeFMUstate
+fmi2DeSerializeFMUstate!
 ```
 
 ### Getting Partial Dervatives
@@ -137,8 +131,8 @@ directional derivatives. This function can be used to construct the desired part
 fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
 fmi2GetRealOutputDerivatives!
-fmi2SampleDirectionalDerivative
-fmiSampleDirectionalDerivative!
+fmi2SampleJacobian
+fmi2SampleJacobian!
 ```
 
 ## FMI for Model Exchange
@@ -159,22 +153,28 @@ fmi2SetString
 ```
 
 ### Evaluation of Model Equations
-This section contains the core functions to evaluate the model equations
+This section contains the core functions to evaluate the model equations.
 
 ```@docs
 fmi2EnterEventMode
 fmi2NewDiscreteStates
+fmi2NewDiscreteStates!
 fmi2EnterContinuousTimeMode
 fmi2CompletedIntegratorStep
+fmi2CompletedIntegratorStep!
+fmi2GetDerivatives
 fmi2GetDerivatives!
+fmi2GetEventIndicators
 fmi2GetEventIndicators!
+fmi2GetContinuousStates
 fmi2GetContinuousStates!
+fmi2GetNominalsOfContinuousStates
 fmi2GetNominalsOfContinuousStates!
 ```
 
-## FMI for CO-Simulation
+## FMI for Co-Simulation
 This chapter defines the Functional Mock-up Interface (FMI) for the coupling of two or more simulation
-models in a co-simulation environment (FMI for Co-Simulation). Co-simulation is a rather general
+models in a Co-Simulation environment (FMI for Co-Simulation). Co-Simulation is a rather general
 approach to the simulation of coupled technical systems and coupled physical phenomena in
 engineering with focus on instationary (time-dependent) problems.
 
@@ -208,8 +208,8 @@ fmi2GetBooleanStatus!
 fmi2GetStringStatus!
 ```
 
-## Self-developed functions
-These new functions, that are useful, but not part of the FMI-spec (example: `fmi2Load`, `fmi2SampleDirectionalDerivative`)
+## add  functions
+These new functions, that are useful, but not part of the FMI-spec. (example: `fmi2Load`, `fmi2SampleJacobian`)
 
 ### Opening and closing FMUs
 ```@docs
@@ -230,12 +230,12 @@ fmi2GetSolutionValue
 fmi2GetSolutionTime
 ```
 
-### external/additional functions
+### External/Additional functions
 
 ```@docs
 fmi2Instantiate!
-fmi2SampleDirectionalDerivative
-fmi2SampleDirectionalDerivative!
+fmi2SampleJacobian
+fmi2SampleJacobian!
 fmi2GetJacobian
 fmi2GetJacobian!
 fmi2GetFullJacobian
@@ -246,12 +246,10 @@ fmi2Set
 fmi2GetStartValue
 fmi2GetUnit
 fmi2GetInitial
-fmi2SampleDirectionalDerivative
-fmi2SampleDirectionalDerivative!
 ```
 
-### Visualize simulation results
 
-```@docs
-fmiPlot
+## All functions
+
+```@index
 ```
