@@ -315,14 +315,13 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
     scalarVariables
 end
 
+setDefaultsWithSimpleType!(typenode, simpleType)=nothing
+
 function setDefaultsWithSimpleType!(typenode::fmi2ModelDescriptionReal, simpleType)
     srcnode = simpleType.Real
     @assert !isnothing(srcnode)
     
-    for attr in (
-        :quantity, :unit, :displayUnit, :relativeQuantity, :min, :max, :nominal,
-        :unbounded, :start, :derivative
-    )
+    for attr in keys(FMICore.fmi2RealAttributes)
         trgt = getfield(typenode, attr)
         if isnothing(trgt)
             src = getfield(srcnode, attr)
@@ -335,23 +334,27 @@ function setDefaultsWithSimpleType!(typenode::fmi2ModelDescriptionReal, simpleTy
     return nothing
 end
 
-for nominalType in [:Integer, :Boolean, :String, :Enumeration]
-    T = Symbol("fmi2ModelDescription", nominalType)
-    @eval function setDefaultsWithSimpleType!(typenode::$T, simpleType)
-        srcnode = getfield(simpleType, $(Meta.quot(nominalType)))
-        @assert !isnothing(srcnode)
+function setDefaultsWithSimpleType!(typenode::fmi2ModelDescriptionInteger, simpleType)
+    srcnode = simpleType.Integer
+    @assert !isnothing(srcnode)
     
-        trgt = getfield(typenode, :start)
+    for attr in keys(FMICore.fmi2IntegerAttributes)
+        trgt = getfield(typenode, attr)
         if isnothing(trgt)
-            src = getfield(srcnode, :start)
+            src = getfield(srcnode, attr)
             if !isnothing(src)
-                setfield!(typenode, :start, src)
+                setfield!(typenode, attr, src)
             end
         end
-   
-        return nothing
     end
+   
+    return nothing
 end
+
+# TODO
+# * decide if the fallback applies to the :start attribute, too (we currently ignore it)
+# * once all attributes are implemented for “Enumeration”, define `setDefaultsWithSimpleType`
+#   for `fmi2ModelDescriptionEnumeration`.
 
 function setDefaultsFromDeclaredType!(scalarVariables, simpleTypes)
     for svar in scalarVariables
