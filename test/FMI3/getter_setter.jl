@@ -15,7 +15,7 @@ inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 # TODO check the value references used and adjust them
 # TODO add clocks
 
-float32ValueReferences = ["Float32_discrete_input", "Float_32_continuous_output"]
+float32ValueReferences = ["Float32_discrete_input", "Float32_continuous_input"]
 float64ValueReferences = ["Float64_discrete_input", "Float64_tunable_parameter"]
 int8ValueReferences = ["Int8_input", "Int8_output"]
 int16ValueReferences = ["Int16_input", "Int16_output"]
@@ -68,7 +68,6 @@ cacheString = ""
 @test fmi3SetInt32(inst, int32ValueReferences[1], Int32(-rndInteger)) == 0
 @test fmi3GetInt32(inst, int32ValueReferences[1]) == -rndInteger
 
-# TODO not contained in the FMU
 @test fmi3SetInt64(inst, int64ValueReferences[1], Int64(rndInteger)) == 0
 @test fmi3GetInt64(inst, int64ValueReferences[1]) == Int64(rndInteger)
 @test fmi3SetInt64(inst, int64ValueReferences[1], Int64(-rndInteger)) == 0
@@ -98,13 +97,13 @@ cacheString = ""
 binary = fmi3GetBinary(inst, binaryValueReferences[1])
 @test unsafe_string(binary) == rndString
 
-# TODO conflict with same alias for fmi3 datatypes fmi3Boolean, fmi3UInt8
-# fmi3Set(inst, 
-#         [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]], 
-#         [rndReal,                rndInteger,                rndBoolean,                rndString,                pointer(rndString)])
+# TODO test after latest PR
+fmi3Set(inst, 
+        [float64ValueReferences[1], int32ValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]], 
+        [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                rndString])
 # @test fmi3Get(inst, 
 #                 [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) == 
-#                 [rndReal,                rndInteger,                rndBoolean,                rndString,                unsafe_string(rndString)]
+#                 [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                unsafe_string(rndString)]
 
 ##################
 # Testing Arrays #
@@ -116,29 +115,30 @@ rndBoolean = [(rand() > 0.5), (rand() > 0.5)]
 tmp = Random.randstring(8)
 rndString = [tmp, tmp]
 
-cacheReal = [0.0, 0.0]
+cacheFloat32 = [Float32(0.0), Float32(0.0)]
+cacheFloat64 = [0.0, 0.0]
 cacheInteger =  [fmi3Int32(0), fmi3Int32(0)]
 cacheBoolean = [fmi3Boolean(false), fmi3Boolean(false)]
 cacheString = [pointer(""), pointer("")]
 
 # TODO not contained in the FMU
-# @test fmi3SetFloat32(inst, realValueReferences, rndReal) == 0
-# @test fmi3GetFloat32(inst, realValueReferences) == rndReal
-# fmi3GetFloat32!(inst, realValueReferences, cacheReal)
-# @test cacheReal == rndReal
-# @test fmi3SetFloat32(inst, realValueReferences, -rndReal) == 0
-# @test fmi3GetFloat32(inst, realValueReferences) == -rndReal
-# fmi3GetFloat32!(inst, realValueReferences, cacheReal)
-# @test cacheReal == -rndReal
+@test fmi3SetFloat32(inst, float32ValueReferences, Float32.(rndReal)) == 0
+@test fmi3GetFloat32(inst, float32ValueReferences) == Float32.(rndReal)
+fmi3GetFloat32!(inst, float32ValueReferences, cacheFloat32)
+@test cacheFloat32 == Float32.(rndReal)
+@test fmi3SetFloat32(inst, float32ValueReferences, Float32.(-rndReal)) == 0
+@test fmi3GetFloat32(inst, float32ValueReferences) == Float32.(-rndReal)
+fmi3GetFloat32!(inst, float32ValueReferences, cacheFloat32)
+@test cacheFloat32 == Float32.(-rndReal)
 
 @test fmi3SetFloat64(inst, float64ValueReferences, rndReal) == 0
 @test fmi3GetFloat64(inst, float64ValueReferences) == rndReal
-fmi3GetFloat64!(inst, float64ValueReferences, cacheReal)
-@test cacheReal == rndReal
+fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
+@test cacheFloat64 == rndReal
 @test fmi3SetFloat64(inst, float64ValueReferences, -rndReal) == 0
 @test fmi3GetFloat64(inst, float64ValueReferences) == -rndReal
-fmi3GetFloat64!(inst, float64ValueReferences, cacheReal)
-@test cacheReal == -rndReal
+fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
+@test cacheFloat64 == -rndReal
 
 # TODO not contained in the FMU
 # @test fmi3SetInt8(inst, integerValueReferences, rndInteger) == 0
