@@ -350,9 +350,9 @@ function fmi3ExitInitializationMode(c::FMU3Instance)
     status = fmi3ExitInitializationMode(c.fmu.cExitInitializationMode, c.compAddr)
     checkStatus(c, status)
     if status == fmi3StatusOK
-        if fmi3IsCoSimulation(c.fmu) && c.fmu.modelDescription.coSimulation.hasEventMode
+        if c.type == fmi3TypeCoSimulation && !c.fmu.modelDescription.coSimulation.hasEventMode
             c.state = fmi3InstanceStateStepMode
-        elseif fmi3IsScheduledExecution(c.fmu)
+        elseif c.type == fmi3TypeScheduledExecution
             c.state = fmi3InstanceStateClockActivationMode
         else
             c.state = fmi3InstanceStateEventMode

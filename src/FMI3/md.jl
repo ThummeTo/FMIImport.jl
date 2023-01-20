@@ -111,6 +111,8 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.modelStructure = fmi3ModelDescriptionModelStructure()
 
             parseModelStructure(node, md)
+
+            md.numberOfContinuousStates = length(md.stateValueReferences)
             
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
@@ -405,7 +407,6 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
 
         index += 1
     end
-    md.numberOfContinuousStates = length(md.stateValueReferences)
     modelVariables
 end
 

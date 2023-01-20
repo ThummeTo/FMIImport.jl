@@ -442,6 +442,7 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
         instance.stateEvent  = fmi3False
         instance.timeEvent   = fmi3False
         instance.stepEvent   = fmi3False
+        instance.type = fmi3TypeModelExchange
 
         if pushInstances
             push!(fmu.instances, instance)
@@ -561,6 +562,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
         instance.jacobianUpdate! = fmi3GetJacobian!
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
+        instance.type = fmi3TypeCoSimulation
 
         if pushInstances
             push!(fmu.instances, instance)
@@ -673,6 +675,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
         instance.jacobianUpdate! = fmi3GetJacobian!
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
+        instance.type = fmi3TypeScheduledExecution
 
         if pushInstances
             push!(fmu.instances, instance)
