@@ -225,7 +225,7 @@ function parseModelDescriptionVariable(defnode, _typename=nothing)
     elseif typename == "Integer"
         typenode = fmi2ModelDescriptionInteger()
         if haskey(defnode, "start")
-            targetArray[index].Integer.start = parseInteger(defnode["start"])
+            typenode.start = parseInteger(defnode["start"])
         end
         # ToDo: remaining attributes
     elseif typename == "Enumeration"
