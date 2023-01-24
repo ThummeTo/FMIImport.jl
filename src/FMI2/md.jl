@@ -219,7 +219,7 @@ function parseModelDescriptionVariable(defnode, _typename=nothing)
     elseif typename == "Boolean"
         typenode = fmi2ModelDescriptionBoolean()
         if haskey(defnode, "start")
-            targetArray[index].Boolean.start = parseFMI2Boolean(defnode["start"])
+            typenode.start = parseFMI2Boolean(defnode["start"])
         end
         # ToDo: remaining attributes
     elseif typename == "Integer"
