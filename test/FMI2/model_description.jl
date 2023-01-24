@@ -80,4 +80,11 @@ dict = fmi2GetNamesAndInitials(myFMU)
 dict = fmi2GetInputNamesAndStarts(myFMU)
 @test length(dict) == 0
 
+@test length(myFMU.modelDescription.unitDefinitions) == 10 
+@test length(myFMU.modelDescription.typeDefinitions) == 9
+@test myFMU.modelDescription.unitDefinitions[5].name == "W"
+@test myFMU.modelDescription.unitDefinitions[6].baseUnit.kg == 1
+@test myFMU.modelDescription.typeDefinitions[1].name == "Modelica.Units.SI.Acceleration"
+@test myFMU.modelDescription.typeDefinitions[1].variable.quantity == "Acceleration"
+@test myFMU.modelDescription.typeDefinitions[1].variable.unit == "m/s2"
 fmi2Unload(myFMU)
