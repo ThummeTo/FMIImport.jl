@@ -1179,10 +1179,15 @@ function fmi2GetUnit(mv::fmi2ScalarVariable)
 end
 
 """
+
    fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
 
 Returns the `unit` of the corresponding model variable `mv` as a `fmi2Unit` if it is
 defined in `md.unitDefinitions`.
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `mv::fmi2ScalarVariable`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
 
 # Source
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
