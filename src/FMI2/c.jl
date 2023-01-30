@@ -94,12 +94,24 @@ end
 # Common function for ModelExchange & CoSimulation
 
 """
-Source: FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
+    fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
 Disposes the given instance, unloads the loaded model, and frees all the allocated memory and other resources that have been allocated by the functions of the FMU interface.
 If a null pointer is provided for “c”, the function call is ignored (does not have an effect).
-
+    
 Removes the component from the FMUs component list.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- nothing
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
+See Also [`fmi2FreeInstance!`](@ref), [`fmi2FreeInstance`](@ref).
 """
 function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
@@ -524,7 +536,7 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
- See also [`fmi2GetReal!`](@ref).
+See also [`fmi2GetReal!`](@ref).
 
 """
 function fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
@@ -559,7 +571,7 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 
- See also [`fmi2GetReal`](@ref).
+See also [`fmi2GetReal`](@ref).
 """
 function fmi2SetReal(c::FMU2Component, 
     vr::AbstractArray{fmi2ValueReference}, 
@@ -613,7 +625,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 
-See also [`fmi2GetInteger!`](@ref),[`fmi2ValueReferenceFormat`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2GetInteger!`](@ref).
 
 """
 function fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
@@ -651,7 +663,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 
-    See also [`fmi2GetInteger!`](@ref).
+See also [`fmi2GetInteger!`](@ref).
 """
 function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -725,7 +737,7 @@ More detailed:
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
-See also [`fmi2GetBoolean`](@ref),[`fmi2ValueReferenceFormat`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2GetBoolean`](@ref).
 """
 function fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
@@ -802,10 +814,6 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 See also [`fmi2GetString!`](@ref).
-
-Source: FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
-
-Functions to get and set values of variables idetified by their valueReference
 """
 function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -878,7 +886,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
 
-See also [`fmi2GetFMUstate`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2GetFMUstate`](@ref).
 """
 function fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
 

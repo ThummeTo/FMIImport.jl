@@ -31,6 +31,15 @@ fmi2IsModelExchange
 
 #### Information functions
 
+<!-- functions that are not exported but listed hier :
+- fmi2GetNames
+- fmi2GetModelVariableIndices
+- fmi2GetDerivateValueReferencesAndNames
+- 
+
+
+-->
+
 ```@docs
 fmi2DependenciesSupported
 fmi2DerivativeDependenciesSupported
@@ -39,8 +48,6 @@ fmi2CanGetSetState
 fmi2CanSerializeFMUstate
 fmi2ProvidesDirectionalDerivative
 fmi2GetValueReferencesAndNames
-fmi2GetNames
-fmi2GetModelVariableIndices
 fmi2GetInputValueReferencesAndNames
 fmi2GetInputNames
 fmi2GetOutputValueReferencesAndNames
@@ -49,7 +56,6 @@ fmi2GetParameterValueReferencesAndNames
 fmi2GetParameterNames
 fmi2GetStateValueReferencesAndNames
 fmi2GetStateNames
-fmi2GetDerivateValueReferencesAndNames
 fmi2GetDerivativeNames
 fmi2GetNamesAndDescriptions
 fmi2GetNamesAndUnits
@@ -128,10 +134,17 @@ means computing the partial derivatives at a particular time instant. For Co-Sim
 compute the partial derivatives at a particular communication point. One function is provided to compute
 directional derivatives. This function can be used to construct the desired partial derivative matrices.
 
+
+<!-- functions that are not exported but listed hier :
+- fmi2GetRealOutputDerivatives!
+- 
+
+
+-->
+
 ```@docs
 fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
-fmi2GetRealOutputDerivatives!
 fmi2SampleJacobian
 fmi2SampleJacobian!
 ```
@@ -156,20 +169,23 @@ fmi2SetString
 ### Evaluation of Model Equations
 This section contains the core functions to evaluate the model equations.
 
+<!-- functions that are not exported but listed hier :
+- fmi2NewDiscreteStates
+- fmi2GetDerivatives
+- fmi2GetEventIndicators
+- fmi2GetNominalsOfContinuousStates
+-->
+
 ```@docs
 fmi2EnterEventMode
-fmi2NewDiscreteStates
 fmi2NewDiscreteStates!
 fmi2EnterContinuousTimeMode
 fmi2CompletedIntegratorStep
 fmi2CompletedIntegratorStep!
-fmi2GetDerivatives
 fmi2GetDerivatives!
-fmi2GetEventIndicators
 fmi2GetEventIndicators!
 fmi2GetContinuousStates
 fmi2GetContinuousStates!
-fmi2GetNominalsOfContinuousStates
 fmi2GetNominalsOfContinuousStates!
 ```
 
