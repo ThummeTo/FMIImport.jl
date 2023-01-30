@@ -36,7 +36,7 @@ function fmi3Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
     (fileName, fileExt) = splitext(fileNameExt)
         
     if unpackPath === nothing
-        # cleanup=true leads to issues with automatic testing on linux server.
+        # cleanup=true leads to issues with automatic testing on linux server. TODO
         unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
     end
 
@@ -442,6 +442,7 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
         instance.stateEvent  = fmi3False
         instance.timeEvent   = fmi3False
         instance.stepEvent   = fmi3False
+        instance.type = fmi3TypeModelExchange
 
         if pushInstances
             push!(fmu.instances, instance)
@@ -561,6 +562,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
         instance.jacobianUpdate! = fmi3GetJacobian!
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
+        instance.type = fmi3TypeCoSimulation
 
         if pushInstances
             push!(fmu.instances, instance)
@@ -673,6 +675,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
         instance.jacobianUpdate! = fmi3GetJacobian!
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
+        instance.type = fmi3TypeScheduledExecution
 
         if pushInstances
             push!(fmu.instances, instance)
@@ -1107,49 +1110,46 @@ function fmi3Get!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::A
         mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
         # TODO change if dataytype is elimnated
-        if mv.datatype.datatype == fmi3Float32 
+        if isa(mv, FMICore.mvFloat32) 
             #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetFloat32(inst, vr)
-        elseif mv.datatype.datatype == fmi3Float64 
+        elseif isa(mv, FMICore.mvFloat64) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetFloat64(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int8 
+        elseif isa(mv, FMICore.mvInt8) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt8(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int16 
+        elseif isa(mv, FMICore.mvInt16) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt16(inst, vr)
-        elseif mv.datatype.datatype == fmi3Int32 
+        elseif isa(mv, FMICore.mvInt32) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt32(inst, vr)
-        elseif mv.datatype.datatype == fmi3GetInt64 
+        elseif isa(mv, FMICore.mvInt64)  
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetInt64(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt8 
+        elseif isa(mv, FMICore.mvUInt8) 
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt8(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt16 
+        elseif isa(mv, FMICore.mvUInt16)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt16(inst, vr)
-        elseif mv.datatype.datatype == fmi3UInt32 
+        elseif isa(mv, FMICore.mvUInt32)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt32(inst, vr)
-        elseif mv.datatype.datatype == fmi3GetUInt64 
+        elseif isa(mv, FMICore.mvUInt64)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetUInt64(inst, vr)
-        elseif mv.datatype.datatype == fmi3Boolean 
+        elseif isa(mv, FMICore.mvBoolean) 
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetBoolean(inst, vr)
-        elseif mv.datatype.datatype == fmi3String 
+        elseif isa(mv, FMICore.mvString)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetString(inst, vr)
-        elseif mv.datatype.datatype == fmi3String 
-            #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            dstArray[i] = fmi3GetString(inst, vr)
-        elseif mv.datatype.datatype == fmi3Binary 
+        elseif isa(mv, FMICore.mvBinary)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             dstArray[i] = fmi3GetBinary(inst, vr)
-        elseif mv.datatype.datatype == fmi3Enum 
+        elseif isa(mv, FMICore.mvEnumeration)
             @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
         else 
             @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
@@ -1183,7 +1183,12 @@ function fmi3Get(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat)
     vrs = prepareValueReference(inst, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
     fmi3Get!(inst, vrs, dstArray)
-    return dstArray
+
+    if length(dstArray) == 1
+        return dstArray[1]
+    else
+        return dstArray
+    end
 end
 
 """
@@ -1224,7 +1229,6 @@ function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Ar
         vr = vrs[i]
         mv = fmi3ModelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
-        # TODO future refactor
         if isa(mv, FMICore.mvFloat32) 
             #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             fmi3SetFloat32(inst, vr, srcArray[i])
@@ -1381,20 +1385,11 @@ function fmi3GetStartValue(c::FMU3Instance, vrs::fmi3ValueReferenceFormat = c.fm
         if length(mvs) == 0
             @warn "fmi3GetStartValue(...): Found no model variable with value reference $(vr)."
         end
-        # TODO check datatype
-        # if mvs[1]._Real != nothing
-        #     push!(starts, mvs[1]._Real.start)
-        # elseif mvs[1]._Integer != nothing
-        #     push!(starts, mvs[1]._Integer.start)
-        # elseif mvs[1]._Boolean != nothing
-        #     push!(starts, mvs[1]._Boolean.start)
-        # elseif mvs[1]._String != nothing
-        #     push!(starts, mvs[1]._String.start)
-        # elseif mvs[1]._Enumeration != nothing
-        #     push!(starts, mvs[1]._Enumeration.start)
-        # else
-        #     @assert false "fmi3GetStartValue(...): Value reference $(vr) has no data type."
-        # end
+        for mv in mvs
+            if hasproperty(mv, :start)
+                push!(starts, mv.start)
+            end
+        end
     end
 
     if length(vrs) == 1
@@ -1429,20 +1424,9 @@ More detailed: `fmi3ValueReferenceFormat = Union{Nothing, String, Array{String,1
 """
 
 function fmi3GetStartValue(mv::fmi3Variable)
-    # TODO check datatype
-    # if mv._Real != nothing
-    #     return mv._Real.start
-    # elseif mv._Integer != nothing
-    #     return mv._Integer.start
-    # elseif mv._Boolean != nothing
-    #     return mv._Boolean.start
-    # elseif mv._String != nothing
-    #     return mv._String.start
-    # elseif mv._Enumeration != nothing
-    #     return mv._Enumeration.start
-    # else
-    #     @assert false "fmi3GetStartValue(...): Variable $(mv) has no data type."
-    # end
+    if hasproperty(mv, :start)
+        return mv.start
+    end
 end
 
 """
