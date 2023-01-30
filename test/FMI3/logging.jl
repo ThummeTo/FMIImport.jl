@@ -5,7 +5,7 @@
 
 import FMIImport: fmi3StatusError
 
-myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.14")
+myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
 myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
