@@ -1,4 +1,4 @@
-#
+S#
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -798,7 +798,6 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
 end
 
 """
-TODO -> Arguments
     fmiGetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},

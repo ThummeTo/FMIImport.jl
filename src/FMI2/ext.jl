@@ -1,4 +1,4 @@
- #
+S #
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -124,7 +124,6 @@ Retrieves all the pointers of binary functions.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
-See also .
 """
 function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, fmi2Type, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
     # Create uninitialized FMU

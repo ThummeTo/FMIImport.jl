@@ -1,4 +1,4 @@
-#
+S#
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -983,7 +983,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
 
-See also [`fmi2SerializeFMUstate`](@ref),[`fmi2FMUstate`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2SerializeFMUstate`](@ref).
 """
 function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
 
