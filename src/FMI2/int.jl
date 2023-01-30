@@ -781,7 +781,7 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -845,7 +845,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -902,7 +902,7 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref), [`fmi2GetDirectionalDerivative`](@ref).
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::fmi2ValueReference,
@@ -1020,7 +1020,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
-See also [`fmi2DoStep`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2DoStep`](@ref).
 """
 function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
 
