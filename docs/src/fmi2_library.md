@@ -1,3 +1,4 @@
+
 # [FMI2 Library Functions](@id library)
 
 ## FMI2 Common Concepts for Model Exchange and Co-Simulation
@@ -233,16 +234,10 @@ fmi2GetSolutionTime
 ### External/Additional functions
 
 ```@docs
-fmi2Instantiate!
-fmi2SampleJacobian
-fmi2SampleJacobian!
 fmi2GetJacobian
 fmi2GetJacobian!
 fmi2GetFullJacobian
 fmi2GetFullJacobian!
-fmi2Get!
-fmi2Get
-fmi2Set
 fmi2GetStartValue
 fmi2GetUnit
 fmi2GetInitial

@@ -11,7 +11,6 @@ using ZipFile
 import Downloads
 
 """
-
     fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
 Create a copy of the .fmu file as a .zip folder and unzips it.
@@ -105,7 +104,6 @@ function dlsym_opt(libHandle, symbol)
 end
 
 """
-
     fmi2Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=true)
 
 Sets the properties of the fmu by reading the modelDescription.xml.
@@ -317,7 +315,6 @@ function loadBinary(fmu::FMU2)
 end
 
 """
-
     fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::fmi2Type=fmu.type, pushComponents::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
                           logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true, logStatusPending::Bool=true)
 
@@ -442,7 +439,6 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
 end
 
 """
-
     fmi2Reload(fmu::FMU2)
 
 Reloads the FMU-binary. This is useful, if the FMU does not support a clean reset implementation.
@@ -460,7 +456,6 @@ function fmi2Reload(fmu::FMU2)
 end
 
 """
-
     fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 
 Unload a FMU.
@@ -492,7 +487,6 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
 end
 
 """
-
     fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
                                        vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -543,7 +537,6 @@ function fmi2SampleJacobian(c::FMU2Component,
 end
 
 """
-
     function fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::AbstractArray{fmi2ValueReference},
                                           vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -625,7 +618,6 @@ function fmi2SampleJacobian!(mtx::Matrix{<:Real},
 end
 
 """
-
     fmi2GetJacobian(comp::FMU2Component,
                          rdx::AbstractArray{fmi2ValueReference},
                          rx::AbstractArray{fmi2ValueReference};
@@ -663,7 +655,6 @@ function fmi2GetJacobian(comp::FMU2Component,
 end
 
 """
-
     fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
                           comp::FMU2Component,
                           rdx::AbstractArray{fmi2ValueReference},
@@ -740,7 +731,6 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
 end
 
 """
-
     fmi2GetFullJacobian(comp::FMU2Component,
                              rdx::AbstractArray{fmi2ValueReference},
                              rx::AbstractArray{fmi2ValueReference};
@@ -832,7 +822,6 @@ function fmi2GetFullJacobian!(jac::AbstractMatrix{fmi2Real},
 end
 
 """
-
     fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
@@ -895,7 +884,6 @@ function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::
 end
 
 """
-
     fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
 
 
@@ -929,7 +917,6 @@ end
 
 
 """
-
     fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
@@ -1002,7 +989,6 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, src; filter
 end
 
 """
-
     fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceFormat = md.valueReferences)
 
 Returns the start/default value for a given value reference.
@@ -1043,7 +1029,6 @@ function fmi2GetStartValue(md::fmi2ModelDescription, vrs::fmi2ValueReferenceForm
 end
 
 """
-
     fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences)
 
 Returns the start/default value for a given value reference.
@@ -1065,7 +1050,6 @@ function fmi2GetStartValue(fmu::FMU2, vrs::fmi2ValueReferenceFormat = fmu.modelD
 end
 
 """
-
     fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences)
 
 Returns the start/default value for a given value reference.
@@ -1118,7 +1102,6 @@ function fmi2GetStartValue(c::FMU2Component, vrs::fmi2ValueReferenceFormat = c.f
 end
 
 """
-
     fmi2GetStartValue(mv::fmi2ScalarVariable)
 
 Returns the start/default value for a given value reference.
@@ -1156,7 +1139,6 @@ function fmi2GetStartValue(mv::fmi2ScalarVariable)
 end
 
 """
-
     fmi2GetUnit(mv::fmi2ScalarVariable)
 
 Returns the `unit` entry of the corresponding model variable.
@@ -1179,7 +1161,6 @@ function fmi2GetUnit(mv::fmi2ScalarVariable)
 end
 
 """
-
     fmi2GetInitial(mv::fmi2ScalarVariable)
 
 Returns the `inital` entry of the corresponding model variable.
@@ -1199,7 +1180,6 @@ function fmi2GetInitial(mv::fmi2ScalarVariable)
 end
 
 """
-
     fmi2SampleJacobian(c::FMU2Component,
                                        vUnknown_ref::Array{fmi2ValueReference},
                                        vKnown_ref::Array{fmi2ValueReference},
@@ -1236,7 +1216,6 @@ function fmi2SampleJacobian(c::FMU2Component,
 end
 
 """
-
     fmi2SampleJacobian!(c::FMU2Component,
                                           vUnknown_ref::Array{fmi2ValueReference},
                                           vKnown_ref::Array{fmi2ValueReference},

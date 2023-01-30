@@ -7,7 +7,6 @@
 # - wrappers to call the model description functions from a FMU-instance [exported]
 
 """
-
     fmi2GetNumberOfStates(fmu::FMU2)
 
 Returns the number of states of the FMU.
@@ -23,7 +22,6 @@ function fmi2GetNumberOfStates(fmu::FMU2)
 end
 
 """
-
     function fmi2GetModelName(fmu::FMU2)
 
 Returns the tag 'modelName' from the model description.
@@ -40,7 +38,6 @@ function fmi2GetModelName(fmu::FMU2)
 end
 
 """
-
     fmi2GetGUID(fmu::FMU2)
 
 Returns the tag 'guid' from the model description.
@@ -57,7 +54,6 @@ function fmi2GetGUID(fmu::FMU2)
 end
 
 """
-
     fmi2GetGenerationTool(fmu::FMU2)
 
 Returns the tag 'generationtool' from the model description.
@@ -74,7 +70,6 @@ function fmi2GetGenerationTool(fmu::FMU2)
 end
 
 """
-
     fmi2GetGenerationDateAndTime(fmu::FMU2)
 
 Returns the tag 'generationdateandtime' from the model description.
@@ -91,7 +86,6 @@ function fmi2GetGenerationDateAndTime(fmu::FMU2)
 end
 
 """
-
     fmi2GetVariableNamingConvention(fmu::FMU2)
 
 Returns the tag 'varaiblenamingconvention' from the model description.
@@ -108,7 +102,6 @@ function fmi2GetVariableNamingConvention(fmu::FMU2)
 end
 
 """
-
     fmi2GetNumberOfEventIndicators(fmu::FMU2)
 
 Returns the tag 'numberOfEventIndicators' from the model description.
@@ -125,7 +118,6 @@ function fmi2GetNumberOfEventIndicators(fmu::FMU2)
 end
 
 """
-
     fmi2CanGetSetState(fmu::FMU2)
 
 Returns true, if the FMU supports the getting/setting of states
@@ -142,7 +134,6 @@ function fmi2CanGetSetState(fmu::FMU2)
 end
 
 """
-
     fmi2CanSerializeFMUstate(fmu::FMU2)
 
 Returns true, if the FMU state can be serialized
@@ -159,7 +150,6 @@ function fmi2CanSerializeFMUstate(fmu::FMU2)
 end
 
 """
-
     fmi2ProvidesDirectionalDerivative(fmu::FMU2)
 
 Returns true, if the FMU provides directional derivatives
@@ -176,7 +166,6 @@ function fmi2ProvidesDirectionalDerivative(fmu::FMU2)
 end
 
 """
-
     fmi2IsCoSimulation(fmu::FMU2)
 
 Returns true, if the FMU supports co simulation
@@ -193,7 +182,6 @@ function fmi2IsCoSimulation(fmu::FMU2)
 end
 
 """
-
     fmi2IsModelExchange(fmu::FMU2)
 
 Returns true, if the FMU supports model exchange

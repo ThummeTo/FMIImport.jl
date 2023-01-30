@@ -51,7 +51,6 @@ function prepareValueReference(comp::FMU2Component, vr::fmi2ValueReferenceFormat
 end
 
 """
-
     fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
 
 Returns an array of ValueReferences coresponding to the variable names.
@@ -82,7 +81,6 @@ function fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArr
 end
 
 """
-
     fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
 
 Returns the model variable(s) fitting the value reference.
@@ -110,7 +108,6 @@ function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2V
 end
 
 """
-
     fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
@@ -139,7 +136,6 @@ function fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 end
 
 """
-
     fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray{String}})
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
@@ -164,7 +160,6 @@ function fmi2StringToValueReference(fmu::FMU2, name::Union{String, AbstractArray
 end
 
 """
-
     fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2ValueReference)
 
 # Arguments
@@ -183,7 +178,6 @@ function fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::fmi2Val
 end
 
 """
-
     fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
 
 # Arguments
@@ -202,7 +196,6 @@ function fmi2ValueReferenceToString(md::fmi2ModelDescription, reference::Int64)
 end
 
 """
-
     fmi2ValueReferenceToString(fmu::FMU2, reference::Union{fmi2ValueReference, Int64})
 
 # Arguments
@@ -222,7 +215,6 @@ end
 
 
 """
-
     fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution state.
@@ -285,7 +277,6 @@ function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceForm
 end
 
 """
-
     fmi2GetSolutionDerivative(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution values.
@@ -344,7 +335,6 @@ function fmi2GetSolutionDerivative(solution::FMU2Solution, vr::fmi2ValueReferenc
 end
 
 """
-
     fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
 Returns the Solution values.
@@ -427,7 +417,6 @@ function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceForm
 end
 
 """
-
     fmi2GetSolutionTime(solution::FMU2Solution)
 
 Returns the Solution time.
