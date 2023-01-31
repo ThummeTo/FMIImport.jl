@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIImport.FMICore: fmi2VariableNamingConventionStructured
+using FMIImport.FMICore: fmi2VariableNamingConventionStructured, fmi2Unit
 
 myFMU = fmi2Load("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 myFMU.executionConfig.assertOnWarning = true
@@ -85,6 +85,35 @@ dict = fmi2GetInputNamesAndStarts(myFMU)
 @test myFMU.modelDescription.unitDefinitions[5].name == "W"
 @test myFMU.modelDescription.unitDefinitions[6].baseUnit.kg == 1
 @test myFMU.modelDescription.typeDefinitions[1].name == "Modelica.Units.SI.Acceleration"
-@test myFMU.modelDescription.typeDefinitions[1].variable.quantity == "Acceleration"
-@test myFMU.modelDescription.typeDefinitions[1].variable.unit == "m/s2"
+stype_attr = FMIImport.fmi2GetSimpleTypeAttributeStruct( myFMU.modelDescription.typeDefinitions[1] );
+@test stype_attr.quantity == "Acceleration"
+@test stype_attr.unit == "m/s2"
+stype_unit = FMIImport.fmi2GetUnit(myFMU.modelDescription, myFMU.modelDescription.typeDefinitions[1]);
+@test stype_unit isa fmi2Unit
+@test stype_unit.name == "m/s2"
+@test stype_unit.baseUnit.m == 1
+@test stype_unit.baseUnit.s == -2
+
+for sv in myFMU.modelDescription.modelVariables
+    declared_type = FMIImport.fmi2GetDeclaredType(myFMU.modelDescription, sv)
+    if !isnothing(declared_type)
+        @test isdefined(sv.variable, :declaredType)
+        @test sv.variable.declaredType == declared_type.name
+        # test, if fallback setting of attributes has worked:
+        declared_type_attr_struct = FMIImport.fmi2GetSimpleTypeAttributeStruct( declared_type )
+        for attr_name in fieldnames(typeof(declared_type_attr_struct))
+            attr_val = getfield( declared_type_attr_struct, attr_name )
+            if !isnothing(attr_val)
+                @test !isnothing(getfield(sv.variable, attr_name))
+            end
+        end
+        # is the right `fmi2Unit` found?
+        if !isnothing(sv.variable.unit)
+            sv_unit = FMIImport.fmi2GetUnit(myFMU.modelDescription, sv)
+            @test sv_unit isa fmi2Unit
+            @test sv_unit.name == sv.variable.unit
+        end
+    end    
+end
+
 fmi2Unload(myFMU)

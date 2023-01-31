@@ -180,13 +180,13 @@ parseStringOrNothing(target_type, src_str::String) = parse(target_type, src_str)
 parseStringOrNothing(target_type, src_str::Nothing) = nothing
 
 # convenient get method with fallback for xml nodes
-function Base.get(node::EzXML.Node, key::String, default)
+function getWithDefault(node::EzXML.Node, key::String, default)
     if haskey(node, key)
         return node[key]
     end
     return default
 end
-Base.get(node::EzXML.Node, key::Symbol, default)=get(node,string(key), default)
+getWithDefault(node::EzXML.Node, key::Symbol, default)=getWithDefault(node,string(key), default)
 
 """
     parseSimpleTypeAttributes!(attr_struct, defnode)
@@ -203,7 +203,7 @@ function parseSimpleTypeAttributes!(attr_struct::FMICore.fmi2SimpleTypeAttribute
         setfield!(
             attr_struct, 
             attr_name, 
-            parseStringOrNothing(attr_type, get(defnode, attr_name, nothing))
+            parseStringOrNothing(attr_type, getWithDefault(defnode, attr_name, nothing))
         )
     end 
     return attr_struct
@@ -213,7 +213,7 @@ function parseSimpleTypeAttributes!(attr_struct::FMICore.fmi2SimpleTypeAttribute
         setfield!(
             attr_struct, 
             attr_name, 
-            parseStringOrNothing(attr_type, get(defnode, attr_name, nothing))
+            parseStringOrNothing(attr_type, getWithDefault(defnode, attr_name, nothing))
         )
     end 
     return attr_struct
@@ -244,6 +244,7 @@ function parseSimpleTypeAttributes(defnode, _typename=nothing)
 
     # parse fields in `defnode` and set them in attr_struct
     parseSimpleTypeAttributes!(attr_struct, defnode)
+    return attr_struct
 end
 
 # helper function to parse variable attributes
@@ -393,7 +394,6 @@ Helper function to set the attributes of `variable description` according to the
 stored in `simple_type`.
 """
 setDefaultsWithSimpleType!(variable_description, simple_type)=nothing
-
 # helper to avoid redundant code below:
 function setDefaultsWithSimpleType!(attr_struct::T, variable_description) where {
     T<:FMICore.fmi2SimpleTypeAttributeStruct
@@ -406,15 +406,18 @@ function setDefaultsWithSimpleType!(attr_struct::T, variable_description) where 
     end
     return nothing
 end
-
+# Helper function to set the attributes of `variable description` according to the attributes 
+# stored in `simple_type`, for **Real** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionReal, simple_type)
     attr_struct = simple_type.Real
     @assert !isnothing(attr_struct)
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
+# Helper function to set the attributes of `variable description` according to the attributes 
+# stored in `simple_type`, for **Integer** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionInteger, simple_type)
-    srcnode = simple_type.Integer
-    @assert !isnothing(srcnode)
+    attr_struct = simple_type.Integer
+    @assert !isnothing(attr_struct)
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
 
@@ -817,7 +820,7 @@ function createSimpleTypes(node::EzXML.Node)
 
     for simpleType = eachelement(node)
         name = simpleType["name"]
-        description = get(simpleType, "description", nothing)
+        description = getWithDefault(simpleType, "description", nothing)
         defnode = firstelement(simpleType)
         attr_struct = parseSimpleTypeAttributes(defnode)
         st = fmi2SimpleType(name, attr_struct, description)
