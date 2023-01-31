@@ -473,18 +473,22 @@ More detailed:
   - `fmi2Pending`: this status is returned if the slave executes the function asynchronously
 
 # Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
-- FMISpec2.0.2[p.22]: 2.1.3 Status Returned by Functions
-- FMISpec2.0.2[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
+- FMISpec2.0.3 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.3[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
+- FMISpec2.0.3[p.18]: 2.1.3 Status Returned by Functions
+- FMISpec2.0.3[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
 See also [`fmi2Terminate`](@ref).
 """
 function fmi2Reset(c::FMU2Component; soft::Bool=false)
-    if c.state != fmi2ComponentStateTerminated && c.state != fmi2ComponentStateError
+    # according to FMISpec2.0.3[p.90], fmi2Reset can be called almost always, except before 
+    # initialization and after a fatal error.
+    if c.state == fmi2ComponentStateFatal
         if soft
-            return fmi2StatusOK
+            @warn "fmi2Reset was called in \"soft\" mode while the component was in Fatal state. Doing nothing."
+            return fmi2StatusWarning
         else
-            @warn "fmi2Reset(_): Needs to be called in state `fmi2ComponentStateTerminated` or `fmi2ComponentStateError`."
+            @warn "fmi2Reset was called in \"hard\" mode while the component was in Fatal state. Trying to reset anyways."
+            # TODO maybe set a flag to also return fmi2StatusWarning later? 
         end
     end
 
