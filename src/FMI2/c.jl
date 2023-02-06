@@ -1,4 +1,4 @@
-S#
+#
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -170,7 +170,6 @@ The standard header file, as documented in this specification, has fmi2TypesPlat
 - FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
-
 function fmi2GetTypesPlatform(c::FMU2Component)
     fmi2GetTypesPlatform(c.fmu)
 end
@@ -216,7 +215,6 @@ Returns the version of the “fmi2Functions.h” header file which was used to c
 - FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
-
 function fmi2GetVersion(c::FMU2Component)
     fmi2GetVersion(c.fmu)
 end
@@ -1558,7 +1556,6 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
-
 fmi2NewDiscreteStates!
 function fmi2SetContinuousStates(c::FMU2Component,
     x::AbstractArray{fmi2Real},

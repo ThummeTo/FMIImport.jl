@@ -1,4 +1,4 @@
-S #
+#
 # Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -847,7 +847,6 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 
 """
-
 function fmi2Get!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray)
     vrs = prepareValueReference(comp, vrs)
 
@@ -901,7 +900,6 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2[p.23]: 2.1.6 Initialization, Termination, and Resetting an FMU
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 """
-
 function fmi2Get(comp::FMU2Component, vrs::fmi2ValueReferenceFormat)
     vrs = prepareValueReference(comp, vrs)
     dstArray = Array{Any,1}(undef, length(vrs))
@@ -944,7 +942,6 @@ More detailed:
 - FMISpec2.0.2[p.23]: 2.1.6 Initialization, Termination, and Resetting an FMU
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 """
-
 function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
     vrs = prepareValueReference(comp, vrs)
 
@@ -1120,7 +1117,6 @@ Returns the start/default value for a given value reference.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-
 function fmi2GetStartValue(mv::fmi2ScalarVariable)
     if mv.Real != nothing
         return mv.Real.start
