@@ -96,7 +96,7 @@ attributes)].
 ```@docs
 fmi2Get
 fmi2Get!
-fmiSet
+fmi2Set
 fmi2GetReal
 fmi2GetReal!
 fmi2GetInteger

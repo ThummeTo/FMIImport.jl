@@ -111,7 +111,7 @@ Removes the component from the FMUs component list.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-See Also [`fmi2FreeInstance!`](@ref), [`fmi2FreeInstance`](@ref).
+See Also [`fmi2FreeInstance!`](@ref).
 """
 function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
@@ -1088,7 +1088,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -1760,7 +1760,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2CompletedIntegratorStep`](@ref), [`fmi2SetFMUState`](@ref).
+See also [`fmi2CompletedIntegratorStep!`](@ref).
 """
 function fmi2CompletedIntegratorStep!(c::FMU2Component,
                                       noSetFMUStatePriorToCurrentPoint::fmi2Boolean,

@@ -1291,7 +1291,7 @@ Returns names of parameters.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetParameterNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.parameterValueReferences, kwargs...)
@@ -1311,7 +1311,7 @@ Returns names of parameters.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetParameterNames(fmu::FMU2; kwargs...)
     fmi2GetParameterNames(fmu.modelDescription; kwargs...)
@@ -1365,7 +1365,7 @@ Returns names of states.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetStateNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.stateValueReferences, kwargs...)
@@ -1385,7 +1385,7 @@ Returns names of states.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetStateNames(fmu::FMU2; kwargs...)
     fmi2GetStateNames(fmu.modelDescription; kwargs...)
@@ -1437,7 +1437,7 @@ Returns names of derivatives.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetDerivativeNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
@@ -1457,7 +1457,7 @@ Returns names of derivatives.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also [`fmi2GetNames`](@ref).
+
 """
 function fmi2GetDerivativeNames(fmu::FMU2; kwargs...)
     fmi2GetDerivativeNames(fmu.modelDescription; kwargs...)

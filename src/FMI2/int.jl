@@ -645,7 +645,7 @@ Free the memory for the allocated FMU state
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
 
-See also [`fmi2FreeFMUstate`](@ref).
+See also [`fmi2FreeFMUstate!`](@ref).
 """
 function fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
     stateRef = Ref(state)
@@ -902,7 +902,7 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative!`](@ref), [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::fmi2ValueReference,
@@ -972,7 +972,6 @@ Sets the n-th time derivative of real input variables.
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 
-See also [`fmi2SetRealInputDerivatives!`](@ref).
 """
 function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
 
@@ -1179,7 +1178,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2CompletedIntegratorStep`](@ref), [`fmi2SetFMUState`](@ref).
+See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
                                      noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
@@ -1210,7 +1209,7 @@ vector.
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetDerivatives`](@ref).
+See also [`fmi2GetDerivatives!`](@ref).
 """
 function fmi2GetDerivatives(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
@@ -1242,7 +1241,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetDerivatives`](@ref).
+See also [`fmi2GetDerivatives!`](@ref).
 """
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
@@ -1266,7 +1265,7 @@ Returns the event indicators of the FMU
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
@@ -1289,7 +1288,6 @@ Returns the event indicators of the FMU.
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
 """
 function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
     ni = Csize_t(length(eventIndicators))
@@ -1309,7 +1307,7 @@ Return the new (continuous) state vector x
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetContinuousStates(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
