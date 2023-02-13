@@ -1159,7 +1159,7 @@ end
 
     fmi2GetUnit(mv::fmi2ScalarVariable)
 
-Returns the `unit` entry of the corresponding model variable.
+Returns the `unit` entry (a string) of the corresponding model variable.
 
 # Arguments
 - `fmi2GetStartValue(mv::fmi2ScalarVariable)`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
@@ -1170,8 +1170,8 @@ Returns the `unit` entry of the corresponding model variable.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(mv::fmi2ScalarVariable)
-    if mv.Real != nothing
+function fmi2GetUnit(mv::Union{fmi2ScalarVariable,fmi2SimpleType})
+    if !isnothing(mv.Real)
         return mv.Real.unit
     else
         return nothing
@@ -1193,7 +1193,7 @@ defined in `md.unitDefinitions`.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
+function fmi2GetUnit(md::fmi2ModelDescription, mv::Union{fmi2ScalarVariable, fmi2SimpleType})
     unit_str = fmi2GetUnit(mv)
     if !isnothing(unit_str)
         ui = findfirst(unit -> unit.name == unit_str, md.unitDefinitions)
@@ -1202,6 +1202,62 @@ function fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
         end
     end
     return nothing
+end
+
+"""
+
+   fmi2GetDeclaredType(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
+
+Returns the `fmi2SimpleType` of the corresponding model variable `mv` as defined in 
+`md.typeDefinitions`.
+If `mv` does not have a declared type, return `nothing`.
+If `mv` has a declared type, but it is not found, issue a warning and return `nothing`.
+
+# Arguments
+- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `mv::fmi2ScalarVariable`: The “ModelVariables” element consists of an ordered set of “ScalarVariable” elements. A “ScalarVariable” represents a variable of primitive type, like a real or integer variable.
+
+# Source
+- FMISpec2.0.3 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.3: 2.2.7  Definition of Model Variables (ModelVariables)
+"""
+function fmi2GetDeclaredType(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
+    if isdefined(mv.variable, :declaredType)
+        dt = mv.variable.declaredType
+        if !isnothing(dt)
+            for simple_type in md.typeDefinitions
+                if dt == simple_type.name
+                    return simple_type
+                end
+            end
+            @warn "`fmi2GetDeclaredType`: Could not find a type definition with name \"$(dt)\" in the `typeDefinitions` of $(md)."
+        end
+    end
+    return nothing
+end
+
+"""
+
+   fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
+
+Returns the attribute structure for the simple type `st`.
+Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`, 
+`st.Boolean` or `st.Enumeration`, whichever is not `nothing`.
+
+# Arguments
+- `st::fmi2SimpleType`: Struct which provides the information on custom SimpleTypes.
+
+# Source
+- FMISpec2.0.3 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.3[p.40]: 2.2.3 Definition of Types (TypeDefinitions)
+"""
+function fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
+    !isnothing(st.Real) && return st.Real
+    !isnothing(st.Integer) && return st.Integer
+    !isnothing(st.String) && return st.String
+    !isnothing(st.Boolean) && return st.Boolean
+    !isnothing(st.Enumeration) && return st.Enumeration
+    return nothing 
 end
 
 """

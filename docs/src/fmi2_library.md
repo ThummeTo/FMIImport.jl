@@ -245,7 +245,9 @@ fmi2Get
 fmi2Set
 fmi2GetStartValue
 fmi2GetUnit
+fmi2GetDeclaredType
 fmi2GetInitial
+fmi2GetSimpleTypeAttributeStruct
 ```
 
 
