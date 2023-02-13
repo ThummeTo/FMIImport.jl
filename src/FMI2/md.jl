@@ -409,15 +409,15 @@ end
 # Helper function to set the attributes of `variable description` according to the attributes 
 # stored in `simple_type`, for **Real** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionReal, simple_type)
-    attr_struct = simple_type.Real
-    @assert !isnothing(attr_struct)
+    attr_struct = simple_type.type
+    @assert typeof(attr_struct) == FMICore.fmi2SimpleTypeAttributesReal
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
 # Helper function to set the attributes of `variable description` according to the attributes 
 # stored in `simple_type`, for **Integer** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionInteger, simple_type)
-    attr_struct = simple_type.Integer
-    @assert !isnothing(attr_struct)
+    attr_struct = simple_type.type
+    @assert typeof(attr_struct) == FMICore.fmi2SimpleTypeAttributesInteger
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
 

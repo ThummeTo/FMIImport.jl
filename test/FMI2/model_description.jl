@@ -85,7 +85,7 @@ dict = fmi2GetInputNamesAndStarts(myFMU)
 @test myFMU.modelDescription.unitDefinitions[5].name == "W"
 @test myFMU.modelDescription.unitDefinitions[6].baseUnit.kg == 1
 @test myFMU.modelDescription.typeDefinitions[1].name == "Modelica.Units.SI.Acceleration"
-stype_attr = FMIImport.fmi2GetSimpleTypeAttributeStruct( myFMU.modelDescription.typeDefinitions[1] );
+stype_attr = myFMU.modelDescription.typeDefinitions[1].type
 @test stype_attr.quantity == "Acceleration"
 @test stype_attr.unit == "m/s2"
 stype_unit = FMIImport.fmi2GetUnit(myFMU.modelDescription, myFMU.modelDescription.typeDefinitions[1]);

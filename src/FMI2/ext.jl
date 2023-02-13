@@ -1170,14 +1170,23 @@ Returns the `unit` entry (a string) of the corresponding model variable.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(mv::Union{fmi2ScalarVariable,fmi2SimpleType})
+function fmi2GetUnit(mv::fmi2ScalarVariable)
     if !isnothing(mv.Real)
         return mv.Real.unit
     else
-        return nothing
+        nothing
     end
 end
 
+function fmi2GetUnit(mv::fmi2SimpleType)
+    if !isnothing(mv.type)
+        return mv.type.unit
+    else
+        nothing
+    end
+end
+
+# ToDo: update Docu!
 """
 
    fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
@@ -1193,7 +1202,7 @@ defined in `md.unitDefinitions`.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(md::fmi2ModelDescription, mv::Union{fmi2ScalarVariable, fmi2SimpleType})
+function fmi2GetUnit(md::fmi2ModelDescription, mv::Union{fmi2ScalarVariable, fmi2SimpleType}) # ToDo: Multiple Dispatch!
     unit_str = fmi2GetUnit(mv)
     if !isnothing(unit_str)
         ui = findfirst(unit -> unit.name == unit_str, md.unitDefinitions)
@@ -1252,11 +1261,7 @@ Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`,
 - FMISpec2.0.3[p.40]: 2.2.3 Definition of Types (TypeDefinitions)
 """
 function fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
-    !isnothing(st.Real) && return st.Real
-    !isnothing(st.Integer) && return st.Integer
-    !isnothing(st.String) && return st.String
-    !isnothing(st.Boolean) && return st.Boolean
-    !isnothing(st.Enumeration) && return st.Enumeration
+    !isnothing(st.type) && return st.type
     return nothing 
 end
 
