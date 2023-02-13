@@ -1170,16 +1170,23 @@ Returns the `unit` entry (a string) of the corresponding model variable.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(mv::Union{fmi2ScalarVariable,fmi2SimpleType})
-    if typeof(mv)== fmi2ScalarVariable && !isnothing(mv.Real)
+function fmi2GetUnit(mv::fmi2ScalarVariable)
+    if !isnothing(mv.Real)
         return mv.Real.unit
-    elseif typeof(mv)== fmi2SimpleType && !isnothing(mv.type)
+    else
+        nothing
+    end
+end
+
+function fmi2GetUnit(mv::fmi2SimpleType)
+    if !isnothing(mv.type)
         return mv.type.unit
     else
         nothing
     end
 end
 
+# ToDo: update Docu!
 """
 
    fmi2GetUnit(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
@@ -1195,7 +1202,7 @@ defined in `md.unitDefinitions`.
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
-function fmi2GetUnit(md::fmi2ModelDescription, mv::Union{fmi2ScalarVariable, fmi2SimpleType})
+function fmi2GetUnit(md::fmi2ModelDescription, mv::Union{fmi2ScalarVariable, fmi2SimpleType}) # ToDo: Multiple Dispatch!
     unit_str = fmi2GetUnit(mv)
     if !isnothing(unit_str)
         ui = findfirst(unit -> unit.name == unit_str, md.unitDefinitions)

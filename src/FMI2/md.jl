@@ -245,7 +245,6 @@ function parseSimpleTypeAttributes(defnode, _typename=nothing)
     # parse fields in `defnode` and set them in attr_struct
     parseSimpleTypeAttributes!(attr_struct, defnode)
     return attr_struct
-
 end
 
 # helper function to parse variable attributes
