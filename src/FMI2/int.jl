@@ -10,16 +10,12 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-    fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
+    fmi2SetDebugLogging(c::FMU2Component)
 
 Control the use of the logging callback function, version independent.
 
 # Arguments
 - `c::FMU2Component`: Argument `c` is a mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
-- `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
-- `categories::Ptr{Nothing}`: This is an unordered set of strings representing the possible values of the log categories of the FMU (for example logEvent). The allowed values of categories are defined by the modeling
-environment that generated the FMU.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -42,7 +38,10 @@ function fmi2SetDebugLogging(c::FMU2Component)
 end
 
 """
-    fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+    fmi2SetupExperiment(c::FMU2Component, 
+                            startTime::Union{Real, Nothing} = nothing, 
+                            stopTime::Union{Real, Nothing} = nothing; 
+                            tolerance::Union{Real, Nothing} = nothing)
 
 Setup the simulation but without defining all of the parameters.
 
@@ -75,7 +74,10 @@ More detailed:
 
 See also [`fmi2SetupExperiment`](@ref).
 """
-function fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+function fmi2SetupExperiment(c::FMU2Component, 
+                                startTime::Union{Real, Nothing} = nothing, 
+                                stopTime::Union{Real, Nothing} = nothing; 
+                                tolerance::Union{Real, Nothing} = nothing)
 
     if startTime == nothing
         startTime = fmi2GetDefaultStartTime(c.fmu.modelDescription)
@@ -911,7 +913,10 @@ end
 
 # CoSimulation specific functions
 """
-    fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+    fmi2SetRealInputDerivatives(c::FMU2Component, 
+                                    vr::AbstractArray{fmi2ValueReference}, 
+                                    order::AbstractArray{fmi2Integer}, 
+                                    values::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -988,7 +993,10 @@ function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFo
 end
 
 """
-    fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+    fmi2DoStep(c::FMU2Component, 
+                    communicationStepSize::Union{Real, Nothing} = nothing; 
+                    currentCommunicationPoint::Union{Real, Nothing} = nothing,
+                    noSetFMUStatePriorToCurrentPoint::Bool = true)
 
 
 Does one step in the CoSimulation FMU
@@ -1178,7 +1186,7 @@ More detailed:
 See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+                                        noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
     enterEventMode = zeros(fmi2Boolean, 1)
     terminateSimulation = zeros(fmi2Boolean, 1)
 

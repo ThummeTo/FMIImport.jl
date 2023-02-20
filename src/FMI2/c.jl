@@ -1107,7 +1107,11 @@ end
 
 # Functions specificly for isCoSimulation
 """
-    fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+    fmi2SetRealInputDerivatives(c::FMU2Component,
+                                    vr::AbstractArray{fmi2ValueReference},
+                                    nvr::Csize_t,
+                                    order::AbstractArray{fmi2Integer}, 
+                                    value::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -1145,7 +1149,10 @@ function fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2Val
 end
 
 """
-    fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+    fmi2GetRealOutputDerivatives!(c::FMU2Component,  
+                                    vr::AbstractArray{fmi2ValueReference}, 
+                                    nvr::Csize_t, order::AbstractArray{fmi2Integer}, 
+                                    value::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -1181,7 +1188,10 @@ function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2
 end
 
 """
-    fmi2DoStep(c::FMU2Component, currentCommunicationPoint::fmi2Real, communicationStepSize::fmi2Real, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+    fmi2DoStep(c::FMU2Component, 
+                    currentCommunicationPoint::fmi2Real, 
+                    communicationStepSize::fmi2Real, 
+                    noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
 
 The computation of a time step is started.
 
@@ -1250,7 +1260,9 @@ function fmi2CancelStep(c::FMU2Component)
 end
 
 """
-    fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Status}) 
+    fmi2GetStatus!(c::FMU2Component, 
+                        s::fmi2StatusKind, 
+                        value::Ref{fmi2Status}) 
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1299,7 +1311,9 @@ function fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value)
 end
 
 """
-    fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Real})
+    fmi2GetRealStatus!(c::FMU2Component, 
+                            s::fmi2StatusKind, 
+                            value::Ref{fmi2Real})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1338,7 +1352,9 @@ function fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Real
 end
 
 """
-    fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Integer})
+    fmi2GetIntegerStatus!(c::FMU2Component, 
+                                s::fmi2StatusKind, 
+                                value::Ref{fmi2Integer})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1377,7 +1393,9 @@ function fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2I
 end
 
 """
-    fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2Boolean})
+    fmi2GetBooleanStatus!(c::FMU2Component, 
+                            s::fmi2StatusKind, 
+                            value::Ref{fmi2Boolean})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1416,7 +1434,9 @@ function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2B
 end
 
 """
-    fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::Ref{fmi2String})
+    fmi2GetStringStatus!(c::FMU2Component, 
+                            s::fmi2StatusKind, 
+                            value::Ref{fmi2String})
 
 Informs the master about the actual status of the simulation run. Which status information is to be returned is specified by the argument `fmi2StatusKind`.
 
@@ -1455,9 +1475,14 @@ function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2St
 end
 
 # Model Exchange specific Functions
-
+#TOD0 
 """
-    fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false)
+    fmi2SetTime(c::FMU2Component, 
+                    time::fmi2Real; 
+                    soft::Bool=false,
+                    track::Bool=true,
+                    force::Bool=c.fmu.executionConfig.force,
+                    time_shift::Bool=c.fmu.executionConfig.autoTimeShift)
 
 Set a new time instant and re-initialize caching of variables that depend on time, provided the newly provided time value is different to the previously set time value (variables that depend solely on constants or parameters need not to be newly computed in the sequel, but the previously computed values can be reused).
 
@@ -1467,6 +1492,8 @@ Set a new time instant and re-initialize caching of variables that depend on tim
 
 # Keywords
 - `soft::Bool=false`: If the Keyword `soft = true` the command is only performed if the FMU is in an allowed state for this command.
+-`track::Bool=true`: If the Keyword `track = true`
+- `time_shift::Bool=c.fmu.executionConfig.autoTimeShift`:
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -1525,6 +1552,7 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
     return status
 end
 
+#TODO
 """
     fmi2SetContinuousStates(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
