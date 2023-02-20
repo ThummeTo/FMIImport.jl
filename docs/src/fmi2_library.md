@@ -181,7 +181,9 @@ In order to enable the slave to interpolate the continuous real inputs between c
 derivatives of the inputs with respect to time can be provided. Also, higher derivatives can be set to allow
 higher order interpolation.
 
-
+```@doc
+fmi2SetRealInputDerivatives
+```
 
 ```@docs
 fmi2GetRealOutputDerivatives
