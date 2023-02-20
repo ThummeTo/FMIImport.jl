@@ -14,7 +14,8 @@ makedocs(sitename="FMIImport.jl",
         modules = [FMIImport],
         checkdocs = :exports,
         pages= Any[
-            "Examples" =>  "index.md"
+            "Introduction" => "index.md"
+            "Examples" =>  "overview.md"
             "FMI2 Library Functions" => "fmi2_library.md"
             "FMI3 Library Functions" => "fmi3_library.md"
             "Related Publication" => "related.md"
@@ -22,4 +23,4 @@ makedocs(sitename="FMIImport.jl",
             ]
         )
 
-deploydocs(repo = "https://github.com/ThummeTo/FMIImport.jl.git", devbranch = "main")
+deploydocs(repo = "github.com/ThummeTo/FMIImport.jl.git", devbranch = "main")

@@ -110,8 +110,6 @@ function fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} =
 end
 
 """
-
-
    fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2Real variables.
@@ -198,7 +196,6 @@ end
 
 """
     fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
-
 
 Set the values of an array of real variables
 
