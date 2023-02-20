@@ -31,14 +31,6 @@ fmi2IsModelExchange
 
 #### Information functions
 
-<!-- functions that are not exported but listed hier :
-- fmi2GetNames
-- fmi2GetModelVariableIndices
-- fmi2GetDerivateValueReferencesAndNames
-- 
-
-
--->
 
 ```@docs
 fmi2DependenciesSupported
@@ -135,16 +127,10 @@ compute the partial derivatives at a particular communication point. One functio
 directional derivatives. This function can be used to construct the desired partial derivative matrices.
 
 
-<!-- functions that are not exported but listed hier :
-- fmi2GetRealOutputDerivatives!
-- 
-
-
--->
-
 ```@docs
 fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
+fmi2GetRealOutputDerivatives!
 fmi2SampleJacobian
 fmi2SampleJacobian!
 ```
@@ -160,32 +146,26 @@ Depending on the situation, different variables need to be computed. In order to
 ```@docs
 fmi2SetTime
 fmi2SetContinuousStates
-fmi2SetReal
-fmi2SetInteger
-fmi2SetBoolean
-fmi2SetString
 ```
 
 ### Evaluation of Model Equations
 This section contains the core functions to evaluate the model equations.
 
-<!-- functions that are not exported but listed hier :
-- fmi2NewDiscreteStates
-- fmi2GetDerivatives
-- fmi2GetEventIndicators
-- fmi2GetNominalsOfContinuousStates
--->
 
 ```@docs
 fmi2EnterEventMode
+fmi2NewDiscreteStates
 fmi2NewDiscreteStates!
 fmi2EnterContinuousTimeMode
 fmi2CompletedIntegratorStep
 fmi2CompletedIntegratorStep!
+fmi2GetDerivatives
 fmi2GetDerivatives!
+fmi2GetEventIndicators
 fmi2GetEventIndicators!
 fmi2GetContinuousStates
 fmi2GetContinuousStates!
+fmi2GetNominalsOfContinuousStates
 fmi2GetNominalsOfContinuousStates!
 ```
 
@@ -201,8 +181,9 @@ In order to enable the slave to interpolate the continuous real inputs between c
 derivatives of the inputs with respect to time can be provided. Also, higher derivatives can be set to allow
 higher order interpolation.
 
+
+
 ```@docs
-fmi2SetRealInputDerivatives
 fmi2GetRealOutputDerivatives
 ```
 
@@ -240,7 +221,6 @@ fmi2Reload
 ```@docs
 fmi2StringToValueReference
 fmi2ModelVariablesForValueReference
-fmi2StringToValueReference
 fmi2ValueReferenceToString
 fmi2GetSolutionState
 fmi2GetSolutionValue

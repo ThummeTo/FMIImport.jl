@@ -1171,8 +1171,6 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
-
-See also [`fmi2SetRealInputDerivatives!`](@ref).
 """
 function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
 
@@ -1556,7 +1554,7 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
-fmi2NewDiscreteStates!
+
 function fmi2SetContinuousStates(c::FMU2Component,
     x::AbstractArray{fmi2Real},
     nx::Csize_t;
