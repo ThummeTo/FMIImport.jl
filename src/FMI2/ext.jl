@@ -1178,9 +1178,20 @@ function fmi2GetUnit(mv::fmi2ScalarVariable)
     end
 end
 
-function fmi2GetUnit(mv::fmi2SimpleType)
-    if !isnothing(mv.type)
-        return mv.type.unit
+"""
+
+    fmi2GetUnit(st::fmi2SimpleType)
+
+Returns the `unit` entry (a string) of the corresponding simple type `st` if it has the 
+attribute `Real` and `nothing` otherwise.
+
+# Source
+- FMISpec2.0.3 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.3: 2.2.3 Definition of Types (TypeDefinitions)
+"""
+function fmi2GetUnit(st::fmi2SimpleType)
+    if hasproperty(st, :Real)
+        return st.Real.unit
     else
         nothing
     end
@@ -1245,13 +1256,14 @@ function fmi2GetDeclaredType(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
     return nothing
 end
 
+# TODO with the new `fmi2SimpleType` definition this function is superfluous...remove?
 """
 
    fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
 
 Returns the attribute structure for the simple type `st`.
 Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`, 
-`st.Boolean` or `st.Enumeration`, whichever is not `nothing`.
+`st.Boolean` or `st.Enumeration`.
 
 # Arguments
 - `st::fmi2SimpleType`: Struct which provides the information on custom SimpleTypes.
@@ -1261,8 +1273,7 @@ Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`,
 - FMISpec2.0.3[p.40]: 2.2.3 Definition of Types (TypeDefinitions)
 """
 function fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
-    !isnothing(st.type) && return st.type
-    return nothing 
+    return getfield(st, :type)
 end
 
 """

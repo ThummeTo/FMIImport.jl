@@ -391,7 +391,7 @@ end
     setDefaultsWithSimpleType!(variable_description, simple_type)
 
 Helper function to set the attributes of `variable description` according to the attributes 
-stored in `simple_type`.
+stored in `simple_type`. However, if a value is set already, it is not overwritten.
 """
 setDefaultsWithSimpleType!(variable_description, simple_type)=nothing
 # helper to avoid redundant code below:
@@ -409,15 +409,13 @@ end
 # Helper function to set the attributes of `variable description` according to the attributes 
 # stored in `simple_type`, for **Real** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionReal, simple_type)
-    attr_struct = simple_type.type
-    @assert typeof(attr_struct) == FMICore.fmi2SimpleTypeAttributesReal
+    attr_struct = simple_type.Real # throws error if `simple_type` has no attribute `Real`
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
 # Helper function to set the attributes of `variable description` according to the attributes 
 # stored in `simple_type`, for **Integer** variables:
 function setDefaultsWithSimpleType!(variable_description::FMICore.fmi2ModelDescriptionInteger, simple_type)
-    attr_struct = simple_type.type
-    @assert typeof(attr_struct) == FMICore.fmi2SimpleTypeAttributesInteger
+    attr_struct = simple_type.Integer
     return setDefaultsWithSimpleType!(attr_struct, variable_description)
 end
 
