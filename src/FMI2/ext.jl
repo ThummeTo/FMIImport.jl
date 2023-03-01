@@ -528,6 +528,23 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
             @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
         end
     end
+    # println(typeof(fmu))
+    # stateRef = pointer_from_objref(fmu)
+    # println(stateRef)
+    # val = nothing
+    # refVal = Ptr{nothing}(val)
+    # stateRef = refVal
+    # println(typeof(fmu))
+    # fmu = stateRef
+    # fmu = nothing
+    fmu = removeStruct(fmu)
+end
+
+function removeStruct(fmu)
+    z = Ref(nothing)
+    fmu = z[]
+    println(fmu)
+    nothing
 end
 
 """
