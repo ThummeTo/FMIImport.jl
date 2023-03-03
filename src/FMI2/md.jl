@@ -207,13 +207,12 @@ function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
 
         if ext 
             typenode = fmi2StringAttributesExt()
+
+            typenode.start = parseNodeString(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
         else
             typenode = fmi2StringAttributes()
         end
-
-        typenode.start = parseNodeString(defnode, "start")
-
-        # ToDo: remaining attributes
 
     elseif typename == "Boolean"
 
@@ -221,11 +220,10 @@ function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
             typenode = fmi2BooleanAttributesExt()
 
             typenode.start = parseNodeBoolean(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
         else
             typenode = fmi2BooleanAttributes()
         end
-        
-        # ToDo: remaining attributes
 
     elseif typename == "Integer"
         
@@ -233,11 +231,14 @@ function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
             typenode = fmi2IntegerAttributesExt()
 
             typenode.start = parseNodeInteger(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
         else
             typenode = fmi2IntegerAttributes()
         end
         
-        # ToDo: remaining attributes
+        typenode.quantity = parseNodeString(defnode, "quantity")
+        typenode.min = parseNodeInteger(defnode, "min")
+        typenode.max = parseNodeInteger(defnode, "max")
 
     elseif typename == "Enumeration"
         
@@ -245,11 +246,16 @@ function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
             typenode = fmi2EnumerationAttributesExt()
 
             typenode.start = parseNodeInteger(defnode, "start")
+            typenode.min = parseNodeInteger(defnode, "min")
+            typenode.max = parseNodeInteger(defnode, "max")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
         else
             typenode = fmi2EnumerationAttributes()
+
+            # ToDo: Parse items!
         end
 
-        # ToDo: remaining attributes
+        typenode.quantity = parseNodeString(defnode, "quantity")
     else
         @warn "Unknown data type `$(typename)`."
         typenode = nothing

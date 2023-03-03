@@ -1242,8 +1242,8 @@ If `mv` has a declared type, but it is not found, issue a warning and return `no
 - FMISpec2.0.3: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetDeclaredType(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
-    if isdefined(mv.variable, :declaredType)
-        dt = mv.variable.declaredType
+    if isdefined(mv.attribute, :declaredType)
+        dt = mv.attribute.declaredType
         if !isnothing(dt)
             for simple_type in md.typeDefinitions
                 if dt == simple_type.name
@@ -1273,7 +1273,7 @@ Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`,
 - FMISpec2.0.3[p.40]: 2.2.3 Definition of Types (TypeDefinitions)
 """
 function fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
-    return getfield(st, :type)
+    return typeof(st.attribute)
 end
 
 """
