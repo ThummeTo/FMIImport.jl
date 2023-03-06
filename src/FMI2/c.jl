@@ -481,14 +481,13 @@ See also [`fmi2Terminate`](@ref).
 """
 function fmi2Reset(c::FMU2Component; soft::Bool=false)
     # according to FMISpec2.0.3[p.90], fmi2Reset can be called almost always, except before 
-    # initialization and after a fatal error.
+    # instantiation and after a fatal error.
     if c.state == fmi2ComponentStateFatal
         if soft
-            @warn "fmi2Reset was called in \"soft\" mode while the component was in Fatal state. Doing nothing."
-            return fmi2StatusWarning
+            #@warn "fmi2Reset was called in `soft=true` mode while the component was in Fatal state. Doing nothing."
+            return fmi2StatusOK
         else
-            @warn "fmi2Reset was called in \"hard\" mode while the component was in Fatal state. Trying to reset anyways."
-            # TODO maybe set a flag to also return fmi2StatusWarning later? 
+            #@warn "fmi2Reset was called in `soft=false` mode while the component was in Fatal state. Trying to reset anyways."
         end
     end
 

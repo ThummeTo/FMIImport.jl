@@ -580,7 +580,8 @@ end
 function parseBaseUnit(node)
     @assert node.name == "BaseUnit"
     unit = FMICore.BaseUnit()
-    for siStr in FMICore.SI_UNIT_STRINGS
+    for siUnit in FMICore.SI_UNITS
+        siStr = String(siUnit)
         if haskey(node, siStr)
             setfield!(unit, Symbol(siStr), parse(Int32, node[siStr]))
         end
