@@ -561,10 +561,10 @@ function fmi2SampleJacobian(c::FMU2Component,
 end
 
 """
-    function fmi2SampleJacobian!(c::FMU2Component,
+    function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+                                    c::FMU2Component,
                                     vUnknown_ref::AbstractArray{fmi2ValueReference},
                                     vKnown_ref::AbstractArray{fmi2ValueReference},
-                                    dvUnknown::AbstractArray, # ToDo: datatype
                                     steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
@@ -586,11 +586,12 @@ Computes a linear combination of the partial derivatives of h with respect to th
    Δv_unknown = (δh / δv_known) Δv_known
 
 # Arguments
+- `mtx::Matrix{<:Real}`:Output matrix to store the Jacobian. Its dimensions must be compatible with the number of unknown and known value references.
 - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vUnknown_ref::AbstractArray{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
 - `vKnown_ref::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` can be equated with `v_known`(variable described above).
 - `dvUnknown::AbstractArray{fmi2Real}`: Stores the directional derivative vector values.
-- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: Step size to be used for numerical differentiation. If nothing, a default value will be chosen automatically.
 
 # Returns
 - `nothing`
@@ -692,13 +693,13 @@ As fallback, directional derivatives will be sampled with central differences.
 For optimization, if the FMU's model description has the optional entry 'dependencies', only dependent variables are sampled/retrieved. This drastically boosts performance for systems with large variable count (like CFD).
 
 # Arguments
-- `jac::AbstractMatrix{fmi2Real}`: Stores the the jacobian ∂rdx / ∂rx.
+- `jac::AbstractMatrix{fmi2Real}`: A matrix that will hold the computed Jacobian matrix.
 - `comp::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `rdx::AbstractArray{fmi2ValueReference}`: Argument `vUnknown_ref` contains values of type`fmi2ValueReference` which are identifiers of a variable value of the model.
 - `rx::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.
 
 # Keywords
-- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: Step size to be used for numerical differentiation. If nothing, a default value will be chosen automatically.
 
 # Returns
 - `nothing`
@@ -815,7 +816,8 @@ No performance optimization, for an optimized version use `fmi2GetJacobian!`.
 - `rx::AbstractArray{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.
 
 # Keywords
-- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: If sampling is used, sampling step size can be set (for each direction individually) using optional argument `steps`.
+- `steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)`: Step size to be used for numerical differentiation.
+If nothing, a default value will be chosen automatically.
 
 # Returns
 - `nothing`
@@ -953,7 +955,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - `srcArray::AbstractArray`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
 
 # Keywords
-- `filter=nothing`: whether the individual values of "fmi2ScalarVariable" are to be stored
+- `filter=nothing`: It is applied to each ModelVariable to determine if it should be updated.
 
 # Returns
 - `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
@@ -1217,7 +1219,7 @@ More detailed: `fmi2Struct = Union{FMU2, FMU2Component}`
 - `str::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
 - `vUnknown_ref::Array{fmi2ValueReference}`:  Argument `vUnKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
 - `vKnown_ref::Array{fmi2ValueReference}`: Argument `vKnown_ref` contains values of type `fmi2ValueReference` which are identifiers of a variable value of the model.`vKnown_ref` is the Array of the vector values of Real input variables of function h that changes its value in the actual Mode.
-- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`: current time stepssize
+- `steps::Array{fmi2Real} = ones(fmi2Real, length(vKnown_ref)).*1e-5`: Predefined step size vector `steps`, where all entries have the value 1e-5.
 
 # Returns
 - `dvUnknown::Arrya{fmi2Real}`: stores the samples of the directional derivative
