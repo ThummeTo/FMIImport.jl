@@ -111,6 +111,8 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.modelStructure = fmi3ModelDescriptionModelStructure()
 
             parseModelStructure(node, md)
+
+            md.numberOfContinuousStates = length(md.stateValueReferences)
             
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi3ModelDescriptionDefaultExperiment()
@@ -312,7 +314,6 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         if haskey(node, "unbounded") && (typename == "Float32" || typename == "Float64")
             modelVariables[index].unbounded = fmi3parseBoolean(node["nominal"])
         end
-
         if haskey(node, "start") && typename != "Binary" && typename != "Clock"
             if node.firstelement !== nothing && node.firstelement.name == "Dimension"
                 substrings = split(node["start"], " ")
@@ -372,10 +373,6 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
                     modelVariables[index].start = parse(fmi3UInt64, node["start"]) 
                 elseif typename == "Boolean"
                     modelVariables[index].start = parseFMI3Boolean(node["start"])
-                elseif typename == "Binary"
-                    modelVariables[index].start = pointer(node["start"])
-                elseif typename == "String"
-                    modelVariables[index].start = parse(fmi3String, node["start"])
                 elseif typename == "Enum"
                     for i in 1:length(md.enumerations)
                         if modelVariables[index].declaredType == md.enumerations[i][1] # identify the enum by the name
@@ -393,12 +390,23 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi3ModelDescription)
         if haskey(node, "reinit") && (typename == "Float32" || typename == "Float64")
             modelVariables[index].reinit = parseFMI3Boolean(node["reinit"])
         end
-        
+
+        if typename == "String" || typename == "Binary"
+            for nod in eachelement(node)
+                if nod.name == "Start"
+                    if typename == "Binary"
+                        modelVariables[index].start = pointer(nod["value"])
+                    elseif typename == "String"
+                        modelVariables[index].start = nod["value"]
+                    end
+                end
+            end
+        end
+            
         md.stringValueReferences[name] = valueReference
 
         index += 1
     end
-    md.numberOfContinuousStates = length(md.stateValueReferences)
     modelVariables
 end
 
