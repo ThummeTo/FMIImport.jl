@@ -40,6 +40,8 @@ fmi2CanGetSetState
 fmi2CanSerializeFMUstate
 fmi2ProvidesDirectionalDerivative
 fmi2GetValueReferencesAndNames
+fmi2GetNames
+fmi2GetModelVariableIndices
 fmi2GetInputValueReferencesAndNames
 fmi2GetInputNames
 fmi2GetOutputValueReferencesAndNames
@@ -48,6 +50,7 @@ fmi2GetParameterValueReferencesAndNames
 fmi2GetParameterNames
 fmi2GetStateValueReferencesAndNames
 fmi2GetStateNames
+fmi2GetDerivateValueReferencesAndNames
 fmi2GetDerivativeNames
 fmi2GetNamesAndDescriptions
 fmi2GetNamesAndUnits
@@ -180,10 +183,6 @@ engineering with focus on instationary (time-dependent) problems.
 In order to enable the slave to interpolate the continuous real inputs between communication steps, the
 derivatives of the inputs with respect to time can be provided. Also, higher derivatives can be set to allow
 higher order interpolation.
-
-```@doc
-fmi2SetRealInputDerivatives
-```
 
 ```@docs
 fmi2GetRealOutputDerivatives
