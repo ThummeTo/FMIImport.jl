@@ -597,7 +597,7 @@ end
 
 # helper to create a `FMICore.DisplayUnit` from a XML-Tag like 
 # `<DisplayUnit name="TempFahrenheit" factor="1.8" offset="-459.67"/>`
-function parseDisplayUnit(node)
+function parseDisplayUnits(node)
     @assert node.name == "DisplayUnit"
 
     unit = FMICore.DisplayUnit(node["name"])
@@ -607,6 +607,7 @@ function parseDisplayUnit(node)
     if haskey(node, "offset")
         setfield!(unit, :offset, parse(Float64, node["offset"]))
     end
+    
     return unit
 end
 
@@ -623,11 +624,11 @@ function parseUnitDefinitions(parentNode)
                 unit.baseUnit = parseBaseUnit(subNode)
 
             elseif subNode.name == "DisplayUnit"
-                displayUnit = parseDisplayUnit(subNode)
-                if isnothing(unit.displayUnit)
-                    unit.displayUnit = FMICore.DisplayUnit[displayUnit]
+                displayUnits = parseDisplayUnits(subNode)
+                if isnothing(unit.displayUnits)
+                    unit.displayUnits = Array{FMICore.DisplayUnit,1}()
                 else
-                    push!(unit.displayUnit, displayUnit)
+                    push!(unit.displayUnits, displayUnits)
                 end
             end
         end
