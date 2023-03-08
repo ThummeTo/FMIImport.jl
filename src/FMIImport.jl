@@ -28,7 +28,9 @@ fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2V
 fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
+using EzXML
 include("utils.jl")
+include("parse.jl")
 
 ### FMI2 ###
 

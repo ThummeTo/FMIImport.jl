@@ -237,7 +237,9 @@ fmi2GetFullJacobian
 fmi2GetFullJacobian!
 fmi2GetStartValue
 fmi2GetUnit
+fmi2GetDeclaredType
 fmi2GetInitial
+fmi2GetSimpleTypeAttributeStruct
 ```
 
 

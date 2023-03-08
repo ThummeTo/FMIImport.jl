@@ -9,10 +9,9 @@
 # - [Sec. 2]  functions to get values from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 # - [Sec. 3]  additional functions to get useful information from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 
-using EzXML
-
 using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment
-using FMICore: fmi2ModelDescriptionReal, fmi2ModelDescriptionBoolean, fmi2ModelDescriptionInteger, fmi2ModelDescriptionString, fmi2ModelDescriptionEnumeration
+using FMICore: fmi2RealAttributesExt, fmi2BooleanAttributesExt, fmi2IntegerAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
+using FMICore: fmi2RealAttributes, fmi2BooleanAttributes, fmi2IntegerAttributes, fmi2StringAttributes, fmi2EnumerationAttributes
 using FMICore: fmi2ModelDescriptionModelStructure
 using FMICore: fmi2DependencyKind
 using FMICore: FMU2
@@ -22,12 +21,17 @@ using FMICore: FMU2
 ######################################
 
 """
+<<<<<<< HEAD
     fmi2LoadModelDescription(pathToModellDescription::String)
+=======
+
+    fmi2LoadModelDescription(pathToModelDescription::String)
+>>>>>>> upstream/main
 
 Extract the FMU variables and meta data from the ModelDescription
 
 # Arguments
-- `pathToModellDescription::String`: Contains the path to a file name that is selected to be read and converted to an XML document. In order to better extract the variables and meta data in the further process.
+- `pathToModelDescription::String`: Contains the path to a file name that is selected to be read and converted to an XML document. In order to better extract the variables and meta data in the further process.
 
 # Returns
 - `md::fmi2ModelDescription`: Retuns a struct which provides the static information of ModelVariables.
@@ -35,7 +39,7 @@ Extract the FMU variables and meta data from the ModelDescription
 # Source
 - [EzXML.jl](https://juliaio.github.io/EzXML.jl/stable/)
 """
-function fmi2LoadModelDescription(pathToModellDescription::String)
+function fmi2LoadModelDescription(pathToModelDescription::String)
     md = fmi2ModelDescription()
 
     md.stringValueReferences = Dict{String, fmi2ValueReference}()
@@ -45,11 +49,8 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
     md.derivativeValueReferences = Array{fmi2ValueReference}(undef, 0)
 
     md.enumerations = []
-    typedefinitions = nothing
-    modelvariables = nothing
-    modelstructure = nothing
 
-    doc = readxml(pathToModellDescription)
+    doc = readxml(pathToModelDescription)
 
     root = doc.root
 
@@ -97,8 +98,13 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
                 md.modelExchange.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
                 md.modelExchange.providesDirectionalDerivative          = parseNodeBoolean(node, "providesDirectionalDerivative"            ; onfail=false)
             end
+            
         elseif node.name == "TypeDefinitions"
-            md.enumerations = createEnum(node)
+            # md.enumerations = createEnum(node)
+            md.typeDefinitions = parseSimpleTypes(node, md)
+
+        elseif node.name == "UnitDefinitions"
+            md.unitDefinitions = parseUnitDefinitions(node)
 
         elseif node.name == "ModelVariables"
             md.modelVariables = parseModelVariables(node, md)
@@ -132,7 +138,9 @@ function fmi2LoadModelDescription(pathToModellDescription::String)
         md.valueReferenceIndicies[md.valueReferences[i]] = i
     end
 
-    md
+    # ToDo: setDefaultsFromDeclaredType!(md.modelVariables, md.typeDefinitions)
+
+    return md
 end
 
 #######################################
@@ -168,6 +176,95 @@ function getDerivativeIndices(node::EzXML.Node)
         end
     end
     sort!(indices, rev=true)
+end
+
+# helper function to parse variable or simple type attributes
+function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
+
+    typename = isnothing(_typename) ? defnode.name : _typename
+    typenode = nothing 
+
+    if typename == "Real"
+
+        if ext 
+            typenode = fmi2RealAttributesExt()
+
+            typenode.start = parseNodeReal(defnode, "start")
+            typenode.derivative = parseNodeUInt(defnode, "derivative")
+            typenode.reinit = parseNodeBoolean(defnode, "reinit")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
+
+        else
+            typenode = fmi2RealAttributes()
+        end
+       
+        typenode.quantity = parseNodeString(defnode, "quantity")
+        typenode.unit = parseNodeString(defnode, "unit")
+        typenode.displayUnit = parseNodeString(defnode, "displayUnit")
+        typenode.relativeQuantity = parseNodeBoolean(defnode, "relativeQuantity")
+        typenode.min = parseNodeReal(defnode, "min")
+        typenode.max = parseNodeReal(defnode, "max")
+        typenode.nominal = parseNodeReal(defnode, "nominal")
+        typenode.unbounded = parseNodeBoolean(defnode, "unbounded")
+      
+    elseif typename == "String"
+
+        if ext 
+            typenode = fmi2StringAttributesExt()
+
+            typenode.start = parseNodeString(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
+        else
+            typenode = fmi2StringAttributes()
+        end
+
+    elseif typename == "Boolean"
+
+        if ext 
+            typenode = fmi2BooleanAttributesExt()
+
+            typenode.start = parseNodeBoolean(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
+        else
+            typenode = fmi2BooleanAttributes()
+        end
+
+    elseif typename == "Integer"
+        
+        if ext 
+            typenode = fmi2IntegerAttributesExt()
+
+            typenode.start = parseNodeInteger(defnode, "start")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
+        else
+            typenode = fmi2IntegerAttributes()
+        end
+        
+        typenode.quantity = parseNodeString(defnode, "quantity")
+        typenode.min = parseNodeInteger(defnode, "min")
+        typenode.max = parseNodeInteger(defnode, "max")
+
+    elseif typename == "Enumeration"
+        
+        if ext 
+            typenode = fmi2EnumerationAttributesExt()
+
+            typenode.start = parseNodeInteger(defnode, "start")
+            typenode.min = parseNodeInteger(defnode, "min")
+            typenode.max = parseNodeInteger(defnode, "max")
+            typenode.declaredType = parseNodeString(defnode, "declaredType")
+        else
+            typenode = fmi2EnumerationAttributes()
+
+            # ToDo: Parse items!
+        end
+
+        typenode.quantity = parseNodeString(defnode, "quantity")
+    else
+        @warn "Unknown data type `$(typename)`."
+        typenode = nothing
+    end
+    return typenode
 end
 
 # Parses the model variables of the FMU model description.
@@ -212,82 +309,26 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
             push!(md.valueReferences, valueReference)
         end
 
-        if haskey(node, "description")
-            scalarVariables[index].description = node["description"]
-        end
+        scalarVariables[index].description = parseNodeString(node, "description")
 
         # type node
-        typenode = nothing
-        typename = node.firstelement.name
-
-        if typename == "Real"
-            scalarVariables[index].Real = fmi2ModelDescriptionReal()
-            typenode = scalarVariables[index].Real
-            if haskey(node.firstelement, "quantity")
-                typenode.quantity = node.firstelement["quantity"]
-            end
-            if haskey(node.firstelement, "unit")
-                typenode.unit = node.firstelement["unit"]
-            end
-            if haskey(node.firstelement, "displayUnit")
-                typenode.displayUnit = node.firstelement["displayUnit"]
-            end
-            if haskey(node.firstelement, "relativeQuantity")
-                typenode.relativeQuantity = parseBoolean(node.firstelement["relativeQuantity"])
-            end
-            if haskey(node.firstelement, "min")
-                typenode.min = parseReal(node.firstelement["min"])
-            end
-            if haskey(node.firstelement, "max")
-                typenode.max = parseReal(node.firstelement["max"])
-            end
-            if haskey(node.firstelement, "nominal")
-                typenode.nominal = parseReal(node.firstelement["nominal"])
-            end
-            if haskey(node.firstelement, "unbounded")
-                typenode.unbounded = parseBoolean(node.firstelement["unbounded"])
-            end
-            if haskey(node.firstelement, "start")
-                typenode.start = parseReal(node.firstelement["start"])
-            end
-            if haskey(node.firstelement, "derivative")
-                typenode.derivative = parse(UInt, node.firstelement["derivative"])
-            end
-        elseif typename == "String"
-            scalarVariables[index].String = fmi2ModelDescriptionString()
-            typenode = scalarVariables[index].String
-            if haskey(node.firstelement, "start")
-                scalarVariables[index].String.start = node.firstelement["start"]
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Boolean"
-            scalarVariables[index].Boolean = fmi2ModelDescriptionBoolean()
-            typenode = scalarVariables[index].Boolean
-            if haskey(node.firstelement, "start")
-                scalarVariables[index].Boolean.start = parseFMI2Boolean(node.firstelement["start"])
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Integer"
-            scalarVariables[index].Integer = fmi2ModelDescriptionInteger()
-            typenode = scalarVariables[index].Integer
-            if haskey(node.firstelement, "start")
-                scalarVariables[index].Integer.start = parseInteger(node.firstelement["start"])
-            end
-            # ToDo: remaining attributes
-        elseif typename == "Enumeration"
-            scalarVariables[index].Enumeration = fmi2ModelDescriptionEnumeration()
-            typenode = scalarVariables[index].Enumeration
-            # ToDo: Save start value
-            # ToDo: remaining attributes
-        else
-            @warn "Unknown data type `$(typename)`."
+        defnode = node.firstelement
+        typenode = parseAttribute(defnode; ext=true)
+        if isa(typenode, fmi2RealAttributesExt)
+            scalarVariables[index].Real = typenode
+        elseif isa(typenode, fmi2StringAttributesExt)
+            scalarVariables[index].String = typenode
+        elseif isa(typenode, fmi2BooleanAttributesExt)
+            scalarVariables[index].Boolean = typenode
+        elseif isa(typenode, fmi2IntegerAttributesExt)
+            scalarVariables[index].Integer = typenode
+        elseif isa(typenode, fmi2EnumerationAttributesExt)
+            scalarVariables[index].Enumeration = typenode
         end
-
+        
         # generic attributes
-        if typenode != nothing
-            if haskey(node.firstelement, "declaredType")
-                typenode.declaredType = node.firstelement["declaredType"]
-            end
+        if !isnothing(typenode)
+            typenode.declaredType = parseNodeString(node.firstelement, "declaredType")
         end
 
         md.stringValueReferences[name] = valueReference
@@ -298,8 +339,33 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
     scalarVariables
 end
 
+# Parses the model variables of the FMU model description.
+function parseSimpleTypes(nodes::EzXML.Node, md::fmi2ModelDescription)
+
+    simpleTypes = Array{fmi2SimpleType, 1}()
+
+    for node in eachelement(nodes)
+
+        simpleType = fmi2SimpleType()
+
+        # mandatory 
+        simpleType.name = node["name"]
+
+        # attribute node (mandatory)
+        defnode = node.firstelement
+        simpleType.attribute = parseAttribute(defnode; ext=false)
+
+        # optional
+        simpleType.description = parseNodeString(node, "description")
+        
+        push!(simpleTypes, simpleType)
+    end
+
+    simpleTypes
+end
+
 # Parses the `ModelStructure.Derivatives` of the FMU model description.
-function parseUnknwon(node::EzXML.Node)
+function parseUnknown(node::EzXML.Node)
     if haskey(node, "index")
         varDep = fmi2VariableDependency(parseInteger(node["index"]))
 
@@ -342,7 +408,7 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknwon(node)
+                varDep = parseUnknown(node)
 
                 # find states and derivatives
                 derSV = md.modelVariables[varDep.index]
@@ -373,7 +439,7 @@ function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknwon(node)
+                varDep = parseUnknown(node)
 
                 push!(md.modelStructure.initialUnknowns, varDep)
             else
@@ -392,7 +458,7 @@ function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknwon(node)
+                varDep = parseUnknown(node)
 
                 # find outputs
                 outVR = md.modelVariables[varDep.index].valueReference
@@ -408,89 +474,6 @@ function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
         else
             @warn "Unknown entry in `ModelStructure.Outputs` named `$(node.name)`."
         end
-    end
-end
-
-# Parses a Bool value represented by a string.
-function parseBoolean(s::Union{String, SubString{String}}; onfail=nothing)
-    if s == "true"
-        return true
-    elseif s == "false"
-        return false
-    else
-        @assert onfail != nothing ["parseBoolean(...) unknown boolean value '$s'."]
-        return onfail
-    end
-end
-
-# parses node (interpreted as boolean)
-function parseNodeBoolean(node, key; onfail=nothing)
-    if haskey(node, key)
-        return parseBoolean(node[key]; onfail=onfail)
-    else
-        return onfail
-    end
-end
-
-# Parses an Integer value represented by a string.
-function parseInteger(s::Union{String, SubString{String}}; onfail=nothing)
-    if onfail == nothing
-        return parse(fmi2Integer, s)
-    else
-        try
-            return parse(fmi2Integer, s)
-        catch
-            return onfail
-        end
-    end
-end
-
-# parses node (interpreted as integer)
-function parseNodeInteger(node, key; onfail=nothing)
-    if haskey(node, key)
-        return parseInteger(node[key]; onfail=onfail)
-    else
-        return onfail
-    end
-end
-
-# Parses a real value represented by a string.
-function parseReal(s::Union{String, SubString{String}}; onfail=nothing)
-    if onfail == nothing
-        return parse(fmi2Real, s)
-    else
-        try
-            return parse(fmi2Real, s)
-        catch
-            return onfail
-        end
-    end
-end
-
-# parses node (interpreted as real)
-function parseNodeReal(node, key; onfail=nothing)
-    if haskey(node, key)
-        return parseReal(node[key]; onfail=onfail)
-    else
-        return onfail
-    end
-end
-
-# parses node (interpreted as string)
-function parseNodeString(node, key; onfail=nothing)
-    if haskey(node, key)
-        return node[key]
-    else
-        return onfail
-    end
-end
-
-# Parses a fmi2Boolean value represented by a string.
-function parseFMI2Boolean(s::Union{String, SubString{String}})
-    if parseBoolean(s)
-        return fmi2True
-    else
-        return fmi2False
     end
 end
 
@@ -514,7 +497,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
 
     if typename == "Real"
         type.datatype = fmi2Real
-        sv.Real = fmi2ModelDescriptionReal()
+        sv.Real = fmi2RealAttributeExt()
     elseif typename == "String"
         type.datatype = fmi2String
     elseif typename == "Boolean"
@@ -595,6 +578,69 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
         type.reinit = parseFMI2Boolean(typenode["reinit"])
     end
     type
+end
+
+# helper to create a `FMICore.BaseUnit` from a XML-Tag like `<BaseUnit m="1" s="-1"/>`
+function parseBaseUnit(node)
+    @assert node.name == "BaseUnit"
+    unit = FMICore.BaseUnit()
+    for siUnit in FMICore.SI_UNITS
+        siStr = String(siUnit)
+        if haskey(node, siStr)
+            setfield!(unit, Symbol(siStr), parse(Int32, node[siStr]))
+        end
+    end
+    if haskey(node, "factor")
+        setfield!(unit, :factor, parse(Float64, node["factor"]))
+    end
+    if haskey(node, "offset")
+        setfield!(unit, :offset, parse(Float64, node["offset"]))
+    end
+    return unit
+end
+
+# helper to create a `FMICore.DisplayUnit` from a XML-Tag like 
+# `<DisplayUnit name="TempFahrenheit" factor="1.8" offset="-459.67"/>`
+function parseDisplayUnits(node)
+    @assert node.name == "DisplayUnit"
+
+    unit = FMICore.DisplayUnit(node["name"])
+    if haskey(node, "factor")
+        setfield!(unit, :factor, parse(Float64, node["factor"]))
+    end
+    if haskey(node, "offset")
+        setfield!(unit, :offset, parse(Float64, node["offset"]))
+    end
+    
+    return unit
+end
+
+function parseUnitDefinitions(parentNode)
+
+    units = Array{fmi2Unit,1}()
+
+    for node in eachelement(parentNode)
+
+        unit = fmi2Unit(node["name"])
+
+        for subNode = eachelement(node)
+            if subNode.name == "BaseUnit"
+                unit.baseUnit = parseBaseUnit(subNode)
+
+            elseif subNode.name == "DisplayUnit"
+                displayUnits = parseDisplayUnits(subNode)
+                if isnothing(unit.displayUnits)
+                    unit.displayUnits = Array{FMICore.DisplayUnit,1}()
+                else
+                    push!(unit.displayUnits, displayUnits)
+                end
+            end
+        end
+
+        push!(units, unit)
+    end
+
+    return units
 end
 
 #=
