@@ -1171,7 +1171,7 @@ Returns the `unit` entry (a string) of the corresponding model variable.
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 """
 function fmi2GetUnit(mv::fmi2ScalarVariable)
-    if !isNothing(mv.Real)
+    if !isnothing(mv.Real)
         return mv.Real.unit
     else
         return nothing
