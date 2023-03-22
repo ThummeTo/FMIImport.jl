@@ -61,7 +61,7 @@ function prepareSolveFMU(fmu::FMU2,
             c = fmi2Instantiate!(fmu; type=type)
         else # use existing instance
             if c === nothing
-                if length(fmu.components) > 0
+                if hasCurrentComponent(fmu)
                     c = getCurrentComponent(fmu)
                 else
                     @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi2Instantiate(fmu)` to prevent this message."

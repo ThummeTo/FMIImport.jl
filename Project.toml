@@ -16,7 +16,7 @@ ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 [compat]
 ChainRulesCore = "1.15.0"
 EzXML = "1.1.0"
-FMICore = "0.16.0"
+FMICore = "0.16.1"
 ForwardDiffChainRules = "0.1.1"
 SciMLSensitivity = "7.19.0"
 ZipFile = "0.10.0"
