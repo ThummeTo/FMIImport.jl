@@ -101,15 +101,28 @@ If a null pointer is provided for “c”, the function call is ignored (does no
 
 Removes the component from the FMUs component list.
 """
+lk_fmi2FreeInstance = ReentrantLock()
 function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
+    global lk_fmi2FreeInstance
+
+    compAddr = c.compAddr
+
     if popComponent
-        ind = findall(x -> x.compAddr==c.compAddr, c.fmu.components)
-        @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
-        deleteat!(c.fmu.components, ind)
+        lock(lk_fmi2FreeInstance) do 
+            ind = findall(x -> x.compAddr == compAddr, c.fmu.components)
+            @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed. Target address `$(compAddr)` was found $(length(ind)) times at indicies $(ind)."
+            deleteat!(c.fmu.components, ind)
+
+            for key in keys(c.fmu.threadComponents)
+                if !isnothing(c.fmu.threadComponents[key]) && c.fmu.threadComponents[key].compAddr == compAddr
+                    c.fmu.threadComponents[key] = nothing
+                end
+            end
+        end
     end
 
-    fmi2FreeInstance!(c.fmu.cFreeInstance, c.compAddr)
+    fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
 
     nothing
 end
@@ -1519,7 +1532,7 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref).
 """
-function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::Bool=true, force::Bool=c.fmu.executionConfig.force, time_shift::Bool=c.fmu.executionConfig.autoTimeShift)
+function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::Bool=true, force::Bool=c.force, time_shift::Bool=c.fmu.executionConfig.autoTimeShift)
 
     # ToDo: Double-check this in the spec.
     # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)
@@ -1590,12 +1603,11 @@ More detailed:
 See also [`fmi2SetContinuousStates`](@ref).
 """
 
-fmi2NewDiscreteStates!
 function fmi2SetContinuousStates(c::FMU2Component,
     x::AbstractArray{fmi2Real},
     nx::Csize_t;
     track::Bool=true,
-    force::Bool=c.fmu.executionConfig.force)
+    force::Bool=c.force)
 
     if !force
         if c.x == x 
