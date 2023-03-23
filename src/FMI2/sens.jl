@@ -388,8 +388,9 @@ function _frule(Δtuple,
 
     #@info "frule:   ∂y=$(∂y)   ∂dx=$(∂dx)"
 
+    ∂Ω = nothing
     if c.fmu.executionConfig.concat_y_dx
-        ∂Ω = ∂y .+ ∂dx
+        ∂Ω = [∂y..., ∂dx...]
     else
         ∂Ω = (∂y, ∂dx) 
     end
