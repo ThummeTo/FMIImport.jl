@@ -21,8 +21,12 @@ using FMICore: FMU2
 ######################################
 
 """
+<<<<<<< HEAD
+    fmi2LoadModelDescription(pathToModellDescription::String)
+=======
 
     fmi2LoadModelDescription(pathToModelDescription::String)
+>>>>>>> upstream/main
 
 Extract the FMU variables and meta data from the ModelDescription
 
@@ -671,7 +675,6 @@ end
 ################################
 
 """
-
     fmi2GetDefaultStartTime(md::fmi2ModelDescription)
 
 Returns startTime from DefaultExperiment if defined else defaults to nothing.
@@ -690,7 +693,6 @@ function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetDefaultStopTime(md::fmi2ModelDescription)
 
 Returns stopTime from DefaultExperiment if defined else defaults to nothing.
@@ -710,7 +712,6 @@ function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetDefaultTolerance(md::fmi2ModelDescription)
 
 Returns tolerance from DefaultExperiment if defined else defaults to nothing.
@@ -730,7 +731,6 @@ function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetDefaultStepSize(md::fmi2ModelDescription)
 
 Returns stepSize from DefaultExperiment if defined else defaults to nothing.
@@ -750,7 +750,6 @@ function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetModelName(md::fmi2ModelDescription)
 Returns the tag 'modelName' from the model description.
 
@@ -766,7 +765,6 @@ function fmi2GetModelName(md::fmi2ModelDescription)#, escape::Bool = true)
 end
 
 """
-
     fmi2GetGUID(md::fmi2ModelDescription)
 
 Returns the tag 'guid' from the model description.
@@ -783,7 +781,6 @@ function fmi2GetGUID(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetGenerationTool(md::fmi2ModelDescription)
 
 Returns the tag 'generationtool' from the model description.
@@ -800,7 +797,6 @@ function fmi2GetGenerationTool(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
 
 Returns the tag 'generationdateandtime' from the model description.
@@ -817,7 +813,6 @@ function fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
 
 Returns the tag 'varaiblenamingconvention' from the model description.
@@ -834,7 +829,6 @@ function fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
 
 Returns the tag 'numberOfEventIndicators' from the model description.
@@ -851,7 +845,6 @@ function fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetNumberOfStates(md::fmi2ModelDescription)
 
 Returns the number of states of the FMU.
@@ -868,7 +861,6 @@ function fmi2GetNumberOfStates(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2IsCoSimulation(md::fmi2ModelDescription)
 
 Returns true, if the FMU supports co simulation
@@ -885,7 +877,6 @@ function fmi2IsCoSimulation(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2IsModelExchange(md::fmi2ModelDescription)
 
 Returns true, if the FMU supports model exchange
@@ -906,7 +897,6 @@ end
 ##################################
 
 """
-
     fmi2DependenciesSupported(md::fmi2ModelDescription)
 
 Returns true if the FMU model description contains `dependency` information.
@@ -927,7 +917,6 @@ function fmi2DependenciesSupported(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
 
 Returns if the FMU model description contains `dependency` information for `derivatives`.
@@ -953,7 +942,6 @@ function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
 
 Returns the tag 'modelIdentifier' from CS or ME section.
@@ -986,7 +974,6 @@ function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
 end
 
 """
-
     fmi2CanGetSetState(md::fmi2ModelDescription)
 
 Returns true, if the FMU supports the getting/setting of states
@@ -1003,7 +990,6 @@ function fmi2CanGetSetState(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
 
 Returns true, if the FMU state can be serialized
@@ -1020,7 +1006,6 @@ function fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
 
 Returns true, if the FMU provides directional derivatives
@@ -1037,7 +1022,6 @@ function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
@@ -1061,7 +1045,6 @@ function fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueRe
 end
 
 """
-
     fmi2GetValueReferencesAndNames(fmu::FMU2)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
@@ -1078,7 +1061,6 @@ function fmi2GetValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-
     fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`.
@@ -1114,7 +1096,6 @@ function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:fi
 end
 
 """
-
     fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
 
 Returns a array of names corresponding to value references `vrs`.
@@ -1134,7 +1115,6 @@ function fmi2GetNames(fmu::FMU2; kwargs...)
 end
 
 """
-
     fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
 
 Returns a array of indices corresponding to value references `vrs`
@@ -1162,7 +1142,6 @@ function fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueRefer
 end
 
 """
-
     fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dict with (vrs, names of inputs).
@@ -1181,7 +1160,6 @@ function fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetInputValueReferencesAndNames(fmu::FMU2)
 
 Returns a dict with (vrs, names of inputs).
@@ -1199,7 +1177,6 @@ function fmi2GetInputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-
     fmi2GetInputNames(md::fmi2ModelDescription; vrs=md.inputvalueReferences, mode=:first)
 
 Returns names of inputs.
@@ -1220,7 +1197,6 @@ function fmi2GetInputNames(md::fmi2ModelDescription; kwargs...)
 end
 
 """
-
     fmi2GetInputNames(fmu::FMU2; vrs=md.inputValueReferences, mode=:first)
 
 Returns names of inputs.
@@ -1241,7 +1217,6 @@ function fmi2GetInputNames(fmu::FMU2; kwargs...)
 end
 
 """
-
     fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
@@ -1261,7 +1236,6 @@ function fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
@@ -1278,7 +1252,6 @@ function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-
     fmi2GetOutputNames(md::fmi2ModelDescription; vrs=md.outputvalueReferences, mode=:first)
 
 Returns names of outputs.
@@ -1298,7 +1271,6 @@ function fmi2GetOutputNames(md::fmi2ModelDescription; kwargs...)
 end
 
 """
-
     fmi2GetOutputNames(fmu::FMU2; vrs=md.outputvalueReferences, mode=:first)
 
 Returns names of outputs.
@@ -1318,7 +1290,6 @@ function fmi2GetOutputNames(fmu::FMU2; kwargs...)
 end
 
 """
-
     fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
@@ -1329,14 +1300,13 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValue
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
 
-See also ['fmi2GetValueReferencesAndNames'](@ref).
+See also [`fmi2GetValueReferencesAndNames`](@ref).
 """
 function fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences)
 end
 
 """
-
     fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
@@ -1347,14 +1317,13 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValue
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
 
-See also ['fmi2GetValueReferencesAndNames'](@ref).
+See also [`fmi2GetValueReferencesAndNames`](@ref).
 """
 function fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
     fmi2GetParameterValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-
     fmi2GetParameterNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences, mode=:first)
 
 Returns names of parameters.
@@ -1368,14 +1337,13 @@ Returns names of parameters.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetParameterNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.parameterValueReferences, kwargs...)
 end
 
 """
-
     fmi2GetParameterNames(fmu::FMU2; vrs=md.parameterValueReferences, mode=:first)
 
 Returns names of parameters.
@@ -1389,14 +1357,13 @@ Returns names of parameters.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetParameterNames(fmu::FMU2; kwargs...)
     fmi2GetParameterNames(fmu.modelDescription; kwargs...)
 end
 
 """
-
     fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of state value references and their corresponding names.
@@ -1413,7 +1380,6 @@ function fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetStateValueReferencesAndNames(fmu::FMU2)
 
 Returns dict(vrs, names of states).
@@ -1432,7 +1398,6 @@ function fmi2GetStateValueReferencesAndNames(fmu::FMU2)
 end
 
 """
-
     fmi2GetStateNames(fmu::FMU2; vrs=md.stateValueReferences, mode=:first)
 
 Returns names of states.
@@ -1446,14 +1411,13 @@ Returns names of states.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetStateNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.stateValueReferences, kwargs...)
 end
 
 """
-
     fmi2GetStateNames(fmu::FMU2; vrs=md.stateValueReferences, mode=:first)
 
 Returns names of states.
@@ -1467,14 +1431,13 @@ Returns names of states.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetStateNames(fmu::FMU2; kwargs...)
     fmi2GetStateNames(fmu.modelDescription; kwargs...)
 end
 
 """
-
     fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative value references and their corresponding names.
@@ -1484,14 +1447,13 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative val
 
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
-See also ['fmi2GetValueReferencesAndNames'](@ref)
+See also [fmi2GetValueReferencesAndNames`](@ref)
 """
 function fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
     fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences)
 end
 
 """
-
     fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
 
 Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative value references and their corresponding names.
@@ -1501,14 +1463,13 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative val
 
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
-See also ['fmi2GetValueReferencesAndNames'](@ref)
+See also [fmi2GetValueReferencesAndNames`](@ref)
 """
 function fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
     fmi2GetDerivateValueReferencesAndNames(fmu.modelDescription)
 end
 
 """
-
     fmi2GetDerivativeNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences, mode=:first)
 
 Returns names of derivatives.
@@ -1522,14 +1483,13 @@ Returns names of derivatives.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetDerivativeNames(md::fmi2ModelDescription; kwargs...)
     fmi2GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
 end
 
 """
-
     fmi2GetDerivativeNames(fmu::FMU2; vrs=md.derivativeValueReferences, mode=:first)
 
 Returns names of derivatives.
@@ -1543,14 +1503,13 @@ Returns names of derivatives.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
 
-See also ['fmi2GetNames'](@ref).
+
 """
 function fmi2GetDerivativeNames(fmu::FMU2; kwargs...)
     fmi2GetDerivativeNames(fmu.modelDescription; kwargs...)
 end
 
 """
-
     fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
 
 Returns a dictionary of variables with their descriptions.
@@ -1566,7 +1525,6 @@ function fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetNamesAndDescriptions(fmu::FMU2)
 
 Returns a dictionary of variables with their descriptions.
@@ -1582,7 +1540,6 @@ function fmi2GetNamesAndDescriptions(fmu::FMU2)
 end
 
 """
-
     fmi2GetNamesAndUnits(md::fmi2ModelDescription)
 
 Returns a dictionary of variables with their units.
@@ -1599,7 +1556,6 @@ function fmi2GetNamesAndUnits(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetNamesAndUnits(fmu::FMU2)
 
 Returns a dictionary of variables with their units.
@@ -1616,7 +1572,6 @@ function fmi2GetNamesAndUnits(fmu::FMU2)
 end
 
 """
-
     fmi2GetNamesAndInitials(md::fmi2ModelDescription)
 
 Returns a dictionary of variables with their initials.
@@ -1633,7 +1588,6 @@ function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetNamesAndInitials(fmu::FMU2)
 
 Returns a dictionary of variables with their initials.
@@ -1650,7 +1604,6 @@ function fmi2GetNamesAndInitials(fmu::FMU2)
 end
 
 """
-
     fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
 
 Returns a dictionary of input variables with their starting values.
@@ -1660,7 +1613,7 @@ Returns a dictionary of input variables with their starting values.
 
 # Returns
 - `dict::Dict{String, Array{fmi2ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi2ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
-See also ['fmi2GetStartValue'](@ref).
+See also [`fmi2GetStartValue`](@ref).
 """
 function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
 
@@ -1669,7 +1622,6 @@ function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
 end
 
 """
-
     fmi2GetInputNamesAndStarts(fmu::FMU2)
 
 Returns a dictionary of input variables with their starting values.
@@ -1679,7 +1631,7 @@ Returns a dictionary of input variables with their starting values.
 
 # Returns
 - `dict::Dict{String, Array{fmi2ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi2ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
-See also ['fmi2GetStartValue'](@ref).
+See also [`fmi2GetStartValue`](@ref).
 """
 function fmi2GetInputNamesAndStarts(fmu::FMU2)
     fmi2GetInputNamesAndStarts(fmu.modelDescription)

@@ -53,7 +53,7 @@ export fmi2GetFMUstate!, fmi2SetFMUstate, fmi2FreeFMUstate!, fmi2SerializedFMUst
 export fmi2GetDirectionalDerivative!, fmi2SetRealInputDerivatives, fmi2GetRealOutputDerivatives
 export fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, fmi2GetIntegerStatus!, fmi2GetBooleanStatus!, fmi2GetStringStatus!
 export fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
-export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!
+export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!, fmi2GetRealOutputDerivatives!
 
 # FMI2_convert.jl
 export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference
@@ -62,8 +62,8 @@ export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue, fmi2GetS
 # FMI2_int.jl
 # almost everything exported in `FMI2_c.jl`
 export fmi2GetReal, fmi2GetInteger, fmi2GetString, fmi2GetBoolean
-export fmi2GetFMUstate, fmi2SerializedFMUstateSize, fmi2SerializeFMUstate, fmi2DeSerializeFMUstate
-export fmi2GetDirectionalDerivative
+export fmi2GetFMUstate, fmi2SerializedFMUstateSize, fmi2SerializeFMUstate, fmi2DeSerializeFMUstate, fmi2NewDiscreteStates
+export fmi2GetDirectionalDerivative, fmi2GetDerivatives, fmi2GetEventIndicators, fmi2GetNominalsOfContinuousStates
 export fmi2CompletedIntegratorStep
 
 # FMI2_ext.jl
@@ -77,11 +77,11 @@ export fmi2GetContinuousStates
 # FMI2_md.jl
 export fmi2LoadModelDescription
 export fmi2GetDefaultStartTime, fmi2GetDefaultStopTime, fmi2GetDefaultTolerance, fmi2GetDefaultStepSize
-export fmi2GetModelName, fmi2GetGUID, fmi2GetGenerationTool, fmi2GetGenerationDateAndTime, fmi2GetVariableNamingConvention, fmi2GetNumberOfEventIndicators, fmi2GetNumberOfStates, fmi2IsCoSimulation, fmi2IsModelExchange
+export fmi2GetModelName, fmi2GetGUID, fmi2GetGenerationTool, fmi2GetGenerationDateAndTime, fmi2GetVariableNamingConvention, fmi2GetNumberOfEventIndicators, fmi2GetNumberOfStates, fmi2IsCoSimulation, fmi2IsModelExchange, fmi2GetNames, fmi2GetModelVariableIndices
 export fmi2DependenciesSupported, fmi2DerivativeDependenciesSupported, fmi2GetModelIdentifier, fmi2CanGetSetState, fmi2CanSerializeFMUstate, fmi2ProvidesDirectionalDerivative
 export fmi2GetInputValueReferencesAndNames, fmi2GetOutputValueReferencesAndNames, fmi2GetParameterValueReferencesAndNames, fmi2GetStateValueReferencesAndNames, fmi2GetDerivativeValueReferencesAndNames
 export fmi2GetInputNames, fmi2GetOutputNames, fmi2GetParameterNames, fmi2GetStateNames, fmi2GetDerivativeNames
-export fmi2GetValueReferencesAndNames, fmi2GetNamesAndDescriptions, fmi2GetNamesAndUnits, fmi2GetNamesAndInitials, fmi2GetInputNamesAndStarts
+export fmi2GetValueReferencesAndNames, fmi2GetNamesAndDescriptions, fmi2GetNamesAndUnits, fmi2GetNamesAndInitials, fmi2GetInputNamesAndStarts, fmi2GetDerivateValueReferencesAndNames
 
 # FMI2_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`

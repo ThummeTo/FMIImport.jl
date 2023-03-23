@@ -10,17 +10,12 @@
 # - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
 
 """
-
-    fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::size_t=Unsigned(0), categories::Ptr{fmiString}=C_NULL)
+    fmi2SetDebugLogging(c::FMU2Component)
 
 Control the use of the logging callback function, version independent.
 
 # Arguments
 - `c::FMU2Component`: Argument `c` is a mutable struct representing an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
-- `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
-- `categories::Ptr{Nothing}`: This is an unordered set of strings representing the possible values of the log categories of the FMU (for example logEvent). The allowed values of categories are defined by the modeling
-environment that generated the FMU.
 
 # Returns
 - `status::fmi2Status`: Return `status` is an enumeration of type `fmi2Status` and indicates the success of the function call.
@@ -43,8 +38,10 @@ function fmi2SetDebugLogging(c::FMU2Component)
 end
 
 """
-
-    fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+    fmi2SetupExperiment(c::FMU2Component, 
+                            startTime::Union{Real, Nothing} = nothing, 
+                            stopTime::Union{Real, Nothing} = nothing; 
+                            tolerance::Union{Real, Nothing} = nothing)
 
 Setup the simulation but without defining all of the parameters.
 
@@ -77,7 +74,10 @@ More detailed:
 
 See also [`fmi2SetupExperiment`](@ref).
 """
-function fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+function fmi2SetupExperiment(c::FMU2Component, 
+                                startTime::Union{Real, Nothing} = nothing, 
+                                stopTime::Union{Real, Nothing} = nothing; 
+                                tolerance::Union{Real, Nothing} = nothing)
 
     if startTime == nothing
         startTime = fmi2GetDefaultStartTime(c.fmu.modelDescription)
@@ -112,8 +112,6 @@ function fmi2SetupExperiment(c::FMU2Component, startTime::Union{Real, Nothing} =
 end
 
 """
-
-
    fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2Real variables.
@@ -152,7 +150,6 @@ function fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 end
 
 """
-
     fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
 
 
@@ -200,9 +197,7 @@ function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Re
 end
 
 """
-
     fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real})
-
 
 Set the values of an array of real variables
 
@@ -243,7 +238,6 @@ function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Uni
 end
 
 """
-
     fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Returns the integer values of an array of variables
@@ -283,7 +277,6 @@ function fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 end
 
 """
-
     fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
 
 Writes the integer values of an array of variables in the given field
@@ -334,7 +327,6 @@ function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 end
 
 """
-
     fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
 
 Set the values of an array of integer variables
@@ -370,7 +362,6 @@ function fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::
 end
 
 """
-
     fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2Boolean variables.
@@ -404,7 +395,6 @@ function fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 end
 
 """
-
     fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
 
 Writes the boolean values of an array of variables in the given field
@@ -450,7 +440,6 @@ function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values:
 end
 
 """
-
     fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
 
 Set the values of an array of boolean variables
@@ -488,7 +477,6 @@ function fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::
 end
 
 """
-
     fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 
 Get the values of an array of fmi2String variables.
@@ -526,7 +514,6 @@ function fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
 end
 
 """
-
     fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
 
 Writes the string values of an array of variables in the given field
@@ -568,7 +555,6 @@ function fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::
 end
 
 """
-
     fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
 
 Set the values of an array of string variables
@@ -615,7 +601,6 @@ function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::U
 end
 
 """
-
     fmi2GetFMUstate(c::FMU2Component)
 
 Makes a copy of the internal FMU state and returns a pointer to this copy.
@@ -642,7 +627,6 @@ function fmi2GetFMUstate(c::FMU2Component)
 end
 
 """
-
     fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
 
 Free the memory for the allocated FMU state
@@ -660,7 +644,7 @@ Free the memory for the allocated FMU state
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
 
-See also [`fmi2FreeFMUstate`](@ref).
+See also [`fmi2FreeFMUstate!`](@ref).
 """
 function fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
     stateRef = Ref(state)
@@ -670,7 +654,6 @@ function fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
 end
 
 """
-
     fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
 
 Returns the size of the byte vector in which the FMUstate can be stored.
@@ -698,7 +681,6 @@ function fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
 end
 
 """
-
     fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
 
 Serializes the data referenced by the pointer FMUstate and copies this data into the byte vector serializedState of length size to be provided by the environment.
@@ -730,7 +712,6 @@ function fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
 end
 
 """
-
     fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArray{fmi2Byte})
 
 Deserialize the data in the serializedState fmi2Byte field
@@ -762,7 +743,6 @@ function fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArra
 end
 
 """
-
     fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -800,7 +780,7 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -817,7 +797,6 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
 end
 
 """
-TODO -> Arguments
     fmiGetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
@@ -865,7 +844,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -886,7 +865,6 @@ function fmi2GetDirectionalDerivative!(c::FMU2Component,
 end
 
 """
-
     fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::fmi2ValueReference,
                                       vKnown_ref::fmi2ValueReference,
@@ -923,7 +901,7 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative`](@ref).
+See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::fmi2ValueReference,
@@ -935,8 +913,10 @@ end
 
 # CoSimulation specific functions
 """
-
-    fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+    fmi2SetRealInputDerivatives(c::FMU2Component, 
+                                    vr::AbstractArray{fmi2ValueReference}, 
+                                    order::AbstractArray{fmi2Integer}, 
+                                    values::AbstractArray{fmi2Real})
 
 Sets the n-th time derivative of real input variables.
 
@@ -976,7 +956,6 @@ function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFor
 end
 
 """
-
     fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
 
 Sets the n-th time derivative of real input variables.
@@ -995,7 +974,6 @@ Sets the n-th time derivative of real input variables.
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 
-See also [`fmi2SetRealInputDerivatives!`](@ref).
 """
 function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
 
@@ -1015,8 +993,10 @@ function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFo
 end
 
 """
-
-    fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+    fmi2DoStep(c::FMU2Component, 
+                    communicationStepSize::Union{Real, Nothing} = nothing; 
+                    currentCommunicationPoint::Union{Real, Nothing} = nothing,
+                    noSetFMUStatePriorToCurrentPoint::Bool = true)
 
 
 Does one step in the CoSimulation FMU
@@ -1044,7 +1024,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
-See also [`fmi2DoStep`](@ref), [`fmi2Struct`](@ref), [`FMU2`](@ref), [`FMU2Component`](@ref).
+See also [`fmi2DoStep`](@ref).
 """
 function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
 
@@ -1075,7 +1055,6 @@ function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing
 end
 
 """
-
     fmiSetTime(c::FMU2Component, t::Real)
 
 Set a new time instant and re-initialize caching of variables that depend on time.
@@ -1113,7 +1092,6 @@ end
 # Model Exchange specific functions
 
 """
-
     fmiSetContinuousStates(c::FMU2Component,
                                  x::Union{AbstractArray{Float32},AbstractArray{Float64}})
 
@@ -1150,7 +1128,6 @@ function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float3
 end
 
 """
-
     fmi2NewDiscreteStates(c::FMU2Component)
 
 Returns the next discrete states
@@ -1182,7 +1159,6 @@ function fmi2NewDiscreteStates(c::FMU2Component)
 end
 
 """
-
     fmiCompletedIntegratorStep(c::FMU2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
 
 This function must be called by the environment after every completed step
@@ -1207,10 +1183,10 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2CompletedIntegratorStep`](@ref), [`fmi2SetFMUState`](@ref).
+See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+                                        noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
     enterEventMode = zeros(fmi2Boolean, 1)
     terminateSimulation = zeros(fmi2Boolean, 1)
 
@@ -1223,7 +1199,6 @@ function fmi2CompletedIntegratorStep(c::FMU2Component,
 end
 
 """
-
     fmi2GetDerivatives(c::FMU2Component)
 
 Compute state derivatives at the current time instant and for the current states.
@@ -1239,7 +1214,7 @@ vector.
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetDerivatives`](@ref).
+See also [`fmi2GetDerivatives!`](@ref).
 """
 function fmi2GetDerivatives(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
@@ -1249,7 +1224,6 @@ function fmi2GetDerivatives(c::FMU2Component)
 end
 
 """
-
     fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
 
 Compute state derivatives at the current time instant and for the current states.
@@ -1272,7 +1246,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetDerivatives`](@ref).
+See also [`fmi2GetDerivatives!`](@ref).
 """
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
@@ -1283,7 +1257,6 @@ function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Re
 end
 
 """
-
     fmi2GetEventIndicators(c::FMU2Component)
 
 Returns the event indicators of the FMU
@@ -1297,7 +1270,7 @@ Returns the event indicators of the FMU
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
@@ -1307,7 +1280,6 @@ function fmi2GetEventIndicators(c::FMU2Component)
 end
 
 """
-
     fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
 
 Returns the event indicators of the FMU.
@@ -1321,7 +1293,6 @@ Returns the event indicators of the FMU.
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
 """
 function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
     ni = Csize_t(length(eventIndicators))
@@ -1329,7 +1300,6 @@ function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArra
 end
 
 """
-
     fmi2GetContinuousStates(c::FMU2Component)
 
 Return the new (continuous) state vector x
@@ -1342,7 +1312,7 @@ Return the new (continuous) state vector x
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
-See also [`fmi2GetEventIndicators`](@ref).
+See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetContinuousStates(c::FMU2Component)
     nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
@@ -1352,7 +1322,6 @@ function fmi2GetContinuousStates(c::FMU2Component)
 end
 
 """
-
     fmi2GetNominalsOfContinuousStates(c::FMU2Component)
 
 Return the new (continuous) state vector x

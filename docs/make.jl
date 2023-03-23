@@ -11,6 +11,8 @@ makedocs(sitename="FMIImport.jl",
             sidebar_sitename = false,
             edit_link = nothing
         ),
+        modules = [FMIImport],
+        checkdocs = :exports,
         pages= Any[
             "Introduction" => "index.md"
             "Examples" =>  "overview.md"

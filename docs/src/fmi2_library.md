@@ -1,3 +1,4 @@
+
 # [FMI2 Library Functions](@id library)
 
 ## FMI2 Common Concepts for Model Exchange and Co-Simulation
@@ -29,6 +30,7 @@ fmi2IsModelExchange
 ```
 
 #### Information functions
+
 
 ```@docs
 fmi2DependenciesSupported
@@ -89,7 +91,7 @@ attributes)].
 ```@docs
 fmi2Get
 fmi2Get!
-fmiSet
+fmi2Set
 fmi2GetReal
 fmi2GetReal!
 fmi2GetInteger
@@ -127,6 +129,7 @@ means computing the partial derivatives at a particular time instant. For Co-Sim
 compute the partial derivatives at a particular communication point. One function is provided to compute
 directional derivatives. This function can be used to construct the desired partial derivative matrices.
 
+
 ```@docs
 fmi2GetDirectionalDerivative!
 fmi2SetRealInputDerivatives
@@ -146,14 +149,11 @@ Depending on the situation, different variables need to be computed. In order to
 ```@docs
 fmi2SetTime
 fmi2SetContinuousStates
-fmi2SetReal
-fmi2SetInteger
-fmi2SetBoolean
-fmi2SetString
 ```
 
 ### Evaluation of Model Equations
 This section contains the core functions to evaluate the model equations.
+
 
 ```@docs
 fmi2EnterEventMode
@@ -185,7 +185,6 @@ derivatives of the inputs with respect to time can be provided. Also, higher der
 higher order interpolation.
 
 ```@docs
-fmi2SetRealInputDerivatives
 fmi2GetRealOutputDerivatives
 ```
 
@@ -223,7 +222,6 @@ fmi2Reload
 ```@docs
 fmi2StringToValueReference
 fmi2ModelVariablesForValueReference
-fmi2StringToValueReference
 fmi2ValueReferenceToString
 fmi2GetSolutionState
 fmi2GetSolutionValue
@@ -233,16 +231,10 @@ fmi2GetSolutionTime
 ### External/Additional functions
 
 ```@docs
-fmi2Instantiate!
-fmi2SampleJacobian
-fmi2SampleJacobian!
 fmi2GetJacobian
 fmi2GetJacobian!
 fmi2GetFullJacobian
 fmi2GetFullJacobian!
-fmi2Get!
-fmi2Get
-fmi2Set
 fmi2GetStartValue
 fmi2GetUnit
 fmi2GetDeclaredType
