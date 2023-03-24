@@ -4,7 +4,7 @@
 #
 
 using ChainRulesCore: ignore_derivatives
-import ForwardDiff
+import SciMLSensitivity.ForwardDiff
 
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
 function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceFormat)

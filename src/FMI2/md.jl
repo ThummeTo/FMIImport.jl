@@ -1018,7 +1018,13 @@ Returns true, if the FMU provides directional derivatives
 
 """
 function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.providesDirectionalDerivative) || (md.modelExchange != nothing && md.modelExchange.providesDirectionalDerivative)
+    if md.coSimulation != nothing 
+        return (md.coSimulation.providesDirectionalDerivative == true)
+    elseif md.modelExchange != nothing 
+        return (md.modelExchange.providesDirectionalDerivative == true)
+    end
+
+    return false
 end
 
 """

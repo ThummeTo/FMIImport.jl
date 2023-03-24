@@ -43,6 +43,8 @@ include("FMI2/md.jl")
 include("FMI2/fmu_to_md.jl")
 include("FMI2/sens.jl")
 
+export getCurrentComponent, hasCurrentComponent
+
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
 export fmi2ComponentState, fmi2ComponentStateModelSetableFMUstate, fmi2ComponentStateModelUnderEvaluation, fmi2ComponentStateModelInitialized # TODO might be imported from FMICOre

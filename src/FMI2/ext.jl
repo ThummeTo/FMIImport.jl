@@ -316,6 +316,7 @@ function loadBinary(fmu::FMU2)
     end
 end
 
+lk_fmi2Instantiate = ReentrantLock()
 """
     fmi2Instantiate!(fmu::FMU2; 
                         instanceName::String=fmu.modelName, 
@@ -415,34 +416,43 @@ function fmi2Instantiate!(fmu::FMU2;
 
     guidStr = "$(fmu.modelDescription.guid)"
 
-    compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
-
-    if compAddr == Ptr{Cvoid}(C_NULL)
-        @error "fmi2Instantiate!(...): Instantiation failed!"
-        return nothing
-    end
-
+    global lk_fmi2Instantiate
     component = nothing
+    
+    lock(lk_fmi2Instantiate) do 
+        compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
-    # check if address is already inside of the components (this may be in FMIExport.jl)
-    for c in fmu.components
-        if c.compAddr == compAddr
-            component = c
-            break
+        if compAddr == Ptr{Cvoid}(C_NULL)
+            @error "fmi2Instantiate!(...): Instantiation failed!"
+            return nothing
         end
-    end
 
-    if component != nothing
-        logInfo(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
-    else
-        component = FMU2Component(compAddr, fmu)
-        component.jacobianUpdate! = fmi2SampleJacobian!
+        # check if address is already inside of the components (this may be in FMIExport.jl)
+        for c in fmu.components
+            if c.compAddr == compAddr
+                component = c
+                break
+            end
+        end
+
+        if !isnothing(component)
+            logWarn(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
+        else
+            component = FMU2Component(compAddr, fmu)
+
+            component.callbackFunctions = callbackFunctions
+            component.instanceName = instanceName
+            component.type = type
+
+            if pushComponents
+                push!(fmu.components, component)
+            end
+        end
+
         component.componentEnvironment = compEnv
-        component.callbackFunctions = callbackFunctions
-        component.instanceName = instanceName
-        component.type = type
+        component.jacobianUpdate! = fmi2SampleJacobian!
 
-        updateFct = nothing
+        updFct = nothing 
         if fmi2ProvidesDirectionalDerivative(fmu)
             updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
         else
@@ -454,12 +464,22 @@ function fmi2Instantiate!(fmu::FMU2;
         component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
         component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
-        if pushComponents
-            push!(fmu.components, component)
-        end
+        # register component for current thread
+        fmu.threadComponents[Threads.threadid()] = component
     end
+    
+    return component
+end
 
-    component
+function hasCurrentComponent(fmu::FMU2)
+    tid = Threads.threadid()
+    return haskey(fmu.threadComponents, tid) && fmu.threadComponents[tid] != nothing
+end
+
+function getCurrentComponent(fmu::FMU2)
+    tid = Threads.threadid()
+    @assert hasCurrentComponent(fmu) ["No FMU instance allocated (in current thread with ID `$(tid)`), have you already called fmiInstantiate?"]
+    return fmu.threadComponents[tid]
 end
 
 """
