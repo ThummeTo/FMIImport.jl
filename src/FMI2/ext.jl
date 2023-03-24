@@ -10,8 +10,6 @@ using Libdl
 using ZipFile
 import Downloads
 
-import SciMLSensitivity: InterpolatingAdjoint, ReverseDiffVJP
-
 """
 
     fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
@@ -133,8 +131,6 @@ See also .
 function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, fmi2Type, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
     # Create uninitialized FMU
     fmu = FMU2(logLevel)
-
-    fmu.executionConfig.sensealg = InterpolatingAdjoint(autojacvec=ReverseDiffVJP(false))
 
     if startswith(pathToFMU, "http")
         logInfo(fmu, "Downloading FMU from `$(pathToFMU)`.")
