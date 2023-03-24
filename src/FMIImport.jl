@@ -5,6 +5,7 @@
 
 module FMIImport
 
+import SciMLSensitivity
 using FMICore
 
 using FMICore: fmi2Component, fmi3Instance
