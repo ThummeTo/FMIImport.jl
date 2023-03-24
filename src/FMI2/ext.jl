@@ -419,31 +419,33 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         end
 
         if !isnothing(component)
-            logInfo(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
+            logWarn(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
         else
             component = FMU2Component(compAddr, fmu)
-            component.jacobianUpdate! = fmi2SampleJacobian!
-            component.componentEnvironment = compEnv
+
             component.callbackFunctions = callbackFunctions
             component.instanceName = instanceName
             component.type = type
-
-            updateFct = nothing
-            if fmi2ProvidesDirectionalDerivative(fmu)
-                updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-            else
-                updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-            end
-
-            component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-            component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-            component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-            component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
             if pushComponents
                 push!(fmu.components, component)
             end
         end
+
+        component.componentEnvironment = compEnv
+        component.jacobianUpdate! = fmi2SampleJacobian!
+
+        updFct = nothing 
+        if fmi2ProvidesDirectionalDerivative(fmu)
+            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
+        else
+            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
+        end
+
+        component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
+        component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
 
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
