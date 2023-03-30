@@ -547,6 +547,13 @@ function removeStruct(fmu)
     nothing
 end
 
+function removeStruct(fmu)
+    z = Ref(nothing)
+    fmu = z[]
+    println(fmu)
+    nothing
+end
+
 """
     fmi2SampleJacobian(c::FMU2Component,
                             vUnknown_ref::AbstractArray{fmi2ValueReference},
