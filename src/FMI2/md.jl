@@ -1082,7 +1082,7 @@ Returns a array of names corresponding to value references `vrs`.
 
 """
 function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-    names = []
+    names = String[]
     for vr in vrs
         ns = fmi2ValueReferenceToString(md, vr)
 
