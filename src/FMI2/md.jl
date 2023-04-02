@@ -1082,7 +1082,7 @@ Returns a array of names corresponding to value references `vrs`.
 
 """
 function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-    names = String[]
+    names = []
     for vr in vrs
         ns = fmi2ValueReferenceToString(md, vr)
 
@@ -1098,7 +1098,7 @@ function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:fi
             @assert false "fmi2GetNames(...) unknown mode `mode`, please choose between `:first`, `:group` and `:flat`."
         end
     end
-    return names
+    return mode == :group ? [string.(name) for name in names] : string.(names)
 end
 
 """
