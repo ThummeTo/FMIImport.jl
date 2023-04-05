@@ -538,6 +538,7 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
     # fmu = stateRef
     # fmu = nothing
     fmu = removeStruct(fmu)
+    return nothing
 end
 
 function removeStruct(fmu)
@@ -547,12 +548,6 @@ function removeStruct(fmu)
     nothing
 end
 
-function removeStruct(fmu)
-    z = Ref(nothing)
-    fmu = z[]
-    println(fmu)
-    nothing
-end
 
 """
     fmi2SampleJacobian(c::FMU2Component,
