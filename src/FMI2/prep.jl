@@ -3,14 +3,20 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+using FMICore: getAttributes, fmi2ScalarVariable
+
 import FMIImport: fmi2VariabilityConstant, fmi2InitialApprox, fmi2InitialExact
-function setBeforeInitialization(mv::FMIImport.fmi2ScalarVariable)
-    return mv.variability != fmi2VariabilityConstant && mv.initial ∈ (fmi2InitialApprox, fmi2InitialExact)
+function setBeforeInitialization(mv::fmi2ScalarVariable)
+    
+    causality, variability, initial = getAttributes(mv)
+    return variability != fmi2VariabilityConstant && initial ∈ (fmi2InitialApprox, fmi2InitialExact)
 end
 
 import FMIImport: fmi2CausalityInput, fmi2CausalityParameter, fmi2VariabilityTunable
-function setInInitialization(mv::FMIImport.fmi2ScalarVariable)
-    return mv.causality == fmi2CausalityInput || (mv.causality != fmi2CausalityParameter && mv.variability == fmi2VariabilityTunable) || (mv.variability != fmi2VariabilityConstant && mv.initial == fmi2InitialExact)
+function setInInitialization(mv::fmi2ScalarVariable)
+
+    causality, variability, initial = getAttributes(mv)
+    return causality == fmi2CausalityInput || (causality != fmi2CausalityParameter && variability == fmi2VariabilityTunable) || (variability != fmi2VariabilityConstant && initial == fmi2InitialExact)
 end
 
 function prepareSolveFMU(fmu::FMU2, 
