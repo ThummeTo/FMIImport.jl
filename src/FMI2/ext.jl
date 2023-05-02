@@ -417,9 +417,10 @@ function fmi2Instantiate!(fmu::FMU2;
     guidStr = "$(fmu.modelDescription.guid)"
 
     global lk_fmi2Instantiate
-    component = nothing
     
-    lock(lk_fmi2Instantiate) do 
+    lock(lk_fmi2Instantiate) do
+        
+        component = nothing
         compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
         if compAddr == Ptr{Cvoid}(C_NULL)
@@ -450,6 +451,8 @@ function fmi2Instantiate!(fmu::FMU2;
         end
 
         component.componentEnvironment = compEnv
+        component.loggingOn = loggingOn
+        component.visible = visible
         component.jacobianUpdate! = fmi2SampleJacobian!
 
         updFct = nothing 
@@ -468,7 +471,7 @@ function fmi2Instantiate!(fmu::FMU2;
         fmu.threadComponents[Threads.threadid()] = component
     end
     
-    return component
+    return getCurrentComponent(fmu)
 end
 
 function hasCurrentComponent(fmu::FMU2)
