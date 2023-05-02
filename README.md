@@ -9,6 +9,7 @@
 [![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIImport.jl/dev) 
 [![Run Tests](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml)
 [![Build Docs](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml)
+[![Run PkgEval](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIImport.jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 
