@@ -62,6 +62,8 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `x`: An array containing the states to be set. Not supported by CS-FMUs.
 - `u`: An array containing the inputs to be set.
 - `u_refs`: An array of value references to indicate which system inputs want to be set.
+- `p`: An array of FMU parameters to be set.
+- `p_refs`: An array of parameter references to indicate which system parameter sensitivities need to be determined.
 - `t`: A scalar value holding the system time to be set.
 
 # Returns (as Tuple)
@@ -74,6 +76,8 @@ function (fmu::FMU2)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     x::Union{AbstractVector{<:Real}, Nothing}=nothing, 
     u::Union{AbstractVector{<:Real}, Nothing}=nothing,
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing}=nothing,
+    p::Union{AbstractVector{<:Real}, Nothing}=fmu.optim_p, 
+    p_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing}=fmu.optim_p_refs, 
     t::Union{Real, Nothing}=nothing)
 
     c = nothing
@@ -87,7 +91,7 @@ function (fmu::FMU2)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
         fmi2ExitInitializationMode(c)
     end
 
-    c(;dx=dx, y=y, y_refs=y_refs, x=x, u=u, u_refs=u_refs, t=t)
+    c(;dx=dx, y=y, y_refs=y_refs, x=x, u=u, u_refs=u_refs, p=p, p_refs=p_refs, t=t)
 end
 
 """
@@ -110,6 +114,8 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `x`: An array containing the states to be set. Not supported by CS-FMUs.
 - `u`: An array containing the inputs to be set.
 - `u_refs`: An array of value references to indicate which system inputs want to be set.
+- `p`: An array of FMU parameters to be set.
+- `p_refs`: An array of parameter references to indicate which system parameter sensitivities need to be determined.
 - `t`: A scalar value holding the system time to be set.
 
 # Returns (as Tuple)
@@ -122,6 +128,8 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
                              x::Union{AbstractVector{<:Real}, Nothing}=nothing, 
                              u::Union{AbstractVector{<:Real}, Nothing}=nothing,
                              u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing}=nothing,
+                             p::Union{AbstractVector{<:Real}, Nothing}=c.fmu.optim_p, 
+                             p_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing}=c.fmu.optim_p_refs, 
                              t::Union{Real, Nothing}=nothing)
 
     if y_refs != nothing && length(y_refs) > 0
@@ -132,6 +140,7 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
 
     @assert y == nothing || (length(y) == length(y_refs)) "Length of `y` must match length of `y_refs`."
     @assert u == nothing || (length(u) == length(u_refs)) "Length of `u` must match length of `u_refs`."
+    @assert p == nothing || (length(p) == length(p_refs)) "Length of `p` must match length of `p_refs`."
 
     if fmi2IsModelExchange(c.fmu)
         
@@ -150,28 +159,33 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
         end
     end
 
-    # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Nothing`.
+    # ToDo: This is necessary, because ForwardDiffChainRules.jl can't handle arguments with type `Nothing`.
     if t == nothing
         t = -1.0
     end
 
-    # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Ptr{Nothing}`.
+    # ToDo: This is necessary, because ForwardDiffChainRules.jl can't handle arguments with type `Ptr{Nothing}`.
     cRef = nothing
     ignore_derivatives() do
         cRef = pointer_from_objref(c)
         cRef = UInt64(cRef)
     end
 
-    # ToDo: This is necessary, because NonconvexUtils/ForwardDiff can't handle arguments with type `Nothing`.
+    # ToDo: This is necessary, because ForwardDiffChainRules.jl can't handle arguments with type `Nothing`.
+    if length(p_refs) <= 0 
+        p = Array{fmi2Real, 1}()
+        p_refs = Array{fmi2ValueReference, 1}()
+    end
+        
     if u == nothing || length(u) <= 0 
-        return eval!(cRef, dx, y, y_refs, x, t)
+        return eval!(cRef, dx, y, y_refs, x, p, p_refs, t)
 
     elseif x == nothing || length(x) <= 0 
-        return eval!(cRef, dx, y, y_refs, u, u_refs, t)
+        return eval!(cRef, dx, y, y_refs, u, u_refs, p, p_refs, t)
 
     end
 
-    return eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
+    return eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 function _eval!(cRef::UInt64, 
@@ -181,17 +195,25 @@ function _eval!(cRef::UInt64,
     x::Union{AbstractVector{<:Real}, Nothing}, 
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{Real, Nothing})
 
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
 
-    @assert x == nothing || !isdual(x) "_eval!(...): Wrong dispatched: `x` is ForwardDiff.Dual, please open an issue with MWE."
-    @assert u == nothing || !isdual(u) "_eval!(...): Wrong dispatched: `u` is ForwardDiff.Dual, please open an issue with MWE."
-    @assert t == nothing || !isdual(t) "_eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual, please open an issue with MWE."
+    #@info "_eval!(p::$(typeof(p)), p_refs::$(typeof(p_refs)))"
+
+    @assert x == nothing || !isdual(x) || !istracked(x) "_eval!(...): Wrong dispatched: `x` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert u == nothing || !isdual(u) || !istracked(u) "_eval!(...): Wrong dispatched: `u` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert t == nothing || !isdual(t) || !istracked(t) "_eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert p == nothing || !isdual(p) || !istracked(p) "_eval!(...): Wrong dispatched: `p` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
 
     x = unsense(x)
     t = unsense(t)
     u = unsense(u)
+    
+    # no need to unsense `p` because it is not beeing used further
+    # p = unsense(p)
 
     # set state
     if x != nothing
@@ -260,10 +282,12 @@ function _frule(Δtuple,
     x,
     u,
     u_refs,
+    p,
+    p_refs,
     t)
 
     Δtuple = undual(Δtuple)
-    Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt = Δtuple
+    Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δp, Δp_refs, Δt = Δtuple
 
     ### ToDo: Somehow, ForwardDiff enters with all types beeing Float64, this needs to be corrected.
 
@@ -275,6 +299,7 @@ function _frule(Δtuple,
     t = undual(t)
     u = undual(u)
     x = undual(x)
+    p = undual(p)
     
     y_refs = undual(y_refs)
     if y_refs != nothing
@@ -286,6 +311,11 @@ function _frule(Δtuple,
         u_refs = convert(Array{UInt32,1}, u_refs)
     end
 
+    p_refs = undual(p_refs)
+    if p_refs != nothing
+        p_refs = convert(Array{UInt32,1}, p_refs)
+    end
+
     ###
 
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
@@ -295,8 +325,9 @@ function _frule(Δtuple,
     derivatives = (dx != nothing && length(dx) > 0)
     states = (x != nothing && length(x) > 0)
     times = (t != nothing && t >= 0.0)
+    parameters = (p != nothing && length(p_refs) > 0)
 
-    Ω = _eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
+    Ω = _eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
     
     # time, states and inputs where already set in `_eval!`, no need to repeat it here
 
@@ -309,15 +340,17 @@ function _frule(Δtuple,
             Δx = convert(Vector{fmi2Real}, Δx)
         end
 
-        if derivatives && states
-            ∂dx += fmi2JVP!(c, :A, c.fmu.modelDescription.derivativeValueReferences, c.fmu.modelDescription.stateValueReferences, Δx)
-            c.solution.evals_∂ẋ_∂x += 1
-            #@info "$(Δx)"
-        end
+        if states
+            if derivatives
+                ∂dx += fmi2JVP!(c, :A, c.fmu.modelDescription.derivativeValueReferences, c.fmu.modelDescription.stateValueReferences, Δx)
+                c.solution.evals_∂ẋ_∂x += 1
+                #@info "$(Δx)"
+            end
 
-        if outputs && states
-            ∂y += fmi2JVP!(c, :C, y_refs, c.fmu.modelDescription.stateValueReferences, Δx)
-            c.solution.evals_∂y_∂x += 1
+            if outputs 
+                ∂y += fmi2JVP!(c, :C, y_refs, c.fmu.modelDescription.stateValueReferences, Δx)
+                c.solution.evals_∂y_∂x += 1
+            end
         end
     end
 
@@ -328,14 +361,35 @@ function _frule(Δtuple,
             Δu = convert(Vector{fmi2Real}, Δu)
         end
 
-        if derivatives && inputs
-            ∂dx += fmi2JVP!(c, :B, c.fmu.modelDescription.derivativeValueReferences, u_refs, Δu)
-            c.solution.evals_∂ẋ_∂u += 1
+        if inputs
+            if derivatives
+                ∂dx += fmi2JVP!(c, :B, c.fmu.modelDescription.derivativeValueReferences, u_refs, Δu)
+                c.solution.evals_∂ẋ_∂u += 1
+            end
+
+            if outputs
+                ∂y += fmi2JVP!(c, :D, y_refs, u_refs, Δu)
+                c.solution.evals_∂y_∂u += 1
+            end
+        end
+    end
+
+    if Δp != NoTangent() && length(Δp) > 0
+
+        if !isa(Δp, AbstractVector{fmi2Real})
+            Δp = convert(Vector{fmi2Real}, Δp)
         end
 
-        if outputs && inputs
-            ∂y += fmi2JVP!(c, :D, y_refs, u_refs, Δu)
-            c.solution.evals_∂y_∂u += 1
+        if parameters
+            if derivatives
+                ∂dx += fmi2JVP!(c, :E, c.fmu.modelDescription.derivativeValueReferences, p_refs, Δp)
+                c.solution.evals_∂ẋ_∂p += 1
+            end
+
+            if outputs
+                ∂y += fmi2JVP!(c, :F, y_refs, p_refs, Δp)
+                c.solution.evals_∂y_∂p += 1
+            end
         end
     end
 
@@ -417,6 +471,8 @@ function _rrule(cRef,
     x,
     u,
     u_refs,
+    p,
+    p_refs,
     t)
 
     @assert !isa(cRef, FMU2Component) "Wrong dispatched!"
@@ -428,8 +484,9 @@ function _rrule(cRef,
     derivatives = (!isnothing(dx) && length(dx) > 0)
     states = (!isnothing(x) && length(x) > 0)
     times = (!isnothing(t) && t >= 0.0)
+    parameters = (!isnothing(p) && length(p_refs) > 0)
 
-    Ω = _eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
+    Ω = _eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 
     # if !inputs
     #     Ω = eval!(cRef, dx, y, y_refs, x, t)
@@ -481,9 +538,12 @@ function _rrule(cRef,
 
         n_dx_x = ZeroTangent()
         n_dx_u = ZeroTangent()
+        n_dx_p = ZeroTangent()
         n_dx_t = ZeroTangent()
+
         n_y_x = ZeroTangent()
         n_y_u = ZeroTangent()
+        n_y_p = ZeroTangent()
         n_y_t = ZeroTangent()
 
         #@info "rrule pullback ȳ, d̄x = $(ȳ), $(d̄x)"
@@ -491,24 +551,38 @@ function _rrule(cRef,
         dx_refs = c.fmu.modelDescription.derivativeValueReferences
         x_refs = c.fmu.modelDescription.stateValueReferences
 
-        if derivatives && states
-            n_dx_x = fmi2VJP!(c, :A, dx_refs, x_refs, d̄x) 
-            c.solution.evals_∂ẋ_∂x += 1
+        if derivatives 
+            if states
+                n_dx_x = fmi2VJP!(c, :A, dx_refs, x_refs, d̄x) 
+                c.solution.evals_∂ẋ_∂x += 1
+            end
+
+            if inputs
+                n_dx_u = fmi2VJP!(c, :B, dx_refs, u_refs, d̄x) 
+                c.solution.evals_∂ẋ_∂u += 1
+            end
+
+            if parameters
+                n_dx_p = fmi2VJP!(c, :E, dx_refs, p_refs, d̄x) 
+                c.solution.evals_∂ẋ_∂p += 1
+            end
         end
 
-        if derivatives && inputs
-            n_dx_u = fmi2VJP!(c, :B, dx_refs, u_refs, d̄x) 
-            c.solution.evals_∂ẋ_∂u += 1
-        end
+        if outputs 
+            if states
+                n_y_x = fmi2VJP!(c, :C, y_refs, x_refs, ȳ) 
+                c.solution.evals_∂y_∂x += 1
+            end
+        
+            if inputs
+                n_y_u = fmi2VJP!(c, :D, y_refs, u_refs, ȳ) 
+                c.solution.evals_∂y_∂u += 1
+            end
 
-        if outputs && states
-            n_y_x = fmi2VJP!(c, :C, y_refs, x_refs, ȳ) 
-            c.solution.evals_∂y_∂x += 1
-        end
-
-        if outputs && inputs
-            n_y_u = fmi2VJP!(c, :D, y_refs, u_refs, ȳ) 
-            c.solution.evals_∂y_∂u += 1
+            if parameters
+                n_y_p = fmi2VJP!(c, :F, y_refs, p_refs, ȳ) 
+                c.solution.evals_∂y_∂p += 1
+            end
         end
 
         if c.fmu.executionConfig.eval_t_gradients
@@ -583,10 +657,13 @@ function _rrule(cRef,
             push!(opt, ū)
             push!(opt, ū_refs)
         end
+
+        p̄ = n_y_p + n_dx_p
+        p̄_refs = ZeroTangent()
         
         #@info "rrule:   $((ret...,))"
 
-        return (f̄, c̄Ref, d̄x, ȳ, ȳ_refs, opt..., t̄)
+        return (f̄, c̄Ref, d̄x, ȳ, ȳ_refs, opt..., p̄, p̄_refs, t̄)
     end
 
     return (Ω, eval_pullback)
@@ -601,9 +678,11 @@ function eval!(cRef::UInt64,
                x::Union{AbstractVector{<:Real}, Nothing}, 
                u::Union{AbstractVector{<:Real}, Nothing},
                u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+               p::AbstractVector{<:Real},
+               p_refs::AbstractVector{<:fmi2ValueReference},
                t::Union{Real, Nothing})
 
-    return _eval!(cRef, dx, y, y_refs, x, u, u_refs, t)
+    return _eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
@@ -615,10 +694,12 @@ function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δ
                             x,
                             u,
                             u_refs,
+                            p,
+                            p_refs, 
                             t)
 
-    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
-                           cRef,  dx,  y,  y_refs,  x,  u,  u_refs,  t)
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δp, Δp_refs, Δt), 
+                           cRef,  dx,  y,  y_refs,  x,  u,  u_refs,  p,  p_refs,  t)
 end
 
 function ChainRulesCore.rrule(::typeof(eval!), 
@@ -629,9 +710,11 @@ function ChainRulesCore.rrule(::typeof(eval!),
                             x,
                             u,
                             u_refs,
+                            p,
+                            p_refs,
                             t)
     
-    return _rrule(cRef, dx, y, y_refs, x, u, u_refs, t)
+    return _rrule(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 @ForwardDiff_frule eval!(cRef::UInt64, 
@@ -641,6 +724,8 @@ end
     x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
     u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
@@ -650,6 +735,8 @@ end
     x::Union{AbstractVector{<:Real}, Nothing}, 
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
@@ -659,6 +746,8 @@ end
     x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{Real, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
@@ -668,6 +757,8 @@ end
     x::Union{AbstractVector{<:Real}, Nothing}, 
     u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{Real, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64, 
@@ -677,6 +768,8 @@ end
     x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
     u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
     u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
     t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
@@ -686,6 +779,8 @@ end
     x::Union{AbstractVector{<:Real}, Nothing}, 
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
     t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
@@ -695,6 +790,8 @@ end
     x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
     t::Union{Real, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
@@ -704,6 +801,8 @@ end
     x::Union{AbstractVector{<:Real}, Nothing}, 
     u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
     u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
     t::Union{Real, Nothing})
 
 # EVAL! WITH `x`, WITHOUT `u`
@@ -713,25 +812,32 @@ function eval!(cRef::UInt64,
     y::Union{AbstractVector{<:Real}, Nothing},
     y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
     x::Union{AbstractVector{<:Real}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{Real, Nothing})
 
-    t = unsense(t)
-    x = unsense(x)
+    #t = unsense(t)
+    #x = unsense(x)
+    #p = unsense(p)
 
-    return _eval!(cRef, dx, y, y_refs, x, nothing, nothing, t)
+    #@info "WITH `x`, WITHOUT `u`"
+
+    return _eval!(cRef, dx, y, y_refs, x, nothing, nothing, p, p_refs, t)
 end
 
-function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δt), 
+function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δp, Δp_refs, Δt), 
     ::typeof(eval!), 
     cRef, 
     dx,
     y,
     y_refs, 
     x,
+    p,
+    p_refs, 
     t)
 
-    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, NoTangent(), NoTangent(), Δt), 
-                           cRef,  dx,  y,  y_refs,  x,     nothing,     nothing,  t)
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, NoTangent(), NoTangent(), Δp, Δp_refs, Δt), 
+                           cRef,  dx,  y,  y_refs,  x,     nothing,     nothing,  p,  p_refs,  t)
 end
 
 function ChainRulesCore.rrule(::typeof(eval!), 
@@ -740,52 +846,66 @@ function ChainRulesCore.rrule(::typeof(eval!),
     y,
     y_refs, 
     x,
+    p,
+    p_refs,
     t)
 
-    return _rrule(cRef, dx, y, y_refs, x, nothing, nothing, t)
+    return _rrule(cRef, dx, y, y_refs, x, nothing, nothing, p, p_refs, t)
 end
 
 @ForwardDiff_frule eval!(cRef::UInt64, 
-dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
-t::Union{ForwardDiff.Dual, Nothing})
+    dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-x::Union{AbstractVector{<:Real}, Nothing}, 
-t::Union{ForwardDiff.Dual, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    x::Union{AbstractVector{<:Real}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
-t::Union{Real, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    x::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{Real, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64, 
-dx::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-y::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
-t::Union{ReverseDiff.TrackedReal, Nothing})
+    dx::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    y::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-x::Union{AbstractVector{<:Real}, Nothing}, 
-t::Union{ReverseDiff.TrackedReal, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    x::Union{AbstractVector{<:Real}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
-t::Union{Real, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    x::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing}, 
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{Real, Nothing})
 
 # EVAL! WITH `u` WITHOUT `x`
 
@@ -795,12 +915,14 @@ function eval!(cRef::UInt64,
     y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
     u::Union{AbstractVector{<:Real}, Nothing},
     u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
     t::Union{Real, Nothing})
 
-    return _eval!(cRef, dx, y, y_refs, nothing, u, u_refs, t)
+    return _eval!(cRef, dx, y, y_refs, nothing, u, u_refs, p, p_refs, t)
 end
 
-function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δu, Δu_refs, Δt), 
+function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δu, Δu_refs, Δp, Δp_refs, Δt), 
                ::typeof(eval!), 
                cRef, 
                dx,
@@ -808,10 +930,12 @@ function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δu, Δu_ref
                y_refs, 
                u,
                u_refs,
+               p,
+               p_refs,
                t)
 
-    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, NoTangent(), Δu, Δu_refs, Δt), 
-                           cRef,   dx,  y,  y_refs,     nothing,  u,  u_refs,  t)
+    return _frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, NoTangent(), Δu, Δu_refs, Δp, Δp_refs, Δt), 
+                           cRef,  dx,  y,  y_refs,     nothing,  u,  u_refs,  p,  p_refs,  t)
 end
 
 function ChainRulesCore.rrule(::typeof(eval!), 
@@ -821,56 +945,70 @@ function ChainRulesCore.rrule(::typeof(eval!),
     y_refs, 
     u,
     u_refs,
+    p,
+    p_refs,
     t)
 
-    return _rrule(cRef, dx, y, y_refs, nothing, u, u_refs, t)
+    return _rrule(cRef, dx, y, y_refs, nothing, u, u_refs, p, p_refs, t)
 end
 
 @ForwardDiff_frule eval!(cRef::UInt64, 
-dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-t::Union{ForwardDiff.Dual, Nothing})
+    dx::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    y::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-u::Union{AbstractVector{<:Real}, Nothing},
-u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-t::Union{ForwardDiff.Dual, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    u::Union{AbstractVector{<:Real}, Nothing},
+    u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{ForwardDiff.Dual, Nothing})
 
 @ForwardDiff_frule eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
-u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
-t::Union{Real, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    u::Union{AbstractVector{<:ForwardDiff.Dual}, Nothing},
+    u_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{Real, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64, 
-dx::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-y::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-u_refs::Union{AbstractVector{<:UInt32}, Nothing},
-t::Union{ReverseDiff.TrackedReal, Nothing})
+    dx::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    y::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-u::Union{AbstractVector{<:Real}, Nothing},
-u_refs::Union{AbstractVector{<:UInt32}, Nothing},
-t::Union{ReverseDiff.TrackedReal, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    u::Union{AbstractVector{<:Real}, Nothing},
+    u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{ReverseDiff.TrackedReal, Nothing})
 
 @grad_from_chainrules eval!(cRef::UInt64,  
-dx::Union{AbstractVector{<:Real}, Nothing},
-y::Union{AbstractVector{<:Real}, Nothing},
-y_refs::Union{AbstractVector{<:UInt32}, Nothing},
-u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
-u_refs::Union{AbstractVector{<:UInt32}, Nothing},
-t::Union{Real, Nothing})
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    u::Union{AbstractVector{<:ReverseDiff.TrackedReal}, Nothing},
+    u_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{Real, Nothing})
 

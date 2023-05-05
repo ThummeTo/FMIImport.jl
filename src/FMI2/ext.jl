@@ -455,6 +455,7 @@ function fmi2Instantiate!(fmu::FMU2;
         component.visible = visible
         component.jacobianUpdate! = fmi2SampleJacobian!
 
+        # setting a jacobian update function dependent on DIrectionalDerivatives-Functionality is present in the FMU
         updFct = nothing 
         if fmi2ProvidesDirectionalDerivative(fmu)
             updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
@@ -466,6 +467,8 @@ function fmi2Instantiate!(fmu::FMU2;
         component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
         component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
         component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.E = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
+        component.F = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
 
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
