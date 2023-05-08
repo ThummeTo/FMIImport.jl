@@ -149,6 +149,7 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
     fmu.modelName = fmu.modelDescription.modelName
+    fmu.isZeroState = (length(fmu.modelDescription.stateValueReferences) == 0)
 
     if isa(type, fmi2Type)
         fmu.type = type

@@ -192,10 +192,8 @@ function eval!(cRef::UInt64,
     u = unsense(u)
     # p = unsense(p)     # no need to unsense `p` because it is not beeing used further
 
-    isZeroState = (length(c.fmu.modelDescription.stateValueReferences) == 0)
-
     # set state
-    if length(x) > 0 && !isZeroState
+    if length(x) > 0 && !c.fmu.isZeroState
         fmi2SetContinuousStates(c, x)
     end
 
@@ -215,7 +213,7 @@ function eval!(cRef::UInt64,
 
             dx_tmp = nothing
 
-            if isZeroState
+            if c.fmu.isZeroState
                 dx_tmp = [1.0]
             else
                 dx_tmp = collect(ForwardDiff.value(e) for e in dx)
@@ -225,7 +223,7 @@ function eval!(cRef::UInt64,
             T, V, N = fd_eltypes(dx)
             dx[:] = collect(ForwardDiff.Dual{T, V, N}(dx_tmp[i], ForwardDiff.partials(dx[i])    ) for i in 1:length(dx))
         else 
-            if isZeroState
+            if c.fmu.isZeroState
                 dx[:] = [1.0]
             else
                 fmi2GetDerivatives!(c, dx)
