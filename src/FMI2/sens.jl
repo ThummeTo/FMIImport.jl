@@ -172,7 +172,7 @@ function (c::FMU2Component)(;dx::Union{AbstractVector{<:Real}, Nothing}=nothing,
     end
 
     # ToDo: This is necessary, because ForwardDiffChainRules.jl can't handle arguments with type `Nothing`.
-    if length(p_refs) <= 0 
+    if isnothing(p_refs) || length(p_refs) <= 0 
         p = Array{fmi2Real, 1}()
         p_refs = Array{fmi2ValueReference, 1}()
     end
@@ -203,10 +203,10 @@ function _eval!(cRef::UInt64,
 
     #@info "_eval!(p::$(typeof(p)), p_refs::$(typeof(p_refs)))"
 
-    @assert x == nothing || !isdual(x) || !istracked(x) "_eval!(...): Wrong dispatched: `x` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
-    @assert u == nothing || !isdual(u) || !istracked(u) "_eval!(...): Wrong dispatched: `u` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
-    @assert t == nothing || !isdual(t) || !istracked(t) "_eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
-    @assert p == nothing || !isdual(p) || !istracked(p) "_eval!(...): Wrong dispatched: `p` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert isnothing(x) || (!isdual(x) && !istracked(x)) "_eval!(...): Wrong dispatched: `x` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert isnothing(u) || (!isdual(u) && !istracked(u)) "_eval!(...): Wrong dispatched: `u` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert isnothing(t) || (!isdual(t) && !istracked(t)) "_eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
+    @assert isnothing(p) || (!isdual(p) && !istracked(p)) "_eval!(...): Wrong dispatched: `p` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
 
     x = unsense(x)
     t = unsense(t)
@@ -685,7 +685,7 @@ function eval!(cRef::UInt64,
     return _eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
-function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δt), 
+function ChainRulesCore.frule((Δself, ΔcRef, Δdx, Δy, Δy_refs, Δx, Δu, Δu_refs, Δp, Δp_refs, Δt), 
                             ::typeof(eval!), 
                             cRef, 
                             dx,
@@ -1012,3 +1012,20 @@ end
     p_refs::AbstractVector{<:UInt32},
     t::Union{Real, Nothing})
 
+# parameter only dispatches
+
+@ForwardDiff_frule eval!(cRef::UInt64,  
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:fmi2ValueReference}, Nothing},
+    p::AbstractVector{<:ForwardDiff.Dual},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Union{Real, Nothing})
+
+@grad_from_chainrules eval!(cRef::UInt64,  
+    dx::Union{AbstractVector{<:Real}, Nothing},
+    y::Union{AbstractVector{<:Real}, Nothing},
+    y_refs::Union{AbstractVector{<:UInt32}, Nothing},
+    p::AbstractVector{<:ReverseDiff.TrackedReal},
+    p_refs::AbstractVector{<:UInt32},
+    t::Union{Real, Nothing})

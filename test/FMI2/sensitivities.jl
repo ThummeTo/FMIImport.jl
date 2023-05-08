@@ -285,7 +285,7 @@ j_get = fmi2GetJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.m
 reset!(c)
 
 # Jacobian F=∂y/∂p
-_f = _p -> fmu(;x=x, p=_p, p_refs=p_refs, y_refs=y_refs)[1:length(y_refs)]
+_f = _p -> fmu(;p=_p, p_refs=p_refs, y_refs=y_refs)[1:length(y_refs)]
 _f(p)
 j_fwd = ForwardDiff.jacobian(_f, p)
 j_zyg = Zygote.jacobian(_f, p)[1]
