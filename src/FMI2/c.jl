@@ -599,7 +599,7 @@ function fmi2SetReal(c::FMU2Component,
 
     if track
         if status == fmi2StatusOK
-            for j in (c.A, c.B, c.C, c.D)
+            for j in (c.A, c.B, c.C, c.D, c.E, c.F)
                 if any(collect(v in j.∂f_refs for v in vr))
                     FMICore.invalidate!(j)
                 end
@@ -1562,6 +1562,8 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
             FMICore.invalidate!(c.B)
             FMICore.invalidate!(c.C)
             FMICore.invalidate!(c.D)
+            FMICore.invalidate!(c.E)
+            FMICore.invalidate!(c.F)
         end
     end
 
@@ -1620,6 +1622,9 @@ function fmi2SetContinuousStates(c::FMU2Component,
 
             FMICore.invalidate!(c.A)
             FMICore.invalidate!(c.C)
+
+            FMICore.invalidate!(c.E)
+            FMICore.invalidate!(c.F)
         end
     end
 
