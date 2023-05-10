@@ -234,25 +234,31 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function fmi2GetSolutionState(solution::FMU2Solution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
     indices = []
 
     if isIndex
-        if length(vr) == 1
-            indices = [vr]
+        if length(vrs) == 1
+            indices = [vrs]
         else
-            indices = vr
+            indices = vrs
         end
     else
         ignore_derivatives() do
-            vr = prepareValueReference(solution.component.fmu, vr)
+            vrs = prepareValueReference(solution.component.fmu, vrs)
 
-            if solution.states !== nothing
-                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
-                    if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
-                        push!(indices, i)
+            if !isnothing(solution.states)
+                for vr in vrs
+                    found = false
+                    for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
+                        if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                            push!(indices, i)
+                            found = true 
+                            break
+                        end
                     end
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
                 end
             end
 
@@ -260,9 +266,9 @@ function fmi2GetSolutionState(solution::FMU2Solution, vr::fmi2ValueReferenceForm
     end
 
     # found something
-    if length(indices) == length(vr)
+    if length(indices) == length(vrs)
 
-        if length(vr) == 1  # single value
+        if length(vrs) == 1  # single value
             return collect(u[indices[1]] for u in solution.states.u)
 
         else # multi value
@@ -294,24 +300,30 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function fmi2GetSolutionDerivative(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function fmi2GetSolutionDerivative(solution::FMU2Solution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
     indices = []
 
     if isIndex
-        if length(vr) == 1
-            indices = [vr]
+        if length(vrs) == 1
+            indices = [vrs]
         else
-            indices = vr
+            indices = vrs
         end
     else
         ignore_derivatives() do
-            vr = prepareValueReference(solution.component.fmu, vr)
+            vrs = prepareValueReference(solution.component.fmu, vrs)
 
-            if solution.states !== nothing
-                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
-                    if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
-                        push!(indices, i)
+            if !isnothing(solution.states)
+                for vr in vrs
+                    found = false
+                    for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
+                        if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                            push!(indices, i)
+                            found = true 
+                            break
+                        end
                     end
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
                 end
             end
 
@@ -319,9 +331,9 @@ function fmi2GetSolutionDerivative(solution::FMU2Solution, vr::fmi2ValueReferenc
     end
 
     # found something
-    if length(indices) == length(vr)
+    if length(indices) == length(vrs)
 
-        if length(vr) == 1  # single value
+        if length(vrs) == 1  # single value
             return collect(ForwardDiff.derivative(t -> solution.states(t)[indices[1]], myt) for myt in solution.states.t)
 
         else # multi value
@@ -353,45 +365,31 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function fmi2GetSolutionValue(solution::FMU2Solution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
     indices = []
 
     if isIndex
-        if length(vr) == 1
-            indices = [vr]
+        if length(vrs) == 1
+            indices = [vrs]
         else
-            indices = vr
+            indices = vrs
         end
     else
         ignore_derivatives() do
-            vr = prepareValueReference(solution.component.fmu, vr)
+            vrs = prepareValueReference(solution.component.fmu, vrs)
 
-            if solution.states !== nothing
-                for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
-                    if solution.component.fmu.modelDescription.stateValueReferences[i] ∈ vr
-                        push!(indices, i)
+            if !isnothing(solution.values)
+                for vr in vrs
+                    found = false
+                    for i in 1:length(solution.valueReferences)
+                        if solution.valueReferences[i] == vr
+                            push!(indices, i)
+                            found = true 
+                            break
+                        end
                     end
-                end
-            end
-
-            # found something
-            if length(indices) == length(vr)
-
-                if length(vr) == 1  # single value
-                    return collect(u[indices[1]] for u in solution.states.u)
-
-                else # multi value
-                    return collect(collect(u[indices[i]] for u in solution.states.u) for i in 1:length(indices))
-
-                end
-            end
-
-            if solution.values !== nothing
-                for i in 1:length(solution.valueReferences)
-                    if solution.valueReferences[i] ∈ vr
-                        push!(indices, i)
-                    end
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not exist for this system."
                 end
             end
 
@@ -399,9 +397,9 @@ function fmi2GetSolutionValue(solution::FMU2Solution, vr::fmi2ValueReferenceForm
     end
 
     # found something
-    if length(indices) == length(vr)
+    if length(indices) == length(vrs)
 
-        if length(vr) == 1  # single value
+        if length(vrs) == 1  # single value
             return collect(u[indices[1]] for u in solution.values.saveval)
 
         else # multi value

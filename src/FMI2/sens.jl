@@ -246,7 +246,7 @@ function _eval!(cRef::UInt64,
     end
 
     if c.fmu.executionConfig.concat_y_dx
-        return [y..., dx...]
+        return vcat(y, dx) # [y..., dx...]
     else
         return y, dx
     end
@@ -390,7 +390,7 @@ function _frule(Δtuple,
 
     ∂Ω = nothing
     if c.fmu.executionConfig.concat_y_dx
-        ∂Ω = [∂y..., ∂dx...]
+        ∂Ω = vcat(∂y, ∂dx) # [∂y..., ∂dx...]
     else
         ∂Ω = (∂y, ∂dx) 
     end
@@ -458,11 +458,11 @@ function _rrule(cRef,
         derivatives = derivatives && !isZeroTangent(d̄x)
 
         if !isa(ȳ, AbstractArray)
-            ȳ = [ȳ...]
+            ȳ = collect(ȳ) # [ȳ...]
         end
 
         if !isa(d̄x, AbstractArray)
-            d̄x = [d̄x...]
+            d̄x = collect(d̄x) # [d̄x...]
         end
 
         # between building and using the pullback maybe the time, state or inputs where changed, so we need to re-set them

@@ -9,7 +9,7 @@
 # - [Sec. 2]  functions to get values from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 # - [Sec. 3]  additional functions to get useful information from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 
-using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment
+using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment, fmi2ModelDescriptionEnumerationItem
 using FMICore: fmi2RealAttributesExt, fmi2BooleanAttributesExt, fmi2IntegerAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
 using FMICore: fmi2RealAttributes, fmi2BooleanAttributes, fmi2IntegerAttributes, fmi2StringAttributes, fmi2EnumerationAttributes
 using FMICore: fmi2ModelDescriptionModelStructure
@@ -21,12 +21,8 @@ using FMICore: FMU2
 ######################################
 
 """
-<<<<<<< HEAD
-    fmi2LoadModelDescription(pathToModellDescription::String)
-=======
 
     fmi2LoadModelDescription(pathToModelDescription::String)
->>>>>>> upstream/main
 
 Extract the FMU variables and meta data from the ModelDescription
 
@@ -47,8 +43,6 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
     md.inputValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.stateValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.derivativeValueReferences = Array{fmi2ValueReference}(undef, 0)
-
-    md.enumerations = []
 
     doc = readxml(pathToModelDescription)
 
@@ -100,8 +94,7 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
             end
             
         elseif node.name == "TypeDefinitions"
-            # md.enumerations = createEnum(node)
-            md.typeDefinitions = parseSimpleTypes(node, md)
+            md.typeDefinitions = parseTypeDefinitions(node, md)
 
         elseif node.name == "UnitDefinitions"
             md.unitDefinitions = parseUnitDefinitions(node)
@@ -179,9 +172,9 @@ function getDerivativeIndices(node::EzXML.Node)
 end
 
 # helper function to parse variable or simple type attributes
-function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
+function parseAttribute(defnode; ext::Bool=false)
 
-    typename = isnothing(_typename) ? defnode.name : _typename
+    typename = defnode.name
     typenode = nothing 
 
     if typename == "Real"
@@ -257,6 +250,35 @@ function parseAttribute(defnode, _typename=nothing; ext::Bool=false)
             typenode = fmi2EnumerationAttributes()
 
             # ToDo: Parse items!
+            for itemNode in eachelement(defnode)
+
+                if itemNode.name != "Item"
+                    @warn "Found item with name `$(itemNode.name)` inside enumeration block, this is not allowed."
+                end
+
+                it = fmi2ModelDescriptionEnumerationItem()
+
+                # mandatory
+                if haskey(itemNode, "name")
+                    it.name = parseNodeString(itemNode, "name")
+                else
+                    @warn "Enumeration item `$(itemNode.name)` is missing the `name` key. This is not allowed."
+                end
+
+                # mandatory
+                if haskey(itemNode, "value")
+                    it.value = parseNodeInteger(itemNode, "value")
+                else
+                    @warn "Enumeration item `$(itemNode.name)` is missing the `value` key. This is not allowed."
+                end
+
+                # optional
+                if haskey(itemNode, "description")
+                    it.description = parseNodeString(itemNode, "description")
+                end
+
+                push!(typenode, it)
+            end
         end
 
         typenode.quantity = parseNodeString(defnode, "quantity")
@@ -340,7 +362,7 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
 end
 
 # Parses the model variables of the FMU model description.
-function parseSimpleTypes(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseTypeDefinitions(nodes::EzXML.Node, md::fmi2ModelDescription)
 
     simpleTypes = Array{fmi2SimpleType, 1}()
 
@@ -523,11 +545,7 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
         elseif typename == "Boolean"
             type.start = parseFMI2Boolean(typenode["start"])
         elseif typename == "Enumeration"
-            for i in 1:length(md.enumerations)
-                if type.declaredType == md.enumerations[i][1] # identify the enum by the name
-                    type.start = md.enumerations[i][1 + parse(fmi2Integer, typenode["start"])] # find the enum value and set it
-                end
-            end
+            type.start = parse(fmi2Integer, typenode["start"])
         elseif typename == "String"
             type.start = typenode["start"]
         else
@@ -1098,7 +1116,7 @@ function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:fi
             @assert false "fmi2GetNames(...) unknown mode `mode`, please choose between `:first`, `:group` and `:flat`."
         end
     end
-    return names
+    return mode == :group ? [string.(name) for name in names] : string.(names)
 end
 
 """

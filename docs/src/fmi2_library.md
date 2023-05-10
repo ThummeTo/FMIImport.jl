@@ -58,6 +58,7 @@ fmi2GetNamesAndInitials
 fmi2GetInputNamesAndStarts
 fmi2GetVersion
 fmi2GetTypesPlatform
+fmi2GetSolutionDerivative
 ```
 
 ###  Creation, Destruction and Logging of FMU Instances
