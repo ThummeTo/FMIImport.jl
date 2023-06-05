@@ -13,15 +13,8 @@ using FMICore: fmi2Component, fmi3Instance
 # functions that have (currently) no better place 
 
 # Receives one or an array of values and converts it into an Array{typeof(value)} (if not already).
-function prepareValue(value)
-    if isa(value, Array) && length(size(value)) == 1
-        return value
-    else
-        return [value]
-    end
-
-    @assert false "prepareValue(...): Unknown dimension of structure `$dim`."
-end 
+prepareValue(value) = [value]
+prepareValue(value::AbstractVector) = value
 export prepareValue, prepareValueReference
 
 # wildcards for how a user can pass a fmi[X]ValueReference
