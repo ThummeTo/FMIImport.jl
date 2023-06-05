@@ -91,6 +91,10 @@ function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
         fmi2ExitInitializationMode(c)
     end
 
+    if t == -1.0
+        t = c.next_t
+    end
+
     c(;dx=dx, y=y, y_refs=y_refs, x=x, u=u, u_refs=u_refs, p=p, p_refs=p_refs, t=t)
 end
 
@@ -130,7 +134,7 @@ function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
                              u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
                              p::AbstractVector{<:Real}=c.fmu.optim_p, 
                              p_refs::AbstractVector{<:fmi2ValueReference}=c.fmu.optim_p_refs, 
-                             t::Real=-1.0)
+                             t::Real=c.next_t)
 
     if length(y_refs) > 0
         if length(y) <= 0 

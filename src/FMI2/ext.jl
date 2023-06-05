@@ -1026,7 +1026,8 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
                 @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
             elseif mv.Enumeration != nothing
-                @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+                @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Enumeration` (`Integer`), is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
             else
                 @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
             end

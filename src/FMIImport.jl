@@ -59,7 +59,7 @@ export fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscrete
 export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!, fmi2GetRealOutputDerivatives!
 
 # FMI2_convert.jl
-export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference
+export fmi2StringToValueReference, fmi2ValueReferenceToString, fmi2ModelVariablesForValueReference, fmi2DataTypeForValueReference
 export fmi2GetSolutionState, fmi2GetSolutionTime, fmi2GetSolutionValue, fmi2GetSolutionDerivative
 
 # FMI2_int.jl
