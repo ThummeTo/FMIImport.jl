@@ -149,6 +149,7 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     # parse modelDescription.xml
     fmu.modelDescription = fmi2LoadModelDescription(pathToModelDescription)
     fmu.modelName = fmu.modelDescription.modelName
+    fmu.isZeroState = (length(fmu.modelDescription.stateValueReferences) == 0)
 
     if isa(type, fmi2Type)
         fmu.type = type
@@ -455,6 +456,7 @@ function fmi2Instantiate!(fmu::FMU2;
         component.visible = visible
         component.jacobianUpdate! = fmi2SampleJacobian!
 
+        # setting a jacobian update function dependent on DIrectionalDerivatives-Functionality is present in the FMU
         updFct = nothing 
         if fmi2ProvidesDirectionalDerivative(fmu)
             updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
@@ -466,6 +468,8 @@ function fmi2Instantiate!(fmu::FMU2;
         component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
         component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
         component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
+        component.E = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
+        component.F = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
 
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
@@ -1022,7 +1026,8 @@ function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::A
                 @assert isa(srcArray[i], String) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
             elseif mv.Enumeration != nothing
-                @warn "fmi2Set(...): Currently not implemented for fmi2Enum."
+                @assert isa(srcArray[i], Union{Real, Integer}) "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Enumeration` (`Integer`), is `$(typeof(srcArray[i]))`."
+                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
             else
                 @assert false "fmi2Set(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
             end

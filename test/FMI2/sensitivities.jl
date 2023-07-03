@@ -22,6 +22,8 @@ u = [2.0]
 u_refs = fmu.modelDescription.inputValueReferences
 y = [0.0, 0.0]
 y_refs = fmu.modelDescription.outputValueReferences
+p_refs = fmu.modelDescription.parameterValueReferences
+p = zeros(length(p_refs))
 dx = [0.0, 0.0]
 t = 0.0
 
@@ -32,9 +34,11 @@ function reset!(c::FMIImport.FMU2Component)
     c.solution.evals_∂y_∂u = 0
     c.solution.evals_∂ẋ_∂t = 0
     c.solution.evals_∂y_∂t = 0
+    c.solution.evals_∂ẋ_∂p = 0
+    c.solution.evals_∂y_∂p = 0
 
-    @test length(dx) == 2
-    @test length(y) == 2
+    @test length(dx) == length(fmu.modelDescription.derivativeValueReferences)
+    @test length(y) == length(fmu.modelDescription.outputValueReferences)
 end
 
 # evaluation: set state, get state derivative (out-of-place)
@@ -52,12 +56,19 @@ ydx = fmu(;x=x, u=u, u_refs=u_refs, y=y, y_refs=y_refs)
 # evaluation: set state and inputs, get state derivative (in-place) and outputs (in-place)
 ydx = fmu(;x=x, u=u, u_refs=u_refs, y=y, y_refs=y_refs, dx=dx)
 
+# evaluation: set state and inputs, parameters, get state derivative (in-place) and outputs (in-place)
+ydx = fmu(;x=x, u=u, u_refs=u_refs, y=y, y_refs=y_refs, dx=dx, p=p, p_refs=p_refs)
+
 # known results
 atol= 1e-8
 A = [0.0 1.0; -10.0 0.0]
 B = [0.0; 1.0]
 C = [0.0 1.0; -10.0 0.0]
 D = [0.0; 1.0]
+E = [0.0   0.0  0.0   0.0   0.0  0.0;
+     0.0  10.0  0.1  10.0  -3.0  5.0]
+F = [0.0   0.0  0.0   0.0   0.0  0.0;
+     0.0  10.0  0.1  10.0  -3.0  5.0]
 dx_t = [0.0, 0.0]
 y_t = [0.0, 0.0]
 
@@ -254,6 +265,40 @@ j_rwd = ReverseDiff.jacobian(_f, [t])
 @test c.solution.evals_∂y_∂u == 0
 @test c.solution.evals_∂ẋ_∂t == 5
 @test c.solution.evals_∂y_∂t == 3
+reset!(c)
+
+# Jacobian E=∂dx/∂p
+_f = _p -> fmu(;x=x, p=_p, p_refs=p_refs)
+_f(p)
+j_fwd = ForwardDiff.jacobian(_f, p)
+j_zyg = Zygote.jacobian(_f, p)[1]
+j_rwd = ReverseDiff.jacobian(_f, p)
+j_smp = fmi2SampleJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
+j_get = fmi2GetJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
+
+@test isapprox(j_fwd, E; atol=atol)
+@test isapprox(j_zyg, E; atol=atol)
+@test isapprox(j_rwd, E; atol=atol)
+@test isapprox(j_smp, E; atol=atol)
+@test isapprox(j_get, E; atol=atol)
+
+reset!(c)
+
+# Jacobian F=∂y/∂p
+_f = _p -> fmu(;p=_p, p_refs=p_refs, y_refs=y_refs)[1:length(y_refs)]
+_f(p)
+j_fwd = ForwardDiff.jacobian(_f, p)
+j_zyg = Zygote.jacobian(_f, p)[1]
+j_rwd = ReverseDiff.jacobian(_f, p)
+j_smp = fmi2SampleJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
+j_get = fmi2GetJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
+
+@test isapprox(j_fwd, F; atol=atol)
+@test isapprox(j_zyg, F; atol=atol)
+@test isapprox(j_rwd, F; atol=atol)
+@test isapprox(j_smp, F; atol=atol)
+@test isapprox(j_get, F; atol=atol)
+
 reset!(c)
 
 # clean up

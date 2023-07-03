@@ -108,6 +108,25 @@ function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2V
 end
 
 """
+ToDo.
+"""
+function fmi2DataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
+    mv = fmi2ModelVariablesForValueReference(md, vr)[1]
+    if !isnothing(mv.Real)
+        return fmi2Real
+    elseif !isnothing(mv.Integer) || !isnothing(mv.Enumeration)
+        return fmi2Integer
+    elseif !isnothing(mv.Boolean)
+        return fmi2Boolean
+    elseif !isnothing(mv.String)
+        return fmi2String
+    else
+        @assert false "fmi2TypeForValueReference(...): Unknown data type for value reference `$(vr)`."
+    end
+    return nothing
+end
+
+"""
     fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
 
 Returns the ValueReference or an array of ValueReferences coresponding to the variable names.
