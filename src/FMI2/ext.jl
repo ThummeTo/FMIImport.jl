@@ -531,24 +531,75 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
             @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
         end
     end
-    # println(typeof(fmu))
-    # stateRef = pointer_from_objref(fmu)
-    # println(stateRef)
-    # val = nothing
-    # refVal = Ptr{nothing}(val)
-    # stateRef = refVal
-    # println(typeof(fmu))
-    # fmu = stateRef
-    # fmu = nothing
-    fmu = removeStruct(fmu)
+    unloadBinary(fmu)
+    fmu.libHandle = nothing
+    # fmu.cGetVersion = nothing
     return nothing
 end
 
-function removeStruct(fmu)
-    z = Ref(nothing)
-    fmu = z[]
-    println(fmu)
-    nothing
+function unloadBinary(fmu::FMU2)
+    fmu.cInstantiate                  = nothing
+    fmu.cGetTypesPlatform             = nothing
+    fmu.cGetVersion                   = nothing
+    fmu.cFreeInstance                 = nothing
+    fmu.cSetDebugLogging              = nothing
+    fmu.cSetupExperiment              = nothing
+    fmu.cEnterInitializationMode      = nothing
+    fmu.cExitInitializationMode       = nothing
+    fmu.cTerminate                    = nothing
+    fmu.cReset                        = nothing
+    fmu.cGetReal                      = nothing
+    fmu.cSetReal                      = nothing
+    fmu.cGetInteger                   = nothing
+    fmu.cSetInteger                   = nothing
+    fmu.cGetBoolean                   = nothing
+    fmu.cSetBoolean                   = nothing
+
+    fmu.cGetString                    = nothing
+    fmu.cSetString                    = nothing
+
+    if fmi2CanGetSetState(fmu.modelDescription)
+        fmu.cGetFMUstate                  = nothing
+        fmu.cSetFMUstate                  = nothing
+        fmu.cFreeFMUstate                 = nothing
+    end
+
+    if fmi2CanSerializeFMUstate(fmu.modelDescription)
+        fmu.cSerializedFMUstateSize       = nothing
+        fmu.cSerializeFMUstate            = nothing
+        fmu.cDeSerializeFMUstate          = nothing
+    end
+
+    if fmi2ProvidesDirectionalDerivative(fmu.modelDescription)
+        fmu.cGetDirectionalDerivative     = nothing
+    end
+
+    # CS specific function calls
+    if fmi2IsCoSimulation(fmu.modelDescription)
+        fmu.cSetRealInputDerivatives      = nothing
+        fmu.cGetRealOutputDerivatives     = nothing
+        fmu.cDoStep                       = nothing
+        fmu.cCancelStep                   = nothing
+        fmu.cGetStatus                    = nothing
+        fmu.cGetRealStatus                = nothing
+        fmu.cGetIntegerStatus             = nothing
+        fmu.cGetBooleanStatus             = nothing
+        fmu.cGetStringStatus              = nothing
+    end
+
+    # ME specific function calls
+    if fmi2IsModelExchange(fmu.modelDescription)
+        fmu.cEnterContinuousTimeMode      = nothing
+        fmu.cGetContinuousStates          = nothing
+        fmu.cGetDerivatives               = nothing
+        fmu.cSetTime                      = nothing
+        fmu.cSetContinuousStates          = nothing
+        fmu.cCompletedIntegratorStep      = nothing
+        fmu.cEnterEventMode               = nothing
+        fmu.cNewDiscreteStates            = nothing
+        fmu.cGetEventIndicators           = nothing
+        fmu.cGetNominalsOfContinuousStates= nothing
+    end
 end
 
 
