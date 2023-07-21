@@ -128,8 +128,20 @@ Retrieves all the pointers of binary functions.
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 """
-function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, fmi2Type, Nothing}=nothing, cleanup::Bool=true, logLevel::FMULogLevel=FMULogLevelWarn)
+function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing, type::Union{Symbol, fmi2Type, Nothing}=nothing, cleanup::Bool=true, logLevel::Union{FMULogLevel, Symbol}=FMULogLevelWarn)
     # Create uninitialized FMU
+
+    if isa(logLevel, Symbol)
+        if logLevel == :info 
+            logLevel = FMULogLevelInfo 
+        elseif logLevel == :warn 
+            logLevel = FMULogLevelWarn
+        elseif logLevel == :error
+            logLevel = FMULogLevelError
+        else
+            @assert false "Unknown logLevel symbol: `$(logLevel)`, supported are `:info`, `:warn` and `:error`."
+        end
+    end
     fmu = FMU2(logLevel)
 
     if startswith(pathToFMU, "http")

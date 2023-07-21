@@ -290,8 +290,8 @@ _f(p)
 j_fwd = ForwardDiff.jacobian(_f, p)
 j_zyg = Zygote.jacobian(_f, p)[1]
 j_rwd = ReverseDiff.jacobian(_f, p)
-j_smp = fmi2SampleJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
-j_get = fmi2GetJacobian(c, fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.parameterValueReferences)
+j_smp = fmi2SampleJacobian(c, fmu.modelDescription.outputValueReferences, fmu.modelDescription.parameterValueReferences)
+j_get = fmi2GetJacobian(c, fmu.modelDescription.outputValueReferences, fmu.modelDescription.parameterValueReferences)
 
 @test isapprox(j_fwd, F; atol=atol)
 @test isapprox(j_zyg, F; atol=atol)
