@@ -13,7 +13,6 @@ import SciMLSensitivity.ReverseDiff
 using ChainRulesCore
 import ForwardDiffChainRules: @ForwardDiff_frule
 import SciMLSensitivity.ReverseDiff: @grad_from_chainrules
-#import NonconvexUtils: @ForwardDiff_frule
 import ChainRulesCore: ZeroTangent, NoTangent, @thunk
 import FMICore: fmi2ValueReference
 
@@ -225,7 +224,16 @@ function eval!(cRef::UInt64,
             end
             
             T, V, N = fd_eltypes(dx)
-            dx[:] = collect(ForwardDiff.Dual{T, V, N}(dx_tmp[i], ForwardDiff.partials(dx[i])    ) for i in 1:length(dx))
+            dx[:] = collect(ForwardDiff.Dual{T, V, N}(dx_tmp[i], ForwardDiff.partials(dx[i])    ) for i in 1:length(dx))    
+
+        elseif istracked(dx)
+
+            dx_tmp = zeros(fmi2Real, length(dx))
+            fmi2GetDerivatives!(c, dx_tmp)
+
+            for e in 1:length(dx)
+                dx[e].value = dx_tmp[e]
+            end
         else 
             if c.fmu.isZeroState
                 dx[:] = [1.0]
