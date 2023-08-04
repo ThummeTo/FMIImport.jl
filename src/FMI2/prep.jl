@@ -113,7 +113,7 @@ function prepareSolveFMU(fmu::FMU2,
             #retcode = fmi2SetContinuousStates(c, x0)
             #@assert retcode == fmi2StatusOK "fmi2Simulate(...): Setting initial state failed with return code $(retcode)."
             retcodes = fmi2Set(c, fmu.modelDescription.stateValueReferences, x0; filter=setBeforeInitialization)
-            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcode)."
+            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial states failed with return code $(retcode)."
         end
 
         # enter (hard)
@@ -125,13 +125,13 @@ function prepareSolveFMU(fmu::FMU2,
         # parameters
         if parameters !== nothing
             retcodes = fmi2Set(c, collect(keys(parameters)), collect(values(parameters)); filter=setInInitialization)
-            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial parameters failed with return code $(retcode)."
+            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial parameters failed with return code $(retcodes)."
         end
             
         # inputs
         if inputs !== nothing
             retcodes = fmi2Set(c, collect(keys(inputs)), collect(values(inputs)); filter=setInInitialization)
-            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcode)."
+            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcodes)."
         end
 
         # start state
@@ -139,7 +139,7 @@ function prepareSolveFMU(fmu::FMU2,
             #retcode = fmi2SetContinuousStates(c, x0)
             #@assert retcode == fmi2StatusOK "fmi2Simulate(...): Setting initial state failed with return code $(retcode)."
             retcodes = fmi2Set(c, fmu.modelDescription.stateValueReferences, x0; filter=setInInitialization)
-            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcode)."
+            @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcodes)."
         end
 
         # exit setup (hard)
@@ -153,7 +153,7 @@ function prepareSolveFMU(fmu::FMU2,
 
         # ME specific
         if type == fmi2TypeModelExchange
-            if x0 == nothing
+            if x0 == nothing && !c.fmu.isZeroState
                 x0 = fmi2GetContinuousStates(c)
             end
 

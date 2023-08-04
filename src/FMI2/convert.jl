@@ -6,6 +6,7 @@
 using ChainRulesCore: ignore_derivatives
 import SciMLSensitivity.ForwardDiff
 
+# ToDo: Replace by multiple dispatch version ...
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
 function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceFormat)
     tvr = typeof(vr)
@@ -105,6 +106,25 @@ function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2V
         end
     end
     ar
+end
+
+"""
+ToDo.
+"""
+function fmi2DataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
+    mv = fmi2ModelVariablesForValueReference(md, vr)[1]
+    if !isnothing(mv.Real)
+        return fmi2Real
+    elseif !isnothing(mv.Integer) || !isnothing(mv.Enumeration)
+        return fmi2Integer
+    elseif !isnothing(mv.Boolean)
+        return fmi2Boolean
+    elseif !isnothing(mv.String)
+        return fmi2String
+    else
+        @assert false "fmi2TypeForValueReference(...): Unknown data type for value reference `$(vr)`."
+    end
+    return nothing
 end
 
 """
