@@ -190,24 +190,21 @@ function eval!(cRef::UInt64,
     @assert (!isdual(t) && !istracked(t)) "eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
     @assert (!isdual(p) && !istracked(p)) "eval!(...): Wrong dispatched: `p` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
 
-    x = unsense(x)
-    t = unsense(t)
-    u = unsense(u)
     # p = unsense(p)     # no need to unsense `p` because it is not beeing used further
 
     # set state
     if length(x) > 0 && !c.fmu.isZeroState
-        fmi2SetContinuousStates(c, x)
+        fmi2SetContinuousStates(c, unsense(x))
     end
 
     # set time
     if t >= 0.0
-        fmi2SetTime(c, t)
+        fmi2SetTime(c, unsense(t))
     end
 
     # set input
     if length(u) > 0 
-        fmi2SetReal(c, u_refs, u)
+        fmi2SetReal(c, u_refs, unsense(u))
     end
 
     # get derivative
