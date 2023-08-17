@@ -69,15 +69,15 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `y::Union{AbstractVector{<:Real}, Nothing}`: The system output `y` (if requested, otherwise `nothing`).
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 """
-function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    y::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-    x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
-    u::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-    p::AbstractVector{<:Real}=fmu.optim_p, 
-    p_refs::AbstractVector{<:fmi2ValueReference}=fmu.optim_p_refs, 
-    t::Real=-1.0)
+function (fmu::FMU2)(dx::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    y_refs::AbstractVector{<:fmi2ValueReference},
+    x::AbstractVector{<:Real},
+    u::AbstractVector{<:Real},
+    u_refs::AbstractVector{<:fmi2ValueReference},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Real)
 
     if hasCurrentComponent(fmu)
         c = getCurrentComponent(fmu)
@@ -93,6 +93,18 @@ function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     end
 
     c(;dx=dx, y=y, y_refs=y_refs, x=x, u=u, u_refs=u_refs, p=p, p_refs=p_refs, t=t)
+end
+
+function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    y::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+    x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
+    u::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+    p::AbstractVector{<:Real}=fmu.optim_p, 
+    p_refs::AbstractVector{<:fmi2ValueReference}=fmu.optim_p_refs, 
+    t::Real=-1.0)
+    (fmu)(dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 """
@@ -123,15 +135,16 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `y::Union{AbstractVector{<:Real}, Nothing}`: The system output `y` (if requested, otherwise `nothing`).
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 """
-function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             y::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-                             x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
-                             u::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-                             p::AbstractVector{<:Real}=c.fmu.optim_p, 
-                             p_refs::AbstractVector{<:fmi2ValueReference}=c.fmu.optim_p_refs, 
-                             t::Real=c.next_t)
+function (c::FMU2Component)(dx::AbstractVector{<:Real},
+                            y::AbstractVector{<:Real},
+                            y_refs::AbstractVector{<:fmi2ValueReference},
+                            x::AbstractVector{<:Real},
+                            u::AbstractVector{<:Real},
+                            u_refs::AbstractVector{<:fmi2ValueReference},
+                            p::AbstractVector{<:Real},
+                            p_refs::AbstractVector{<:fmi2ValueReference},
+                            t::Real)
+
 
     if length(y_refs) > 0
         if length(y) <= 0 
@@ -168,6 +181,18 @@ function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     end
 
     return eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
+end
+
+function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             y::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+                             x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
+                             u::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+                             p::AbstractVector{<:Real}=c.fmu.optim_p, 
+                             p_refs::AbstractVector{<:fmi2ValueReference}=c.fmu.optim_p_refs, 
+                             t::Real=c.next_t)
+    (c)(dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 function eval!(cRef::UInt64, 
