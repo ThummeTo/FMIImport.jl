@@ -1185,15 +1185,12 @@ See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
                                         noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
-    enterEventMode = zeros(fmi2Boolean, 1)
-    terminateSimulation = zeros(fmi2Boolean, 1)
-
     status = fmi2CompletedIntegratorStep!(c,
                                           noSetFMUStatePriorToCurrentPoint,
-                                          pointer(enterEventMode),
-                                          pointer(terminateSimulation))
+                                          c.ptr_stepEnterEventMode,
+                                          c.ptr_terminateSimulation)
 
-    return (status, enterEventMode[1], terminateSimulation[1])
+    return (status, c.stepEnterEventMode, c.terminateSimulation)
 end
 
 """
