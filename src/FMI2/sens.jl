@@ -79,8 +79,6 @@ function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     p_refs::AbstractVector{<:fmi2ValueReference}=fmu.optim_p_refs, 
     t::Real=-1.0)
 
-    c = nothing
-
     if hasCurrentComponent(fmu)
         c = getCurrentComponent(fmu)
     else
@@ -210,18 +208,11 @@ function eval!(cRef::UInt64,
     # get derivative
     if length(dx) > 0
         if isdual(dx)
-
-            dx_tmp = nothing
-
-            if c.fmu.isZeroState
-                dx_tmp = [1.0]
-            else
-                dx_tmp = collect(ForwardDiff.value(e) for e in dx)
-                fmi2GetDerivatives!(c, dx_tmp)
+            dx_tmp = ForwardDiff.value.(dx)
+            c.fmu.isZeroState || fmi2GetDerivatives!(c, dx_tmp)
+            for i = 1:length(dx)
+                dx[i].value = dx_tmp[i]
             end
-            
-            T, V, N = fd_eltypes(dx)
-            dx[:] = collect(ForwardDiff.Dual{T, V, N}(dx_tmp[i], ForwardDiff.partials(dx[i])    ) for i in 1:length(dx))    
 
         elseif istracked(dx)
 
