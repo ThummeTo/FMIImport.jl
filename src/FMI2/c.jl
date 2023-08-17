@@ -597,17 +597,25 @@ function fmi2SetReal(c::FMU2Component,
                 c.compAddr, vr, nvr, value)
     checkStatus(c, status)
 
-    if track
-        if status == fmi2StatusOK
-            for j in (c.A, c.B, c.C, c.D, c.E, c.F)
-                if any(collect(v in j.∂f_refs for v in vr))
-                    FMICore.invalidate!(j)
-                end
-            end
-        end
+    if track && status == fmi2StatusOK 
+        track_jac(vr, c.A)
+        track_jac(vr, c.B)
+        track_jac(vr, c.C)
+        track_jac(vr, c.D)
+        track_jac(vr, c.E)
+        track_jac(vr, c.F)
     end
 
     return status
+end
+function track_jac(vr::A, M::FMICore.FMUJacobian{V,R}) where {A<:AbstractArray{fmi2ValueReference},V,R}
+    for v in vr
+        if v in M.∂f_refsset
+            FMICore.invalidate!(M)
+            return
+        end
+    end
+    return
 end
 
 """
