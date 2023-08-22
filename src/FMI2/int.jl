@@ -1119,7 +1119,7 @@ function fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{fmi2Real}; k
     nx = Csize_t(length(x))
     status = fmi2SetContinuousStates(c, x, nx; kwargs...)
     if status == fmi2StatusOK
-        c.x = x
+        isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
     end
     return status
 end

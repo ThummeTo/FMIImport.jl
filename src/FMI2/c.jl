@@ -1626,7 +1626,7 @@ function fmi2SetContinuousStates(c::FMU2Component,
 
     if track
         if status == fmi2StatusOK
-            isnothing(c.x) ? (c.x = x;) : copyto!(c.x, x)
+            isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
 
             FMICore.invalidate!(c.A)
             FMICore.invalidate!(c.C)
