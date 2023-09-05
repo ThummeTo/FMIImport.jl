@@ -159,7 +159,10 @@ end
 
 # makes Reals from ForwardDiff/ReverseDiff.TrackedXXX scalar/vector
 function unsense(e::AbstractArray)
-    return collect(unsense(c) for c in e)
+    return unsense.(e)
+end
+function unsense(e::AbstractArray{fmi2Real})
+    return e
 end
 function unsense(e::Tuple)
     return (collect(unsense(c) for c in e)...,)

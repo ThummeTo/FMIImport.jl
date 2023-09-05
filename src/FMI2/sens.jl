@@ -69,17 +69,15 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `y::Union{AbstractVector{<:Real}, Nothing}`: The system output `y` (if requested, otherwise `nothing`).
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 """
-function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    y::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-    x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
-    u::AbstractVector{<:Real}=Vector{fmi2Real}(),
-    u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-    p::AbstractVector{<:Real}=fmu.optim_p, 
-    p_refs::AbstractVector{<:fmi2ValueReference}=fmu.optim_p_refs, 
-    t::Real=-1.0)
-
-    c = nothing
+function (fmu::FMU2)(dx::AbstractVector{<:Real},
+    y::AbstractVector{<:Real},
+    y_refs::AbstractVector{<:fmi2ValueReference},
+    x::AbstractVector{<:Real},
+    u::AbstractVector{<:Real},
+    u_refs::AbstractVector{<:fmi2ValueReference},
+    p::AbstractVector{<:Real},
+    p_refs::AbstractVector{<:fmi2ValueReference},
+    t::Real)
 
     if hasCurrentComponent(fmu)
         c = getCurrentComponent(fmu)
@@ -95,6 +93,18 @@ function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     end
 
     c(;dx=dx, y=y, y_refs=y_refs, x=x, u=u, u_refs=u_refs, p=p, p_refs=p_refs, t=t)
+end
+
+function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    y::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+    x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
+    u::AbstractVector{<:Real}=Vector{fmi2Real}(),
+    u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+    p::AbstractVector{<:Real}=fmu.optim_p, 
+    p_refs::AbstractVector{<:fmi2ValueReference}=fmu.optim_p_refs, 
+    t::Real=-1.0)
+    (fmu)(dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
 """
@@ -125,15 +135,16 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `y::Union{AbstractVector{<:Real}, Nothing}`: The system output `y` (if requested, otherwise `nothing`).
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 """
-function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             y::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-                             x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
-                             u::AbstractVector{<:Real}=Vector{fmi2Real}(),
-                             u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
-                             p::AbstractVector{<:Real}=c.fmu.optim_p, 
-                             p_refs::AbstractVector{<:fmi2ValueReference}=c.fmu.optim_p_refs, 
-                             t::Real=c.next_t)
+function (c::FMU2Component)(dx::AbstractVector{<:Real},
+                            y::AbstractVector{<:Real},
+                            y_refs::AbstractVector{<:fmi2ValueReference},
+                            x::AbstractVector{<:Real},
+                            u::AbstractVector{<:Real},
+                            u_refs::AbstractVector{<:fmi2ValueReference},
+                            p::AbstractVector{<:Real},
+                            p_refs::AbstractVector{<:fmi2ValueReference},
+                            t::Real)
+
 
     if length(y_refs) > 0
         if length(y) <= 0 
@@ -172,6 +183,18 @@ function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     return eval!(cRef, dx, y, y_refs, x, u, u_refs, p, p_refs, t)
 end
 
+function (c::FMU2Component)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             y::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             y_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+                             x::AbstractVector{<:Real}=Vector{fmi2Real}(), 
+                             u::AbstractVector{<:Real}=Vector{fmi2Real}(),
+                             u_refs::AbstractVector{<:fmi2ValueReference}=Vector{fmi2ValueReference}(),
+                             p::AbstractVector{<:Real}=c.fmu.optim_p, 
+                             p_refs::AbstractVector{<:fmi2ValueReference}=c.fmu.optim_p_refs, 
+                             t::Real=c.next_t)
+    (c)(dx, y, y_refs, x, u, u_refs, p, p_refs, t)
+end
+
 function eval!(cRef::UInt64, 
     dx::AbstractVector{<:Real},
     y::AbstractVector{<:Real},
@@ -190,41 +213,31 @@ function eval!(cRef::UInt64,
     @assert (!isdual(t) && !istracked(t)) "eval!(...): Wrong dispatched: `t` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
     @assert (!isdual(p) && !istracked(p)) "eval!(...): Wrong dispatched: `p` is ForwardDiff.Dual/ReverseDiff.TrackedReal, please open an issue with MWE."
 
-    x = unsense(x)
-    t = unsense(t)
-    u = unsense(u)
     # p = unsense(p)     # no need to unsense `p` because it is not beeing used further
 
     # set state
     if length(x) > 0 && !c.fmu.isZeroState
-        fmi2SetContinuousStates(c, x)
+        fmi2SetContinuousStates(c, unsense(x))
     end
 
     # set time
     if t >= 0.0
-        fmi2SetTime(c, t)
+        fmi2SetTime(c, unsense(t))
     end
 
     # set input
     if length(u) > 0 
-        fmi2SetReal(c, u_refs, u)
+        fmi2SetReal(c, u_refs, unsense(u))
     end
 
     # get derivative
     if length(dx) > 0
         if isdual(dx)
-
-            dx_tmp = nothing
-
-            if c.fmu.isZeroState
-                dx_tmp = [1.0]
-            else
-                dx_tmp = collect(ForwardDiff.value(e) for e in dx)
-                fmi2GetDerivatives!(c, dx_tmp)
+            dx_tmp = ForwardDiff.value.(dx)
+            c.fmu.isZeroState || fmi2GetDerivatives!(c, dx_tmp)
+            for i = 1:length(dx)
+                dx[i].value = dx_tmp[i]
             end
-            
-            T, V, N = fd_eltypes(dx)
-            dx[:] = collect(ForwardDiff.Dual{T, V, N}(dx_tmp[i], ForwardDiff.partials(dx[i])    ) for i in 1:length(dx))    
 
         elseif istracked(dx)
 

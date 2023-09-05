@@ -6,43 +6,30 @@
 using ChainRulesCore: ignore_derivatives
 import SciMLSensitivity.ForwardDiff
 
-# ToDo: Replace by multiple dispatch version ...
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
-function prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReferenceFormat)
-    tvr = typeof(vr)
-    if isa(vr, AbstractArray{fmi2ValueReference,1})
-        return vr
-    elseif tvr == fmi2ValueReference
-        return [vr]
-    elseif tvr == String
-        return [fmi2StringToValueReference(md, vr)]
-    elseif isa(vr, AbstractArray{String,1})
-        return fmi2StringToValueReference(md, vr)
-    elseif tvr == Int64
-        return [fmi2ValueReference(vr)]
-    elseif isa(vr, AbstractArray{Int64,1})
-        return fmi2ValueReference.(vr)
-    elseif tvr == Nothing
+prepareValueReference(md::fmi2ModelDescription, vr::AbstractVector{fmi2ValueReference}) = vr
+prepareValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference) = [vr]
+prepareValueReference(md::fmi2ModelDescription, vr::String) = [fmi2StringToValueReference(md, vr)]
+prepareValueReference(md::fmi2ModelDescription, vr::AbstractVector{String}) = fmi2StringToValueReference(md, vr)
+prepareValueReference(md::fmi2ModelDescription, vr::AbstractVector{<:Integer}) = fmi2ValueReference.(vr)
+prepareValueReference(md::fmi2ModelDescription, vr::Integer) = [fmi2ValueReference(vr)]
+prepareValueReference(md::fmi2ModelDescription, vr::Nothing) = fmi2ValueReference[]
+function prepareValueReference(md::fmi2ModelDescription, vr::Symbol)
+    if vr == :states
+        return md.stateValueReferences
+    elseif vr == :derivatives
+        return md.derivativeValueReferences
+    elseif vr == :inputs
+        return md.inputValueReferences
+    elseif vr == :outputs
+        return md.outputValueReferences
+    elseif vr == :all
+        return md.valueReferences
+    elseif vr == :none
         return Array{fmi2ValueReference,1}()
-    elseif tvr == Symbol
-        if vr == :states
-            return md.stateValueReferences
-        elseif vr == :derivatives
-            return md.derivativeValueReferences
-        elseif vr == :inputs
-            return md.inputValueReferences
-        elseif vr == :outputs
-            return md.outputValueReferences
-        elseif vr == :all
-            return md.valueReferences
-        elseif vr == :none
-            return Array{fmi2ValueReference,1}()
-        else
-            @assert false "Unknwon symbol `$vr`, can't convert to value reference."
-        end
+    else
+        @assert false "Unknwon symbol `$vr`, can't convert to value reference."
     end
-
-    @assert false "prepareValueReference(...): Unknown value reference structure `$tvr`."
 end
 function prepareValueReference(fmu::FMU2, vr::fmi2ValueReferenceFormat)
     prepareValueReference(fmu.modelDescription, vr)
