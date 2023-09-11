@@ -1119,7 +1119,11 @@ function fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{fmi2Real}; k
     nx = Csize_t(length(x))
     status = fmi2SetContinuousStates(c, x, nx; kwargs...)
     if status == fmi2StatusOK
-        isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
+        if isnothing(c.x) 
+            c.x = copy(x)
+        else
+            copyto!(c.x, x)
+        end
     end
     return status
 end
@@ -1184,13 +1188,13 @@ More detailed:
 See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                        noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
+                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
     status = fmi2CompletedIntegratorStep!(c,
                                           noSetFMUStatePriorToCurrentPoint,
-                                          c.ptr_stepEnterEventMode,
-                                          c.ptr_terminateSimulation)
+                                          c._ptr_enterEventMode,
+                                          c._ptr_terminateSimulation)
 
-    return (status, c.stepEnterEventMode, c.terminateSimulation)
+    return (status, c.enterEventMode, c.terminateSimulation)
 end
 
 """
@@ -1246,7 +1250,11 @@ See also [`fmi2GetDerivatives!`](@ref).
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
     if status == fmi2StatusOK
-        c.ẋ = derivatives
+        if isnothing(c.ẋ) 
+            c.ẋ = copy(derivatives)
+        else
+            copyto!(c.ẋ, derivatives)
+        end
     end
     return status
 end
