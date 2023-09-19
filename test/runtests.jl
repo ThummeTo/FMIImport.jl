@@ -38,10 +38,6 @@ function runtestsFMI2(exportingTool)
             end
         end
 
-        @testset "Sensitivities" begin
-            include("FMI2/sensitivities.jl")
-        end
-
         @testset "Model Description Parsing" begin
             include("FMI2/model_description.jl")
         end

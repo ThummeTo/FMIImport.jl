@@ -3,8 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using ChainRulesCore: ignore_derivatives
-import SciMLSensitivity.ForwardDiff
+# ToDo: Fix this: import SciMLSensitivity.ForwardDiff
 
 # Receives one or an array of value references in an arbitrary format (see fmi2ValueReferenceFormat) and converts it into an Array{fmi2ValueReference} (if not already).
 prepareValueReference(md::fmi2ModelDescription, vr::AbstractVector{fmi2ValueReference}) = vr
@@ -56,16 +55,17 @@ Returns an array of ValueReferences coresponding to the variable names.
 See also [`fmi2StringToValueReference`](@ref).
 """
 function fmi2StringToValueReference(md::fmi2ModelDescription, names::AbstractArray{String})
-    vr = Array{fmi2ValueReference}(undef,0)
-    for name in names
-        reference = fmi2StringToValueReference(md, name)
-        if reference == nothing
-            @warn "Value reference for variable '$name' not found, skipping."
-        else
-            push!(vr, reference)
-        end
-    end
-    vr
+    # vr = Array{fmi2ValueReference}(undef,0)
+    # for name in names
+    #     reference = fmi2StringToValueReference(md, name)
+    #     if reference == nothing
+    #         @warn "Value reference for variable '$name' not found, skipping."
+    #     else
+    #         push!(vr, reference)
+    #     end
+    # end
+    # vr
+    return broadcast(fmi2StringToValueReference, (md,), names)
 end
 
 """

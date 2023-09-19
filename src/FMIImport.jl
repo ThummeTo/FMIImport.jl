@@ -5,10 +5,12 @@
 
 module FMIImport
 
-import SciMLSensitivity
 using FMICore
-
 using FMICore: fmi2Component, fmi3Instance
+using FMICore: fast_copy!
+
+using FMICore.Requires
+import FMICore.ChainRulesCore: ignore_derivatives
 
 # functions that have (currently) no better place 
 
@@ -23,11 +25,9 @@ fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3V
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
 using EzXML
-include("utils.jl")
 include("parse.jl")
 
 ### FMI2 ###
-
 include("FMI2/prep.jl")
 include("FMI2/convert.jl")
 include("FMI2/c.jl")
@@ -35,9 +35,6 @@ include("FMI2/int.jl")
 include("FMI2/ext.jl")
 include("FMI2/md.jl")
 include("FMI2/fmu_to_md.jl")
-include("FMI2/sens.jl")
-
-export getCurrentComponent, hasCurrentComponent
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished

@@ -234,9 +234,10 @@ end
 
 # helper
 function checkStatus(c::FMU2Component, status::fmi2Status)
-    @assert (status != fmi2StatusWarning) || !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
+    if status == fmi2StatusWarning
+        @assert !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
 
-    if status == fmi2StatusError
+    elseif status == fmi2StatusError
         c.state = fmi2ComponentStateError
         @assert !c.fmu.executionConfig.assertOnError "Assert on `fmi2StatusError`. See stack for errors."
 
@@ -561,6 +562,7 @@ function fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, n
     return status
 end
 
+
 """
     fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
@@ -608,6 +610,8 @@ function fmi2SetReal(c::FMU2Component,
 
     return status
 end
+
+
 function track_jac(vr::A, M::FMICore.FMUJacobian{V,R}) where {A<:AbstractArray{fmi2ValueReference},V,R}
     for v in vr
         if v in M.∂f_refsset
@@ -658,6 +662,7 @@ function fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}
     return status
 end
 
+
 """
     fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -694,6 +699,7 @@ function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
@@ -734,6 +740,7 @@ function fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}
     return status
 end
 
+
 """
     fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
@@ -768,6 +775,7 @@ function fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
@@ -808,6 +816,7 @@ function fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     return status
 end
 
+
 """
     fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -844,6 +853,7 @@ function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, 
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
@@ -1023,6 +1033,7 @@ function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serial
     return status
 end
 
+
 """
     fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
 
@@ -1061,6 +1072,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetDirectionalDerivative!(c::FMU2Component,
@@ -1164,13 +1176,14 @@ More detailed:
 
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+function fmi2SetRealInputDerivatives(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
 
     status = fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives,
                 c.compAddr, vr, nvr, order, value)
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetRealOutputDerivatives!(c::FMU2Component,  
@@ -1203,13 +1216,14 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 """
-function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+function fmi2GetRealOutputDerivatives!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
 
     status = fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
                 c.compAddr, vr, nvr, order, value)
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2DoStep(c::FMU2Component, 
@@ -1499,7 +1513,6 @@ function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2St
 end
 
 # Model Exchange specific Functions
-#TOD0 
 """
     fmi2SetTime(c::FMU2Component, 
                     time::fmi2Real; 
@@ -1578,7 +1591,6 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
     return status
 end
 
-#TODO
 """
     fmi2SetContinuousStates(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
@@ -1865,6 +1877,7 @@ function fmi2GetDerivatives!(c::FMU2Component,
     status = fmi2GetDerivatives!(c.fmu.cGetDerivatives,
           c.compAddr, derivatives, nx)
     checkStatus(c, status)
+    
     return status
 end
 
@@ -1894,11 +1907,20 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::Array{fmi2Real}, ni::Csize_t)
 
     status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
                     c.compAddr, eventIndicators, ni)
     checkStatus(c, status)
+    return status
+end
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
+
+    @warn "Calling `fmi2GetEventIndicators!` with `eventIndicators::AbstractArray{fmi2Real}` is slow, please use `eventIndicators::Array{fmi2Real}`."
+    buf = Array{fmi2Real}(eventIndicators)
+    status = fmi2GetEventIndicators!(c, buf, ni)
+    eventIndicators[:] = buf
+
     return status
 end
 
@@ -1931,12 +1953,23 @@ More detailed:
 See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetContinuousStates!(c::FMU2Component,
-                                 x::AbstractArray{fmi2Real},
+                                 x::Array{fmi2Real},
                                  nx::Csize_t)
 
     status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
           c.compAddr, x, nx)
     checkStatus(c, status)
+    return status
+end
+function fmi2GetContinuousStates!(c::FMU2Component,
+    x::AbstractArray{fmi2Real},
+    nx::Csize_t)
+
+    @warn "Calling `fmi2GetContinuousStates!` with `x::AbstractArray{fmi2Real}` is slow, please use `x::Array{fmi2Real}`."
+    buf = Array{fmi2Real}(x)
+    status = fmi2GetContinuousStates!(c, buf, nx)
+    x[:] = buf
+
     return status
 end
 
@@ -1966,10 +1999,19 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
+function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
 
     status = fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
     checkStatus(c, status)
+    return status
+end
+function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
+
+    @warn "Calling `fmi2GetNominalsOfContinuousStates!` with `x_nominal::AbstractArray{fmi2Real}` is slow, please use `x_nominal::Array{fmi2Real}`."
+    buf = Array{fmi2Real}(x_nominal)
+    status = fmi2GetNominalsOfContinuousStates!(c, buf, nx)
+    x_nominal[:] = buf 
+
     return status
 end
