@@ -69,6 +69,7 @@ export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobi
 export fmi2Get, fmi2Get!, fmi2Set 
 export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleJacobian
 export fmi2GetContinuousStates
+export fmi2GetDeclaredType, fmi2GetSimpleTypeAttributeStruct
 
 # FMI2_md.jl
 export fmi2LoadModelDescription
@@ -142,7 +143,14 @@ export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi
 
 ###
 
+"""
+Union containing a [`FMU2`](@ref) or a [`FMU2Component`](@ref)
+"""
 fmi2Struct = Union{FMU2, FMU2Component}
+
+"""
+Union containing a [`FMU3`](@ref) or a [`FMU3Component`](@ref)
+"""
 fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
 
