@@ -126,7 +126,7 @@ export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegrat
 
 
 # FMI3_ext.jl
-export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
+export fmi3Unzip, fmi3Load, fmi3Reload, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
 export fmi3Get, fmi3Get!, fmi3Set 
 export fmi3SampleDirectionalDerivative!
 export fmi3GetJacobian, fmi3GetJacobian!, fmi3GetFullJacobian, fmi3GetFullJacobian!
@@ -149,7 +149,7 @@ Union containing a [`FMU2`](@ref) or a [`FMU2Component`](@ref)
 fmi2Struct = Union{FMU2, FMU2Component}
 
 """
-Union containing a [`FMU3`](@ref) or a [`FMU3Component`](@ref)
+Union containing a [`FMU3`](@ref) or a [`FMU3Instance`](@ref)
 """
 fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
