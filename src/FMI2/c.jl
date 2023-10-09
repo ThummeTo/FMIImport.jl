@@ -21,6 +21,8 @@ import FMICore: fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, 
 import FMICore: fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
 import FMICore: fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!
 
+using FMICore: invalidate!, check_invalidate!
+
 """
 Source: FMISpec2.0.2[p.21]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 
@@ -600,26 +602,25 @@ function fmi2SetReal(c::FMU2Component,
     checkStatus(c, status)
 
     if track && status == fmi2StatusOK 
-        track_jac(vr, c.A)
-        track_jac(vr, c.B)
-        track_jac(vr, c.C)
-        track_jac(vr, c.D)
-        track_jac(vr, c.E)
-        track_jac(vr, c.F)
+        check_invalidate!(vr, c.∂ẋ_∂x) 
+        check_invalidate!(vr, c.∂ẋ_∂u)
+        check_invalidate!(vr, c.∂ẋ_∂p)
+        
+        check_invalidate!(vr, c.∂y_∂x) 
+        check_invalidate!(vr, c.∂y_∂u)
+        check_invalidate!(vr, c.∂y_∂p)
+
+        check_invalidate!(vr, c.∂e_∂x) 
+        check_invalidate!(vr, c.∂e_∂u)
+        check_invalidate!(vr, c.∂e_∂p)
+
+        # [NOTE] No need to check for:
+        #        check_invalidate!(vr, c.∂ẋ_∂t)
+        #        check_invalidate!(vr, c.∂y_∂t)
+        #        check_invalidate!(vr, c.∂e_∂t)
     end
 
     return status
-end
-
-
-function track_jac(vr::A, M::FMICore.FMUJacobian{V,R}) where {A<:AbstractArray{fmi2ValueReference},V,R}
-    for v in vr
-        if v in M.∂f_refsset
-            FMICore.invalidate!(M)
-            return
-        end
-    end
-    return
 end
 
 """
@@ -1579,12 +1580,9 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
         if status == fmi2StatusOK
             c.t = time
 
-            FMICore.invalidate!(c.A)
-            FMICore.invalidate!(c.B)
-            FMICore.invalidate!(c.C)
-            FMICore.invalidate!(c.D)
-            FMICore.invalidate!(c.E)
-            FMICore.invalidate!(c.F)
+            invalidate!(c.∂ẋ_∂t)
+            invalidate!(c.∂y_∂t)
+            invalidate!(c.∂e_∂t)
         end
     end
 
@@ -1640,11 +1638,9 @@ function fmi2SetContinuousStates(c::FMU2Component,
         if status == fmi2StatusOK
             isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
 
-            FMICore.invalidate!(c.A)
-            FMICore.invalidate!(c.C)
-
-            FMICore.invalidate!(c.E)
-            FMICore.invalidate!(c.F)
+            invalidate!(c.∂ẋ_∂x)
+            invalidate!(c.∂y_∂x)
+            invalidate!(c.∂e_∂x)
         end
     end
 
@@ -1907,20 +1903,11 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::Array{fmi2Real}, ni::Csize_t)
+function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
     status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
                     c.compAddr, eventIndicators, ni)
     checkStatus(c, status)
-    return status
-end
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
-
-    @warn "Calling `fmi2GetEventIndicators!` with `eventIndicators::AbstractArray{fmi2Real}` is slow, please use `eventIndicators::Array{fmi2Real}`."
-    buf = Array{fmi2Real}(eventIndicators)
-    status = fmi2GetEventIndicators!(c, buf, ni)
-    eventIndicators[:] = buf
-
     return status
 end
 
@@ -1953,23 +1940,12 @@ More detailed:
 See also [`fmi2GetEventIndicators!`](@ref).
 """
 function fmi2GetContinuousStates!(c::FMU2Component,
-                                 x::Array{fmi2Real},
+                                 x::AbstractArray{fmi2Real},
                                  nx::Csize_t)
 
     status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
           c.compAddr, x, nx)
     checkStatus(c, status)
-    return status
-end
-function fmi2GetContinuousStates!(c::FMU2Component,
-    x::AbstractArray{fmi2Real},
-    nx::Csize_t)
-
-    @warn "Calling `fmi2GetContinuousStates!` with `x::AbstractArray{fmi2Real}` is slow, please use `x::Array{fmi2Real}`."
-    buf = Array{fmi2Real}(x)
-    status = fmi2GetContinuousStates!(c, buf, nx)
-    x[:] = buf
-
     return status
 end
 
@@ -1999,19 +1975,10 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::Array{fmi2Real}, nx::Csize_t)
+function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
 
     status = fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
                     c.compAddr, x_nominal, nx)
     checkStatus(c, status)
-    return status
-end
-function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
-
-    @warn "Calling `fmi2GetNominalsOfContinuousStates!` with `x_nominal::AbstractArray{fmi2Real}` is slow, please use `x_nominal::Array{fmi2Real}`."
-    buf = Array{fmi2Real}(x_nominal)
-    status = fmi2GetNominalsOfContinuousStates!(c, buf, nx)
-    x_nominal[:] = buf 
-
     return status
 end

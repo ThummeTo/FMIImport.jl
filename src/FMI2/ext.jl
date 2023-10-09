@@ -523,7 +523,7 @@ function fmi2Instantiate!(fmu::FMU2;
             component.callbackFunctions = callbackFunctions
             component.instanceName = instanceName
             component.type = type
-
+            
             if pushComponents
                 push!(fmu.components, component)
             end
@@ -532,22 +532,28 @@ function fmi2Instantiate!(fmu::FMU2;
         component.componentEnvironment = compEnv
         component.loggingOn = loggingOn
         component.visible = visible
-        component.jacobianUpdate! = fmi2SampleJacobian!
 
-        # setting a jacobian update function dependent on DIrectionalDerivatives-Functionality is present in the FMU
-        updFct = nothing 
-        if fmi2ProvidesDirectionalDerivative(fmu)
-            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-        else
-            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-        end
+        # Jacobians 
 
-        component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.E = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
-        component.F = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
+        # smpFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # updFct = nothing
+        # if fmi2ProvidesDirectionalDerivative(fmu)
+        #     updFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # else
+        #     updFct = smpFct
+        # end
+
+        # component.∂ẋ_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+    
+        # component.∂y_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+
+        # component.∂e_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
 
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
@@ -613,13 +619,13 @@ end
 
 """
     fmi2SampleJacobian(c::FMU2Component,
-                            vUnknown_ref::AbstractArray{fmi2ValueReference},
+                            vUnknown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
                             vKnown_ref::AbstractArray{fmi2ValueReference},
                             steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
 This function samples the directional derivative by manipulating corresponding values (central differences).
 
-Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
+Computes the directional derivatives of an FMU. An FMU has different modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
 𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
 
 - `v_unknown`: vector of unknown Real variables computed in the actual Mode:
@@ -664,8 +670,8 @@ end
 """
     function fmi2SampleJacobian!(mtx::Matrix{<:Real},
                                     c::FMU2Component,
-                                    vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                    vKnown_ref::AbstractArray{fmi2ValueReference},
+                                    vUnknown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
+                                    vKnown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
                                     steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
@@ -730,6 +736,90 @@ function fmi2SampleJacobian!(mtx::Matrix{<:Real},
 
         fmi2SetReal(c, vKnown, origValue + step; track=false)
         fmi2GetReal!(c, vUnknown_ref, posValues)
+
+        fmi2SetReal(c, vKnown, origValue; track=false)
+
+        if length(vUnknown_ref) == 1
+            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+        else
+            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+        end
+    end
+
+    nothing
+end
+
+function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+    c::FMU2Component,
+    vUnknown_ref::Symbol,
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
+    @assert vUnknown_ref == :indicators "vUnknown_ref::Symbol must be `:indicators`!"
+
+    step = 0.0
+
+    len_vUnknown_ref = c.fmu.modelDescription.numberOfEventIndicators
+
+    negValues = zeros(len_vUnknown_ref)
+    posValues = zeros(len_vUnknown_ref)
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        if steps === nothing
+            step = max(2.0 * eps(Float32(origValue)), 1e-12)
+        else
+            step = steps[i]
+        end
+
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2GetEventIndicators!(c, negValues)
+
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2GetEventIndicators!(c, posValues)
+
+        fmi2SetReal(c, vKnown, origValue; track=false)
+
+        if len_vUnknown_ref == 1
+            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+        else
+            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+        end
+    end
+
+    nothing
+end
+
+function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::Symbol,
+    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
+    @assert vKnown_ref == :time "vKnown_ref::Symbol must be `:time`!"
+
+    step = 0.0
+
+    negValues = zeros(length(vUnknown_ref))
+    posValues = zeros(length(vUnknown_ref))
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        if steps === nothing
+            step = max(2.0 * eps(Float32(origValue)), 1e-12)
+        else
+            step = steps[i]
+        end
+
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2GetEventIndicators!(c, negValues)
+
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2GetEventIndicators!(c, posValues)
 
         fmi2SetReal(c, vKnown, origValue; track=false)
 
@@ -844,12 +934,11 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
         # end
 
         if length(sensitive_rdx) > 0
-            # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-            #try
+        
             fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-            #catch e
+            
             #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
-            #end   
+    
         end
     end
 

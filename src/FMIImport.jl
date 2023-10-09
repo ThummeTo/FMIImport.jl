@@ -19,11 +19,6 @@ prepareValue(value) = [value]
 prepareValue(value::AbstractVector) = value
 export prepareValue, prepareValueReference
 
-# wildcards for how a user can pass a fmi[X]ValueReference
-fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
-fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
-export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
-
 using EzXML
 include("parse.jl")
 
@@ -119,7 +114,6 @@ export fmi3GetBoolean, fmi3GetString, fmi3GetBinary, fmi3GetClock
 export fmi3GetFMUState, fmi3SerializedFMUStateSize, fmi3SerializeFMUState, fmi3DeSerializeFMUState
 export fmi3GetDirectionalDerivative
 export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegratorStep
-
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
