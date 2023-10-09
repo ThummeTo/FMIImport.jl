@@ -281,7 +281,6 @@ function loadBinary(fmu::FMU2)
     fmu.cSetInteger                   = dlsym(fmu.libHandle, :fmi2SetInteger)
     fmu.cGetBoolean                   = dlsym(fmu.libHandle, :fmi2GetBoolean)
     fmu.cSetBoolean                   = dlsym(fmu.libHandle, :fmi2SetBoolean)
-
     fmu.cGetString                    = dlsym_opt(fmu.libHandle, :fmi2GetString)
     fmu.cSetString                    = dlsym_opt(fmu.libHandle, :fmi2SetString)
 
@@ -326,6 +325,73 @@ function loadBinary(fmu::FMU2)
         fmu.cNewDiscreteStates            = dlsym(fmu.libHandle, :fmi2NewDiscreteStates)
         fmu.cGetEventIndicators           = dlsym(fmu.libHandle, :fmi2GetEventIndicators)
         fmu.cGetNominalsOfContinuousStates= dlsym(fmu.libHandle, :fmi2GetNominalsOfContinuousStates)
+    end
+end
+
+function unloadBinary(fmu::FMU2)
+    
+    # retrieve functions
+    fmu.cInstantiate                  = @cfunction(FMICore.unload_fmi2Instantiate, fmi2Component, (fmi2String, fmi2Type, fmi2String, fmi2String, Ptr{fmi2CallbackFunctions}, fmi2Boolean, fmi2Boolean))
+    fmu.cGetTypesPlatform             = @cfunction(FMICore.unload_fmi2GetTypesPlatform, fmi2String, ())
+    fmu.cGetVersion                   = @cfunction(FMICore.unload_fmi2GetVersion, fmi2String, ())
+    fmu.cFreeInstance                 = @cfunction(FMICore.unload_fmi2FreeInstance, Cvoid, (fmi2Component,))
+    fmu.cSetDebugLogging              = @cfunction(FMICore.unload_fmi2SetDebugLogging, fmi2Status, (fmi2Component, fmi2Boolean, Csize_t, Ptr{fmi2String}))
+    fmu.cSetupExperiment              = @cfunction(FMICore.unload_fmi2SetupExperiment, fmi2Status, (fmi2Component, fmi2Boolean, fmi2Real, fmi2Real, fmi2Boolean, fmi2Real))
+    fmu.cEnterInitializationMode      = @cfunction(FMICore.unload_fmi2EnterInitializationMode, fmi2Status, (fmi2Component,))
+    fmu.cExitInitializationMode       = @cfunction(FMICore.unload_fmi2ExitInitializationMode, fmi2Status, (fmi2Component,))
+    fmu.cTerminate                    = @cfunction(FMICore.unload_fmi2Terminate, fmi2Status, (fmi2Component,))
+    fmu.cReset                        = @cfunction(FMICore.unload_fmi2Reset, fmi2Status, (fmi2Component,))
+    fmu.cGetReal                      = @cfunction(FMICore.unload_fmi2GetReal, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real}))
+    fmu.cSetReal                      = @cfunction(FMICore.unload_fmi2SetReal, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Real}))
+    fmu.cGetInteger                   = @cfunction(FMICore.unload_fmi2GetInteger, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}))
+    fmu.cSetInteger                   = @cfunction(FMICore.unload_fmi2SetInteger, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Integer}))
+    fmu.cGetBoolean                   = @cfunction(FMICore.unload_fmi2GetBoolean, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean}))
+    fmu.cSetBoolean                   = @cfunction(FMICore.unload_fmi2SetBoolean, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2Boolean}))
+    fmu.cGetString                    = @cfunction(FMICore.unload_fmi2GetString, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String}))
+    fmu.cSetString                    = @cfunction(FMICore.unload_fmi2SetString, fmi2Status, (fmi2Component, Ptr{fmi2ValueReference}, Csize_t, Ptr{fmi2String}))
+
+    # ToDo: Implement for pecial functions!
+    # if fmi2CanGetSetState(fmu.modelDescription)
+    #     fmu.cGetFMUstate                  = FMICore.unload_fmi2GetFMUstate
+    #     fmu.cSetFMUstate                  = FMICore.unload_fmi2SetFMUstate
+    #     fmu.cFreeFMUstate                 = FMICore.unload_fmi2FreeFMUstate
+    # end
+
+    # if fmi2CanSerializeFMUstate(fmu.modelDescription)
+    #     fmu.cSerializedFMUstateSize       = FMICore.unload_fmi2SerializedFMUstateSize
+    #     fmu.cSerializeFMUstate            = FMICore.unload_fmi2SerializeFMUstate
+    #     fmu.cDeSerializeFMUstate          = FMICore.unload_fmi2DeSerializeFMUstate
+    # end
+
+    # if fmi2ProvidesDirectionalDerivative(fmu.modelDescription)
+    #     fmu.cGetDirectionalDerivative     = FMICore.unload_fmi2GetDirectionalDerivative
+    # end
+
+    # ToDo: CS specific function calls
+    # if fmi2IsCoSimulation(fmu.modelDescription)
+    #     fmu.cSetRealInputDerivatives      = FMICore.unload_fmi2SetRealInputDerivatives
+    #     fmu.cGetRealOutputDerivatives     = FMICore.unload_fmi2GetRealOutputDerivatives
+    #     fmu.cDoStep                       = FMICore.unload_fmi2DoStep
+    #     fmu.cCancelStep                   = FMICore.unload_fmi2CancelStep
+    #     fmu.cGetStatus                    = FMICore.unload_fmi2GetStatus
+    #     fmu.cGetRealStatus                = FMICore.unload_fmi2GetRealStatus
+    #     fmu.cGetIntegerStatus             = FMICore.unload_fmi2GetIntegerStatus
+    #     fmu.cGetBooleanStatus             = FMICore.unload_fmi2GetBooleanStatus
+    #     fmu.cGetStringStatus              = FMICore.unload_fmi2GetStringStatus
+    # end
+
+    # ME specific function calls
+    if fmi2IsModelExchange(fmu.modelDescription)
+        fmu.cEnterContinuousTimeMode      = @cfunction(FMICore.unload_fmi2EnterContinuousTimeMode, fmi2Status, (fmi2Component,))
+        fmu.cGetContinuousStates          = @cfunction(FMICore.unload_fmi2GetContinuousStates, fmi2Status, (fmi2Component, Ptr{fmi2Real}, Csize_t))
+        fmu.cGetDerivatives               = @cfunction(FMICore.unload_fmi2GetDerivatives, fmi2Status, (fmi2Component, Ptr{fmi2Real}, Csize_t))
+        fmu.cSetTime                      = @cfunction(FMICore.unload_fmi2SetTime, fmi2Status, (fmi2Component, fmi2Real))
+        fmu.cSetContinuousStates          = @cfunction(FMICore.unload_fmi2SetContinuousStates, fmi2Status, (fmi2Component, Ptr{fmi2Real}, Csize_t))
+        fmu.cCompletedIntegratorStep      = @cfunction(FMICore.unload_fmi2CompletedIntegratorStep, fmi2Status, (fmi2Component, fmi2Boolean, Ptr{fmi2Boolean}, Ptr{fmi2Boolean}))
+        fmu.cEnterEventMode               = @cfunction(FMICore.unload_fmi2EnterEventMode, fmi2Status, (fmi2Component,))
+        fmu.cNewDiscreteStates            = @cfunction(FMICore.unload_fmi2NewDiscreteStates, fmi2Status, (fmi2Component, Ptr{fmi2EventInfo}))
+        fmu.cGetEventIndicators           = @cfunction(FMICore.unload_fmi2GetEventIndicators, fmi2Status, (fmi2Component, Ptr{fmi2Real}, Csize_t))
+        fmu.cGetNominalsOfContinuousStates= @cfunction(FMICore.unload_fmi2GetNominalsOfContinuousStates, fmi2Status, (fmi2Component, Ptr{fmi2Real}, Csize_t))
     end
 end
 
@@ -437,7 +503,7 @@ function fmi2Instantiate!(fmu::FMU2;
         compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
         if compAddr == Ptr{Cvoid}(C_NULL)
-            @error "fmi2Instantiate!(...): Instantiation failed!"
+            @error "fmi2Instantiate!(...): Instantiation failed, see error messages above.\nIf no error messages, enable FMU debug logging.\nIf logging is on and no messages are printed before this, the FMU might not log errors."
             return nothing
         end
 
@@ -457,7 +523,7 @@ function fmi2Instantiate!(fmu::FMU2;
             component.callbackFunctions = callbackFunctions
             component.instanceName = instanceName
             component.type = type
-
+            
             if pushComponents
                 push!(fmu.components, component)
             end
@@ -466,39 +532,34 @@ function fmi2Instantiate!(fmu::FMU2;
         component.componentEnvironment = compEnv
         component.loggingOn = loggingOn
         component.visible = visible
-        component.jacobianUpdate! = fmi2SampleJacobian!
 
-        # setting a jacobian update function dependent on DIrectionalDerivatives-Functionality is present in the FMU
-        updFct = nothing 
-        if fmi2ProvidesDirectionalDerivative(fmu)
-            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-        else
-            updFct = (jac, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(jac.mtx, component, ∂f_refs, ∂x_refs)
-        end
+        # Jacobians 
 
-        component.A = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.B = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.C = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.stateValueReferences, updFct)
-        component.D = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, fmu.modelDescription.inputValueReferences, updFct)
-        component.E = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.derivativeValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
-        component.F = FMICore.FMUJacobian{fmi2Real, fmi2ValueReference}(fmu.modelDescription.outputValueReferences, isnothing(fmu.optim_p_refs) ? Array{fmi2ValueReference,1}() : fmu.optim_p_refs, updFct)
+        # smpFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # updFct = nothing
+        # if fmi2ProvidesDirectionalDerivative(fmu)
+        #     updFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # else
+        #     updFct = smpFct
+        # end
+
+        # component.∂ẋ_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+    
+        # component.∂y_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+
+        # component.∂e_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
 
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
     end
     
     return getCurrentComponent(fmu)
-end
-
-function hasCurrentComponent(fmu::FMU2)
-    tid = Threads.threadid()
-    return haskey(fmu.threadComponents, tid) && fmu.threadComponents[tid] != nothing
-end
-
-function getCurrentComponent(fmu::FMU2)
-    tid = Threads.threadid()
-    @assert hasCurrentComponent(fmu) ["No FMU instance allocated (in current thread with ID `$(tid)`), have you already called fmiInstantiate?"]
-    return fmu.threadComponents[tid]
 end
 
 """
@@ -526,18 +587,25 @@ Free the allocated memory, close the binaries and remove temporary zip and unzip
 
 # Arguments
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-- `cleanUp::Bool= true`: Defines if the file, link, or empty directory should be deleted.
+- `cleanUp::Bool= true`: Defines if the file and directory should be deleted.
+
+# Keywords 
+- `secure_pointers=true` whether pointers to C-functions should be overwritten with dummies with Julia assertions, instead of pointing to dead memory (slower, but more user safe)
 """
-function fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
+function fmi2Unload(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool=true)
 
     while length(fmu.components) > 0
         fmi2FreeInstance!(fmu.components[end])
     end
 
-    dlclose(fmu.libHandle)
-
     # the components are removed from the component list via call to fmi2FreeInstance!
     @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
+
+    if secure_pointers
+        unloadBinary(fmu)
+    end
+
+    dlclose(fmu.libHandle)
 
     if cleanUp
         try
@@ -551,13 +619,13 @@ end
 
 """
     fmi2SampleJacobian(c::FMU2Component,
-                            vUnknown_ref::AbstractArray{fmi2ValueReference},
+                            vUnknown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
                             vKnown_ref::AbstractArray{fmi2ValueReference},
                             steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
 This function samples the directional derivative by manipulating corresponding values (central differences).
 
-Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
+Computes the directional derivatives of an FMU. An FMU has different modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
 𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
 
 - `v_unknown`: vector of unknown Real variables computed in the actual Mode:
@@ -602,8 +670,8 @@ end
 """
     function fmi2SampleJacobian!(mtx::Matrix{<:Real},
                                     c::FMU2Component,
-                                    vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                    vKnown_ref::AbstractArray{fmi2ValueReference},
+                                    vUnknown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
+                                    vKnown_ref::Union{AbstractArray{fmi2ValueReference}, Symbol},
                                     steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
 
 This function samples the directional derivative by manipulating corresponding values (central differences) and saves in-place.
@@ -668,6 +736,90 @@ function fmi2SampleJacobian!(mtx::Matrix{<:Real},
 
         fmi2SetReal(c, vKnown, origValue + step; track=false)
         fmi2GetReal!(c, vUnknown_ref, posValues)
+
+        fmi2SetReal(c, vKnown, origValue; track=false)
+
+        if length(vUnknown_ref) == 1
+            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+        else
+            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+        end
+    end
+
+    nothing
+end
+
+function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+    c::FMU2Component,
+    vUnknown_ref::Symbol,
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
+    @assert vUnknown_ref == :indicators "vUnknown_ref::Symbol must be `:indicators`!"
+
+    step = 0.0
+
+    len_vUnknown_ref = c.fmu.modelDescription.numberOfEventIndicators
+
+    negValues = zeros(len_vUnknown_ref)
+    posValues = zeros(len_vUnknown_ref)
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        if steps === nothing
+            step = max(2.0 * eps(Float32(origValue)), 1e-12)
+        else
+            step = steps[i]
+        end
+
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2GetEventIndicators!(c, negValues)
+
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2GetEventIndicators!(c, posValues)
+
+        fmi2SetReal(c, vKnown, origValue; track=false)
+
+        if len_vUnknown_ref == 1
+            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+        else
+            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+        end
+    end
+
+    nothing
+end
+
+function fmi2SampleJacobian!(mtx::Matrix{<:Real},
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::Symbol,
+    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+
+    @assert vKnown_ref == :time "vKnown_ref::Symbol must be `:time`!"
+
+    step = 0.0
+
+    negValues = zeros(length(vUnknown_ref))
+    posValues = zeros(length(vUnknown_ref))
+
+    for i in 1:length(vKnown_ref)
+        vKnown = vKnown_ref[i]
+        origValue = fmi2GetReal(c, vKnown)
+
+        if steps === nothing
+            step = max(2.0 * eps(Float32(origValue)), 1e-12)
+        else
+            step = steps[i]
+        end
+
+        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2GetEventIndicators!(c, negValues)
+
+        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2GetEventIndicators!(c, posValues)
 
         fmi2SetReal(c, vKnown, origValue; track=false)
 
@@ -782,12 +934,11 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
         # end
 
         if length(sensitive_rdx) > 0
-            # doesn't work because indexed-views can`t be passed by reference (to ccalls)
-            #try
+        
             fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-            #catch e
+            
             #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
-            #end   
+    
         end
     end
 

@@ -21,6 +21,8 @@ import FMICore: fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, 
 import FMICore: fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
 import FMICore: fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!
 
+using FMICore: invalidate!, check_invalidate!
+
 """
 Source: FMISpec2.0.2[p.21]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 
@@ -234,9 +236,10 @@ end
 
 # helper
 function checkStatus(c::FMU2Component, status::fmi2Status)
-    @assert (status != fmi2StatusWarning) || !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
+    if status == fmi2StatusWarning
+        @assert !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
 
-    if status == fmi2StatusError
+    elseif status == fmi2StatusError
         c.state = fmi2ComponentStateError
         @assert !c.fmu.executionConfig.assertOnError "Assert on `fmi2StatusError`. See stack for errors."
 
@@ -561,6 +564,7 @@ function fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, n
     return status
 end
 
+
 """
     fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
@@ -597,14 +601,23 @@ function fmi2SetReal(c::FMU2Component,
                 c.compAddr, vr, nvr, value)
     checkStatus(c, status)
 
-    if track
-        if status == fmi2StatusOK
-            for j in (c.A, c.B, c.C, c.D, c.E, c.F)
-                if any(collect(v in j.∂f_refs for v in vr))
-                    FMICore.invalidate!(j)
-                end
-            end
-        end
+    if track && status == fmi2StatusOK 
+        check_invalidate!(vr, c.∂ẋ_∂x) 
+        check_invalidate!(vr, c.∂ẋ_∂u)
+        check_invalidate!(vr, c.∂ẋ_∂p)
+        
+        check_invalidate!(vr, c.∂y_∂x) 
+        check_invalidate!(vr, c.∂y_∂u)
+        check_invalidate!(vr, c.∂y_∂p)
+
+        check_invalidate!(vr, c.∂e_∂x) 
+        check_invalidate!(vr, c.∂e_∂u)
+        check_invalidate!(vr, c.∂e_∂p)
+
+        # [NOTE] No need to check for:
+        #        check_invalidate!(vr, c.∂ẋ_∂t)
+        #        check_invalidate!(vr, c.∂y_∂t)
+        #        check_invalidate!(vr, c.∂e_∂t)
     end
 
     return status
@@ -650,6 +663,7 @@ function fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}
     return status
 end
 
+
 """
     fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -686,6 +700,7 @@ function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
@@ -726,6 +741,7 @@ function fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}
     return status
 end
 
+
 """
     fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
@@ -760,6 +776,7 @@ function fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
@@ -800,6 +817,7 @@ function fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference},
     return status
 end
 
+
 """
     fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -836,6 +854,7 @@ function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, 
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
@@ -1015,6 +1034,7 @@ function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serial
     return status
 end
 
+
 """
     fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
 
@@ -1053,6 +1073,7 @@ function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArr
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetDirectionalDerivative!(c::FMU2Component,
@@ -1156,13 +1177,14 @@ More detailed:
 
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+function fmi2SetRealInputDerivatives(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
 
     status = fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives,
                 c.compAddr, vr, nvr, order, value)
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2GetRealOutputDerivatives!(c::FMU2Component,  
@@ -1195,13 +1217,14 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 """
-function fmi2GetRealOutputDerivatives!(c::FMU2Component,  vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, order::AbstractArray{fmi2Integer}, value::AbstractArray{fmi2Real})
+function fmi2GetRealOutputDerivatives!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
 
     status = fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
                 c.compAddr, vr, nvr, order, value)
     checkStatus(c, status)
     return status
 end
+
 
 """
     fmi2DoStep(c::FMU2Component, 
@@ -1491,7 +1514,6 @@ function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2St
 end
 
 # Model Exchange specific Functions
-#TOD0 
 """
     fmi2SetTime(c::FMU2Component, 
                     time::fmi2Real; 
@@ -1558,19 +1580,15 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
         if status == fmi2StatusOK
             c.t = time
 
-            FMICore.invalidate!(c.A)
-            FMICore.invalidate!(c.B)
-            FMICore.invalidate!(c.C)
-            FMICore.invalidate!(c.D)
-            FMICore.invalidate!(c.E)
-            FMICore.invalidate!(c.F)
+            invalidate!(c.∂ẋ_∂t)
+            invalidate!(c.∂y_∂t)
+            invalidate!(c.∂e_∂t)
         end
     end
 
     return status
 end
 
-#TODO
 """
     fmi2SetContinuousStates(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
@@ -1618,13 +1636,11 @@ function fmi2SetContinuousStates(c::FMU2Component,
 
     if track
         if status == fmi2StatusOK
-            c.x = copy(x)
+            isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
 
-            FMICore.invalidate!(c.A)
-            FMICore.invalidate!(c.C)
-
-            FMICore.invalidate!(c.E)
-            FMICore.invalidate!(c.F)
+            invalidate!(c.∂ẋ_∂x)
+            invalidate!(c.∂y_∂x)
+            invalidate!(c.∂e_∂x)
         end
     end
 
@@ -1857,6 +1873,7 @@ function fmi2GetDerivatives!(c::FMU2Component,
     status = fmi2GetDerivatives!(c.fmu.cGetDerivatives,
           c.compAddr, derivatives, nx)
     checkStatus(c, status)
+    
     return status
 end
 

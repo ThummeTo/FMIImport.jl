@@ -227,15 +227,12 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2SetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Real}, <:Real}; kwargs...)
-
-    vr = prepareValueReference(c, vr)
-    values = prepareValue(values)
+function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractVector{fmi2Real}; kwargs...)
     @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
-
     nvr = Csize_t(length(vr))
-    fmi2SetReal(c, vr, nvr, Array{fmi2Real}(values); kwargs...)
+    fmi2SetReal(c, prepareValueReference(c, vr), nvr, prepareValue(values); kwargs...)
 end
+fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real; kwargs...) = fmi2SetReal(c, prepareValueReference(c, vr), prepareValue(values); kwargs...)
 
 """
     fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
@@ -1118,14 +1115,15 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetContinuousStates`](@ref).
 """
-function fmi2SetContinuousStates(c::FMU2Component, x::Union{AbstractArray{Float32}, AbstractArray{Float64}}; kwargs...)
+function fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{fmi2Real}; kwargs...)
     nx = Csize_t(length(x))
-    status = fmi2SetContinuousStates(c, Array{fmi2Real}(x), nx; kwargs...)
+    status = fmi2SetContinuousStates(c, x, nx; kwargs...)
     if status == fmi2StatusOK
-        c.x = x
+        fast_copy!(c, :x, x)
     end
     return status
 end
+fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{Float32}; kwargs...) = fmi2SetContinuousStates(c, Array{fmi2Real}(x); kwargs...)
 
 """
     fmi2NewDiscreteStates(c::FMU2Component)
@@ -1186,16 +1184,13 @@ More detailed:
 See also [`fmi2CompletedIntegratorStep`](@ref).
 """
 function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                        noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
-    enterEventMode = zeros(fmi2Boolean, 1)
-    terminateSimulation = zeros(fmi2Boolean, 1)
-
+                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
     status = fmi2CompletedIntegratorStep!(c,
                                           noSetFMUStatePriorToCurrentPoint,
-                                          pointer(enterEventMode),
-                                          pointer(terminateSimulation))
+                                          c._ptr_enterEventMode,
+                                          c._ptr_terminateSimulation)
 
-    return (status, enterEventMode[1], terminateSimulation[1])
+    return (status, c._enterEventMode, c._terminateSimulation)
 end
 
 """
@@ -1251,7 +1246,7 @@ See also [`fmi2GetDerivatives!`](@ref).
 function fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
     status = fmi2GetDerivatives!(c, derivatives, Csize_t(length(derivatives)))
     if status == fmi2StatusOK
-        c.ẋ = derivatives
+        fast_copy!(c, :ẋ, derivatives)
     end
     return status
 end

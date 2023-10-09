@@ -5,10 +5,12 @@
 
 module FMIImport
 
-import SciMLSensitivity
 using FMICore
-
 using FMICore: fmi2Component, fmi3Instance
+using FMICore: fast_copy!
+
+using FMICore.Requires
+import FMICore.ChainRulesCore: ignore_derivatives
 
 # functions that have (currently) no better place 
 
@@ -17,17 +19,10 @@ prepareValue(value) = [value]
 prepareValue(value::AbstractVector) = value
 export prepareValue, prepareValueReference
 
-# wildcards for how a user can pass a fmi[X]ValueReference
-fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
-fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
-export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
-
 using EzXML
-include("utils.jl")
 include("parse.jl")
 
 ### FMI2 ###
-
 include("FMI2/prep.jl")
 include("FMI2/convert.jl")
 include("FMI2/c.jl")
@@ -35,9 +30,6 @@ include("FMI2/int.jl")
 include("FMI2/ext.jl")
 include("FMI2/md.jl")
 include("FMI2/fmu_to_md.jl")
-include("FMI2/sens.jl")
-
-export getCurrentComponent, hasCurrentComponent
 
 # FMI2_c.jl
 export fmi2CallbackLogger, fmi2CallbackAllocateMemory, fmi2CallbackFreeMemory, fmi2CallbackStepFinished
@@ -122,7 +114,6 @@ export fmi3GetBoolean, fmi3GetString, fmi3GetBinary, fmi3GetClock
 export fmi3GetFMUState, fmi3SerializedFMUStateSize, fmi3SerializeFMUState, fmi3DeSerializeFMUState
 export fmi3GetDirectionalDerivative
 export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegratorStep
-
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
