@@ -18,6 +18,9 @@ prepareValue(value::AbstractVector) = value
 export prepareValue, prepareValueReference
 
 # wildcards for how a user can pass a fmi[X]ValueReference
+"""
+TODO
+"""
 fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
 fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}} 
 export fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
@@ -154,7 +157,14 @@ Union containing a [`FMU3`](@ref) or a [`FMU3Instance`](@ref)
 fmi3Struct = Union{FMU3, FMU3Instance}
 export fmi2Struct, fmi3Struct
 
+"""
+Union containing a [`FMU2`](@ref), a [`FMU2Component`](@ref) or a [`fmi2ModelDescription`](@ref)
+"""
 fmi2StructMD = Union{FMU2, FMU2Component, fmi2ModelDescription}
+
+"""
+Union containing a [`FMU3`](@ref), a [`FMU3Instance`](@ref) or a [`fmi3ModelDescription`](@ref)
+"""
 fmi3StructMD = Union{FMU3, FMU3Instance , fmi3ModelDescription}
 export fmi2StructMD, fmi3StructMD
 

@@ -658,7 +658,7 @@ end
 
 """
     
-    fmi3SetInt8!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
+    fmi3SetInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
 
 Functions to get and set values of variables idetified by their valueReference.
 
@@ -683,7 +683,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
-See also [`fmi3SetInt8!`](@ref).
 """
 function fmi3SetInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
     status = fmi3SetInt8(c.fmu.cSetInt8,
@@ -902,7 +901,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
-See also [`fmi3SetUInt16!`](@ref).
 """
 function fmi3SetUInt16(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3UInt16}, nvalue::Csize_t)
     status = fmi3SetUInt16(c.fmu.cSetUInt16,
@@ -1584,7 +1582,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
-See also [`fmi3FreeFMUState!`](@ref).
 """
 function fmi3FreeFMUState!(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
     status = fmi3FreeFMUState!(c.fmu.cFreeFMUState,
@@ -1697,8 +1694,8 @@ function fmi3DeSerializeFMUState!(c::FMU3Instance, serialzedState::AbstractArray
     return status
 end
 
+# TODO Clocks and dependencies functions
 """
-
     fmi3SetIntervalDecimal(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, intervals::AbstractArray{fmi3Float64})
 
 Sets the interval until the next clock tick
@@ -1724,7 +1721,6 @@ More detailed:
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3SetIntervalDecimal`](@ref).
 """
-# TODO Clocks and dependencies functions
 function fmi3SetIntervalDecimal(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, intervals::AbstractArray{fmi3Float64})
     status = fmi3SetIntervalDecimal(c.fmu.cSetIntervalDecimal,
                 c.compAddr, vr, nvr, intervals)     
@@ -1954,8 +1950,8 @@ function fmi3ActivateModelPartition(c::FMU3Instance, vr::fmi3ValueReference, act
     return status
 end
 
+# TODO not tested
 """
-
     fmi3GetNumberOfVariableDependencies!(c::FMU3Instance, vr::fmi3ValueReference, nvr::Ref{Csize_t})
 
 The number of dependencies of a given variable, which may change if structural parameters are changed, can be retrieved by calling fmi3GetNumberOfVariableDependencies.
@@ -1983,7 +1979,6 @@ More detailed:
 - FMISpec3.0: 2.2.10. Dependencies of Variables
 See also [`fmi3GetNumberOfVariableDependencies!`](@ref).
 """
-# TODO not tested
 function fmi3GetNumberOfVariableDependencies!(c::FMU3Instance, vr::fmi3ValueReference, nvr::Ref{Csize_t})
     status = fmi3GetNumberOfVariableDependencies!(c.fmu.cGetNumberOfVariableDependencies,
                 c.compAddr, vr, nvr)

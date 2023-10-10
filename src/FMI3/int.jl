@@ -1777,7 +1777,7 @@ end
 
 """
     
-    fmi3FreeFMUState(c::FMU3Instance, state::fmi3FMUState)
+    fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
 
 Free the allocated memory for the FMU state.
 
@@ -1792,8 +1792,6 @@ Free the allocated memory for the FMU state.
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
-
-See also [`fmi3FreeFMUState`](@ref).
 """
 function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
     stateRef = Ref(state)
