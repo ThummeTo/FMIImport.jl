@@ -255,6 +255,10 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     return fmu
 end
 
+"""
+    loadBinary(fmu::FMU2)
+load pointers to `fmu`\`s c functions from shared library handle (provided by `fmu.libHandle`)
+"""
 function loadBinary(fmu::FMU2)
     lastDirectory = pwd()
     cd(dirname(fmu.binaryPath))

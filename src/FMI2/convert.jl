@@ -109,7 +109,8 @@ function fmi2ModelVariablesForValueReference(md::fmi2ModelDescription, vr::fmi2V
 end
 
 """
-ToDo.
+    fmi2DataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
+Returns the fmi2DataType (`fmi2Real`, `fmi2Integer`, `fmi2Boolean`, `fmi2String`) for a given Valuereference `vr` of a given FMU-ModelDescription `md`
 """
 function fmi2DataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueReference)
     mv = fmi2ModelVariablesForValueReference(md, vr)[1]
