@@ -84,7 +84,7 @@ function (fmu::FMU2)(;dx::AbstractVector{<:Real}=Vector{fmi2Real}(),
     if hasCurrentComponent(fmu)
         c = getCurrentComponent(fmu)
     else
-        logWarn(fmu, "No FMU2Component found. Allocating one.")
+        logWarning(fmu, "No FMU2Component found. Allocating one.")
         c = fmi2Instantiate!(fmu)
         fmi2EnterInitializationMode(c)
         fmi2ExitInitializationMode(c)
