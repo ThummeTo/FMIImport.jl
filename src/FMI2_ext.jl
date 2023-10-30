@@ -10,6 +10,8 @@ using Libdl
 using ZipFile
 import Downloads
 
+const CB_LIB_PATH = @path joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+
 """
 
    fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
@@ -364,7 +366,7 @@ function fmi2Instantiate!(fmu::FMU2; instanceName::String=fmu.modelName, type::f
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
 
-            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+            cbLibPath = CB_LIB_PATH
             if Sys.iswindows()
                 cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
             elseif Sys.islinux()

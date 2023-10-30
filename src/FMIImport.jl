@@ -3,6 +3,7 @@ module FMIImport
 using FMICore
 
 using FMICore: fmi2Component, fmi3Instance
+using RelocatableFolders
 
 # functions that have (currently) no better place 
 
