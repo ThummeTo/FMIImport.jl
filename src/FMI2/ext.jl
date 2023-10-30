@@ -10,6 +10,8 @@ using Libdl
 using ZipFile
 import Downloads
 
+const CB_LIB_PATH = @path joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+
 """
     fmi2Unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
@@ -105,8 +107,8 @@ end
 
 """
     fmi2Load(pathToFMU::String;
-                unpackPath=nothing, 
-                type=nothing, 
+                unpackPath=nothing,
+                type=nothing,
                 cleanup=true)
 
 Sets the properties of the fmu by reading the modelDescription.xml.
@@ -132,9 +134,9 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     # Create uninitialized FMU
 
     if isa(logLevel, Symbol)
-        if logLevel == :info 
-            logLevel = FMULogLevelInfo 
-        elseif logLevel == :warn 
+        if logLevel == :info
+            logLevel = FMULogLevelInfo
+        elseif logLevel == :warn
             logLevel = FMULogLevelWarn
         elseif logLevel == :error
             logLevel = FMULogLevelError
@@ -329,7 +331,7 @@ function loadBinary(fmu::FMU2)
 end
 
 function unloadBinary(fmu::FMU2)
-    
+
     # retrieve functions
     fmu.cInstantiate                  = @cfunction(FMICore.unload_fmi2Instantiate, fmi2Component, (fmi2String, fmi2Type, fmi2String, fmi2String, Ptr{fmi2CallbackFunctions}, fmi2Boolean, fmi2Boolean))
     fmu.cGetTypesPlatform             = @cfunction(FMICore.unload_fmi2GetTypesPlatform, fmi2String, ())
@@ -397,18 +399,18 @@ end
 
 lk_fmi2Instantiate = ReentrantLock()
 """
-    fmi2Instantiate!(fmu::FMU2; 
-                        instanceName::String=fmu.modelName, 
-                        type::fmi2Type=fmu.type, 
-                        pushComponents::Bool = true, 
-                        visible::Bool = false, 
-                        loggingOn::Bool = fmu.executionConfig.loggingOn, 
+    fmi2Instantiate!(fmu::FMU2;
+                        instanceName::String=fmu.modelName,
+                        type::fmi2Type=fmu.type,
+                        pushComponents::Bool = true,
+                        visible::Bool = false,
+                        loggingOn::Bool = fmu.executionConfig.loggingOn,
                         externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
-                        logStatusOK::Bool=true, 
-                        logStatusWarning::Bool=true, 
-                        logStatusDiscard::Bool=true, 
-                        logStatusError::Bool=true, 
-                        logStatusFatal::Bool=true, 
+                        logStatusOK::Bool=true,
+                        logStatusWarning::Bool=true,
+                        logStatusDiscard::Bool=true,
+                        logStatusError::Bool=true,
+                        logStatusFatal::Bool=true,
                         logStatusPending::Bool=true)
 
 Create a new instance of the given fmu, adds a logger if logginOn == true.
@@ -438,18 +440,18 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 
 See also [`fmi2Instantiate`](#@ref).
 """
-function fmi2Instantiate!(fmu::FMU2; 
-                            instanceName::String=fmu.modelName, 
-                            type::fmi2Type=fmu.type, 
-                            pushComponents::Bool = true, 
-                            visible::Bool = false, 
-                            loggingOn::Bool = fmu.executionConfig.loggingOn, 
+function fmi2Instantiate!(fmu::FMU2;
+                            instanceName::String=fmu.modelName,
+                            type::fmi2Type=fmu.type,
+                            pushComponents::Bool = true,
+                            visible::Bool = false,
+                            loggingOn::Bool = fmu.executionConfig.loggingOn,
                             externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
-                            logStatusOK::Bool=true, 
-                            logStatusWarning::Bool=true, 
-                            logStatusDiscard::Bool=true, 
-                            logStatusError::Bool=true, 
-                            logStatusFatal::Bool=true, 
+                            logStatusOK::Bool=true,
+                            logStatusWarning::Bool=true,
+                            logStatusDiscard::Bool=true,
+                            logStatusError::Bool=true,
+                            logStatusFatal::Bool=true,
                             logStatusPending::Bool=true)
 
     compEnv = FMU2ComponentEnvironment()
@@ -465,7 +467,7 @@ function fmi2Instantiate!(fmu::FMU2;
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
 
-            cbLibPath = joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
+            cbLibPath = CB_LIB_PATH
             if Sys.iswindows()
                 cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
             elseif Sys.islinux()
@@ -496,9 +498,9 @@ function fmi2Instantiate!(fmu::FMU2;
     guidStr = "$(fmu.modelDescription.guid)"
 
     global lk_fmi2Instantiate
-    
+
     lock(lk_fmi2Instantiate) do
-        
+
         component = nothing
         compAddr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
 
@@ -523,7 +525,7 @@ function fmi2Instantiate!(fmu::FMU2;
             component.callbackFunctions = callbackFunctions
             component.instanceName = instanceName
             component.type = type
-            
+
             if pushComponents
                 push!(fmu.components, component)
             end
@@ -533,7 +535,7 @@ function fmi2Instantiate!(fmu::FMU2;
         component.loggingOn = loggingOn
         component.visible = visible
 
-        # Jacobians 
+        # Jacobians
 
         # smpFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(mtx, component, ∂f_refs, ∂x_refs)
         # updFct = nothing
@@ -546,7 +548,7 @@ function fmi2Instantiate!(fmu::FMU2;
         # component.∂ẋ_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
         # component.∂ẋ_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
         # component.∂ẋ_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
-    
+
         # component.∂y_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
         # component.∂y_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
         # component.∂y_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
@@ -558,7 +560,7 @@ function fmi2Instantiate!(fmu::FMU2;
         # register component for current thread
         fmu.threadComponents[Threads.threadid()] = component
     end
-    
+
     return getCurrentComponent(fmu)
 end
 
@@ -589,7 +591,7 @@ Free the allocated memory, close the binaries and remove temporary zip and unzip
 - `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
 - `cleanUp::Bool= true`: Defines if the file and directory should be deleted.
 
-# Keywords 
+# Keywords
 - `secure_pointers=true` whether pointers to C-functions should be overwritten with dummies with Julia assertions, instead of pointing to dead memory (slower, but more user safe)
 """
 function fmi2Unload(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool=true)
@@ -934,11 +936,11 @@ function fmi2GetJacobian!(jac::AbstractMatrix{fmi2Real},
         # end
 
         if length(sensitive_rdx) > 0
-        
+
             fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
-            
+
             #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
-    
+
         end
     end
 
@@ -1131,9 +1133,9 @@ end
 
 
 """
-    fmi2Set(comp::FMU2Component, 
-                vrs::fmi2ValueReferenceFormat, 
-                srcArray::AbstractArray; 
+    fmi2Set(comp::FMU2Component,
+                vrs::fmi2ValueReferenceFormat,
+                srcArray::AbstractArray;
                 filter=nothing)
 
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
@@ -1379,7 +1381,7 @@ end
 """
     fmi2GetUnit(st::fmi2SimpleType)
 
-Returns the `unit` entry (a string) of the corresponding simple type `st` if it has the 
+Returns the `unit` entry (a string) of the corresponding simple type `st` if it has the
 attribute `Real` and `nothing` otherwise.
 
 # Source
@@ -1423,7 +1425,7 @@ end
 """
     fmi2GetDeclaredType(md::fmi2ModelDescription, mv::fmi2ScalarVariable)
 
-Returns the `fmi2SimpleType` of the corresponding model variable `mv` as defined in 
+Returns the `fmi2SimpleType` of the corresponding model variable `mv` as defined in
 `md.typeDefinitions`.
 If `mv` does not have a declared type, return `nothing`.
 If `mv` has a declared type, but it is not found, issue a warning and return `nothing`.
@@ -1456,7 +1458,7 @@ end
     fmi2GetSimpleTypeAttributeStruct(st::fmi2SimpleType)
 
 Returns the attribute structure for the simple type `st`.
-Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`, 
+Depending on definition, this is either `st.Real`, `st.Integer`, `st.String`,
 `st.Boolean` or `st.Enumeration`.
 
 # Arguments

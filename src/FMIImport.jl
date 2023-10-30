@@ -12,7 +12,9 @@ using FMICore: fast_copy!
 using FMICore.Requires
 import FMICore.ChainRulesCore: ignore_derivatives
 
-# functions that have (currently) no better place 
+using RelocatableFolders
+
+# functions that have (currently) no better place
 
 # Receives one or an array of values and converts it into an Array{typeof(value)} (if not already).
 prepareValue(value) = [value]
@@ -58,7 +60,7 @@ export fmi2CompletedIntegratorStep
 export fmi2Unzip, fmi2Load, loadBinary, fmi2Reload, fmi2Unload, fmi2Instantiate!
 export fmi2SampleJacobian!
 export fmi2GetJacobian, fmi2GetJacobian!, fmi2GetFullJacobian, fmi2GetFullJacobian!
-export fmi2Get, fmi2Get!, fmi2Set 
+export fmi2Get, fmi2Get!, fmi2Set
 export fmi2GetUnit, fmi2GetInitial, fmi2GetStartValue, fmi2SampleJacobian
 export fmi2GetContinuousStates
 
@@ -74,7 +76,7 @@ export fmi2GetValueReferencesAndNames, fmi2GetNamesAndDescriptions, fmi2GetNames
 # FMI2_fmu_to_md.jl
 # everything exported in `FMI2_md.jl`
 
-# FMI2_sens.jl 
+# FMI2_sens.jl
 export eval!
 
 ### FMI3 ###
@@ -117,14 +119,14 @@ export fmi3GetStartValue, fmi3SampleDirectionalDerivative, fmi3CompletedIntegrat
 
 # FMI3_ext.jl
 export fmi3Unzip, fmi3Load, fmi3Unload, fmi3InstantiateModelExchange!, fmi3InstantiateCoSimulation!, fmi3InstantiateScheduledExecution!
-export fmi3Get, fmi3Get!, fmi3Set 
+export fmi3Get, fmi3Get!, fmi3Set
 export fmi3SampleDirectionalDerivative!
 export fmi3GetJacobian, fmi3GetJacobian!, fmi3GetFullJacobian, fmi3GetFullJacobian!
 
 # FMI3_md.jl
 export fmi3LoadModelDescription
 export fmi3GetModelName, fmi3GetInstantiationToken, fmi3GetGenerationTool, fmi3GetGenerationDateAndTime, fmi3GetVariableNamingConvention
-export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution 
+export fmi3IsCoSimulation, fmi3IsModelExchange, fmi3IsScheduledExecution
 export fmi3GetDefaultStartTime, fmi3GetDefaultStopTime, fmi3GetDefaultTolerance, fmi3GetDefaultStepSize
 export fmi3GetModelIdentifier, fmi3CanGetSetState, fmi3CanSerializeFMUState, fmi3ProvidesDirectionalDerivatives, fmi3ProvidesAdjointDerivatives
 
