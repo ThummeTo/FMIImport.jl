@@ -70,7 +70,7 @@ function prepareSolveFMU(fmu::FMU2,
                 if hasCurrentComponent(fmu)
                     c = getCurrentComponent(fmu)
                 else
-                    @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi2Instantiate(fmu)` to prevent this message."
+                    @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one.\nUse `fmi2Instantiate(fmu)` to prevent this message."
                     c = fmi2Instantiate!(fmu; type=type)
                 end
             end
