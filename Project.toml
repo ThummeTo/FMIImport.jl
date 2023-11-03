@@ -1,7 +1,7 @@
 name = "FMIImport"
 uuid = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>", "JK <josef.kircher@student.uni-augsburg.de>"]
-version = "0.16.0"
+version = "0.16.1"
 
 [deps]
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -13,7 +13,7 @@ ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
 EzXML = "1.1.0"
-FMICore = "0.18.0"
+FMICore = "0.18.2"
 RelocatableFolders = "1"
 ZipFile = "0.10.0"
 julia = "1.6"

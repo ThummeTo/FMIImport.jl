@@ -122,6 +122,8 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
     compAddr = c.compAddr
 
+    @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.compAddr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
+
     if popComponent
         lock(lk_fmi2FreeInstance) do 
             ind = findall(x -> x.compAddr == compAddr, c.fmu.components)

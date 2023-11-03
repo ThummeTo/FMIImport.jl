@@ -6,7 +6,7 @@
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl).
 
 
-[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMIImport.jl/dev) 
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMI.jl/dev) 
 [![Run Tests](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml)
 [![Build Docs](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Documentation.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml)
@@ -20,12 +20,12 @@
 
 2\. Install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
-(@v1.6) pkg> add FMIImport
+(@v1) pkg> add FMIImport
 ```
 
 3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
 ```julia-repl
-(@v1.6) pkg> test FMIImport
+(@v1) pkg> test FMIImport
 ```
 
 4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
@@ -37,6 +37,7 @@ To keep dependencies nice and clean, the original package [*FMI.jl*](https://git
 - [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl): Importing FMUs into Julia
 - [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl): Exporting stand-alone FMUs from Julia Code
 - [*FMICore.jl*](https://github.com/ThummeTo/FMICore.jl): C-code wrapper for the FMI-standard
+- [*FMISensitivity.jl*](https://github.com/ThummeTo/FMISensitivity.jl): Static and dynamic sensitivities over FMUs
 - [*FMIBuild.jl*](https://github.com/ThummeTo/FMIBuild.jl): Compiler/Compilation dependencies for FMIExport.jl
 - [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl): Machine Learning with FMUs (differentiation over FMUs)
 - [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
