@@ -227,7 +227,8 @@ function fmi3Load(pathToFMU::String; unpackPath=nothing, type=nothing, cleanup=t
 end
 
 """
-TODO
+    loadBinary(fmu::FMU3)
+load pointers to `fmu`\`s c functions from shared library handle (provided by `fmu.libHandle`)
 """
 function loadBinary(fmu::FMU3)
     lastDirectory = pwd()
@@ -736,8 +737,7 @@ function fmi3Unload(fmu::FMU3, cleanUp::Bool = true)
 end
 
 """
-
-fmi3SampleDirectionalDerivative(c::FMU3Instance,
+    fmi3SampleDirectionalDerivative(c::FMU3Instance,
     vUnknown_ref::AbstractArray{fmi3ValueReference},
     vKnown_ref::AbstractArray{fmi3ValueReference},
     steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
@@ -788,8 +788,7 @@ end
 
 
 """
-
-fmi3SampleDirectionalDerivative!(c::FMU3Instance,
+    fmi3SampleDirectionalDerivative!(c::FMU3Instance,
     vUnknown_ref::AbstractArray{fmi3ValueReference},
     vKnown_ref::AbstractArray{fmi3ValueReference},
     steps::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
@@ -1278,9 +1277,6 @@ function fmi3Set(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Ar
     return retcodes
 end
 
-"""
-ToDo: DocString 
-"""
 function fmi3Set(inst::FMU3Instance, vr::Union{fmi3ValueReference, String}, value)
     vrs = prepareValueReference(inst, vr)
 
@@ -1430,7 +1426,14 @@ function fmi3GetStartValue(mv::fmi3Variable)
 end
 
 """
-TODO
+    function fmi3SampleDirectionalDerivative(c::FMU3Instance,
+        vUnknown_ref::Array{fmi3ValueReference},
+        vKnown_ref::Array{fmi3ValueReference},
+        steps::Array{fmi3Float64} = ones(fmi3Float64, length(vKnown_ref)).*1e-5)
+
+Wrapper for [`fmi3SampleDirectionalDerivative!`](@ref) with `dvUnknown` initialized with zeros
+
+Returning dvUnknown, modified by `fmi3SampleDirectionalDerivative!` call.
 """
 function fmi3SampleDirectionalDerivative(c::FMU3Instance,
     vUnknown_ref::Array{fmi3ValueReference},
