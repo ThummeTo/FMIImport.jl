@@ -658,7 +658,7 @@ end
 
 """
     
-    fmi3SetInt8!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
+    fmi3SetInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
 
 Functions to get and set values of variables idetified by their valueReference.
 
@@ -683,7 +683,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
-See also [`fmi3SetInt8!`](@ref).
 """
 function fmi3SetInt8(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Int8}, nvalue::Csize_t)
     status = fmi3SetInt8(c.fmu.cSetInt8,
@@ -902,7 +901,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
-See also [`fmi3SetUInt16!`](@ref).
 """
 function fmi3SetUInt16(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3UInt16}, nvalue::Csize_t)
     status = fmi3SetUInt16(c.fmu.cSetUInt16,
@@ -1584,7 +1582,6 @@ More detailed:
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
-See also [`fmi3FreeFMUState!`](@ref).
 """
 function fmi3FreeFMUState!(c::FMU3Instance, FMUstate::Ref{fmi3FMUState})
     status = fmi3FreeFMUState!(c.fmu.cFreeFMUState,
@@ -1697,8 +1694,8 @@ function fmi3DeSerializeFMUState!(c::FMU3Instance, serialzedState::AbstractArray
     return status
 end
 
+# TODO Clocks and dependencies functions
 """
-
     fmi3SetIntervalDecimal(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, intervals::AbstractArray{fmi3Float64})
 
 Sets the interval until the next clock tick
@@ -1707,6 +1704,7 @@ Sets the interval until the next clock tick
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `intervals::AbstractArray{fmi3Float64}`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1724,7 +1722,6 @@ More detailed:
 - FMISpec3.0: 2.2.9. Clocks
 See also [`fmi3SetIntervalDecimal`](@ref).
 """
-# TODO Clocks and dependencies functions
 function fmi3SetIntervalDecimal(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, intervals::AbstractArray{fmi3Float64})
     status = fmi3SetIntervalDecimal(c.fmu.cSetIntervalDecimal,
                 c.compAddr, vr, nvr, intervals)     
@@ -1742,6 +1739,8 @@ Sets the interval until the next clock tick. Only allowed if the attribute 'supp
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `intervalCounters::AbstractArray{fmi3UInt64}`: 
+- `resolutions::AbstractArray{fmi3UInt64}`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1783,6 +1782,8 @@ For information about fmi3IntervalQualifiers, call ?fmi3IntervalQualifier
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `intervals::AbstractArray{fmi3Float64}`: 
+- `qualifiers::fmi3IntervalQualifier`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1824,6 +1825,9 @@ For information about fmi3IntervalQualifiers, call ?fmi3IntervalQualifier
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `intervalCounters::AbstractArray{fmi3UInt64}`: 
+- `resolutions::AbstractArray{fmi3UInt64}`: 
+- `qualifiers::fmi3IntervalQualifier`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1859,6 +1863,7 @@ fmi3GetShiftDecimal retrieves the delay to the first Clock tick from the FMU.
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `shifts::AbstractArray{fmi3Float64}`:
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1894,6 +1899,8 @@ fmi3GetShiftFraction retrieves the delay to the first Clock tick from the FMU.
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::AbstractArray{fmi3ValueReference}`: Argument `vr` is an AbstractArray of `nvr` value handels called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
+- `shiftCounters::AbstractArray{fmi3UInt64}`:
+- `resolutions::AbstractArray{fmi3UInt64}`:
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1930,6 +1937,7 @@ Each `fmi3ActivateModelPartition` call is associated with the computation of an 
 # Arguments
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::fmi3ValueReference`: Argument `vr` is the value handel called "ValueReference" that define the variable that shall be inquired.
+- `activationTime::AbstractArray{fmi3Float64}`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -1954,8 +1962,8 @@ function fmi3ActivateModelPartition(c::FMU3Instance, vr::fmi3ValueReference, act
     return status
 end
 
+# TODO not tested
 """
-
     fmi3GetNumberOfVariableDependencies!(c::FMU3Instance, vr::fmi3ValueReference, nvr::Ref{Csize_t})
 
 The number of dependencies of a given variable, which may change if structural parameters are changed, can be retrieved by calling fmi3GetNumberOfVariableDependencies.
@@ -1983,7 +1991,6 @@ More detailed:
 - FMISpec3.0: 2.2.10. Dependencies of Variables
 See also [`fmi3GetNumberOfVariableDependencies!`](@ref).
 """
-# TODO not tested
 function fmi3GetNumberOfVariableDependencies!(c::FMU3Instance, vr::fmi3ValueReference, nvr::Ref{Csize_t})
     status = fmi3GetNumberOfVariableDependencies!(c.fmu.cGetNumberOfVariableDependencies,
                 c.compAddr, vr, nvr)
@@ -1997,21 +2004,20 @@ end
         elementIndiceOfInpendents::AbstractArray{Csize_t}, dependencyKind::AbstractArray{fmi3DependencyKind}, ndependencies::Csize_t)
 
 The actual dependencies (of type dependenciesKind) can be retrieved by calling the function fmi3GetVariableDependencies:
-    
-# TODO argmuents
+
 # Arguments
 - `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `vr::fmi3ValueReference`: Argument `vr` is the value handel called "ValueReference" that define the variable that shall be inquired.
 - `nvr::Csize_t`: Argument `nvr` defines the size of `vr`.
-- `elementIndicesOfDependent::AbstractArray{Csize_t}`: must point to a buffer of size_t values of size `nDependencies` allocated by the calling environment. 
+- `elementIndiceOfDependents::AbstractArray{Csize_t}`: must point to a buffer of size_t values of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the element index of the dependent variable that dependency information is provided for. The element indices start with 1. Using the element index 0 means all elements of the variable. (Note: If an array has more than one dimension the indices are serialized in the same order as defined for values in Section 2.2.6.1.)
 - `independents::AbstractArray{fmi3ValueReference}`:  must point to a buffer of `fmi3ValueReference` values of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the value reference of the independent variable that this dependency entry is dependent upon.
-- `elementIndicesIndependents::AbstractArray{Csize_t}`: must point to a buffer of size_t `values` of size `nDependencies` allocated by the calling environment. 
+- `elementIndiceOfInpendents::AbstractArray{Csize_t}`: must point to a buffer of size_t `values` of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the element index of the independent variable that this dependency entry is dependent upon. The element indices start with 1. Using the element index 0 means all elements of the variable. (Note: If an array has more than one dimension the indices are serialized in the same order as defined for values in Section 2.2.6.1.)
-- `dependencyKinds::AbstractArray{fmi3DependencyKind}`: must point to a buffer of dependenciesKind values of size `nDependencies` allocated by the calling environment. 
+- `dependencyKind::AbstractArray{fmi3DependencyKind}`: must point to a buffer of dependenciesKind values of size `nDependencies` allocated by the calling environment. 
     It is filled in by this function with the enumeration value describing the dependency of this dependency entry.
-- `nDependencies::Csize_t`: specifies the number of dependencies that the calling environment allocated space for in the result buffers, and should correspond to value obtained by calling `fmi3GetNumberOfVariableDependencies`.
+- `ndependencies::Csize_t`: specifies the number of dependencies that the calling environment allocated space for in the result buffers, and should correspond to value obtained by calling `fmi3GetNumberOfVariableDependencies`.
         
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -2514,7 +2520,6 @@ function fmi3EvaluateDiscreteStates(c::FMU3Instance)
 end
 
 """
-
     fmi3UpdateDiscreteStates(c::FMU3Instance, discreteStatesNeedUpdate::Ref{fmi3Boolean}, terminateSimulation::Ref{fmi3Boolean}, 
                                     nominalsOfContinuousStatesChanged::Ref{fmi3Boolean}, valuesOfContinuousStatesChanged::Ref{fmi3Boolean},
                                     nextEventTimeDefined::Ref{fmi3Boolean}, nextEventTime::Ref{fmi3Float64})
@@ -2524,6 +2529,12 @@ This function is called to signal a converged solution at the current super-dens
 # TODO Arguments
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `discreteStatesNeedUpdate::Ref{fmi3Boolean}`: 
+- `terminateSimulation::Ref{fmi3Boolean}`: 
+- `nominalsOfContinuousStatesChanged::Ref{fmi3Boolean}`: 
+- `valuesOfContinuousStatesChanged::Ref{fmi3Boolean}`: 
+- `nextEventTimeDefined::Ref{fmi3Boolean}`: 
+- `nextEventTime::Ref{fmi3Float64}`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -2540,7 +2551,6 @@ More detailed:
 - FMISpec3.0: 2.2.4 Status Returned by Functions
 - FMISpec3.0: 2.3.5. State: Event Mode
 
-See also [`fmi3UpdateDiscreteStates`](@ref).
 """
 function fmi3UpdateDiscreteStates(c::FMU3Instance, discreteStatesNeedUpdate::Ref{fmi3Boolean}, terminateSimulation::Ref{fmi3Boolean}, 
                                     nominalsOfContinuousStatesChanged::Ref{fmi3Boolean}, valuesOfContinuousStatesChanged::Ref{fmi3Boolean},
@@ -2852,6 +2862,12 @@ The model enters Event Mode from the Continuous-Time Mode in ModelExchange oder 
 # TODO argmuents
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `stepEvent::fmi3Boolean`: 
+- `stateEvent::fmi3Boolean`: 
+- `rootsFound::AbstractArray{fmi3Int32}`: 
+- `nEventIndicators::Csize_t`: 
+- `timeEvent::fmi3Boolean`: 
+- `soft::Bool=false`: 
 
 # Keywords
 - `soft::Bool=false`: If the Keyword `soft = true` the `fmi3Teminate` needs to be called in state  `fmi3InstanceStateContinuousTimeMode` or `fmi3InstanceStateEventMode`.
@@ -2902,6 +2918,13 @@ The computation of a time step is started.
 # TODO argmuents
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `currentCommunicationPoint::fmi3Float64`:  
+- `communicationStepSize::fmi3Float64`: 
+- `noSetFMUStatePriorToCurrentPoint::fmi3Boolean`: 
+- `eventEncountered::Ref{fmi3Boolean}`: 
+- `terminateSimulation::Ref{fmi3Boolean}`: 
+- `earlyReturn::Ref{fmi3Boolean}`: 
+- `lastSuccessfulTime::Ref{fmi3Float64}`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.

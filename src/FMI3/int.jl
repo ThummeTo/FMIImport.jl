@@ -1777,7 +1777,7 @@ end
 
 """
     
-    fmi3FreeFMUState(c::FMU3Instance, state::fmi3FMUState)
+    fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
 
 Free the allocated memory for the FMU state.
 
@@ -1792,8 +1792,6 @@ Free the allocated memory for the FMU state.
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
-
-See also [`fmi3FreeFMUState`](@ref).
 """
 function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
     stateRef = Ref(state)
@@ -2583,8 +2581,7 @@ function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::Abstr
 end
 
 """
-
-fmi3UpdateDiscreteStates(c::FMU3Instance)
+    fmi3UpdateDiscreteStates(c::FMU3Instance)
 
 This function is called to signal a converged solution at the current super-dense time instant. fmi3UpdateDiscreteStates must be called at least once per super-dense time instant.
 
@@ -2593,14 +2590,18 @@ This function is called to signal a converged solution at the current super-dens
 
 # TODO returns
 # Returns
--
+- `discreteStatesNeedUpdate`
+- `terminateSimulation`
+- `nominalsOfContinuousStatesChanged`
+- `valuesOfContinuousStatesChanged`
+- `nextEventTimeDefined`
+- `nextEventTime`
 
 # Source
 - FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.3.5. State: Event Mode
 
-See also [`fmi3UpdateDiscreteStates`](@ref).
 """
 function fmi3UpdateDiscreteStates(c::FMU3Instance)
     discreteStatesNeedUpdate = fmi3True
@@ -2708,6 +2709,11 @@ The model enters Event Mode from the Continuous-Time Mode in ModelExchange oder 
 # TODO argmuents
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `stepEvent::Bool`:  
+- `stateEvent::Bool`: 
+- `rootsFound::AbstractArray{fmi3Int32}`: 
+- `nEventIndicators::Csize_t`: 
+- `timeEvent::Bool`: 
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.
@@ -2739,6 +2745,13 @@ The computation of a time step is started.
 # TODO argmuents
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+- `currentCommunicationPoint::Union{Real, Nothing} = nothing`
+- `communicationStepSize::Union{Real, Nothing} = nothing`
+- `noSetFMUStatePriorToCurrentPoint::Bool = true`
+- `eventEncountered::fmi3Boolean = fmi3False`
+- `terminateSimulation::fmi3Boolean = fmi3False`
+- `earlyReturn::fmi3Boolean = fmi3False`
+- `lastSuccessfulTime::fmi3Float64 = 0.0`
 
 # Returns
 - `status::fmi3Status`: Return `status` is an enumeration of type `fmi3Status` and indicates the success of the function call.

@@ -99,7 +99,7 @@ end
 function dlsym_opt(libHandle, symbol)
     addr = dlsym(libHandle, symbol; throw_error=false)
     if addr == nothing
-        logWarn(fmu, "This FMU does not support function '$symbol'.")
+        logWarning(fmu, "This FMU does not support function '$symbol'.")
         addr = Ptr{Cvoid}(C_NULL)
     end
     addr
@@ -257,6 +257,10 @@ function fmi2Load(pathToFMU::String; unpackPath::Union{String, Nothing}=nothing,
     return fmu
 end
 
+"""
+    loadBinary(fmu::FMU2)
+load pointers to `fmu`\`s c functions from shared library handle (provided by `fmu.libHandle`)
+"""
 function loadBinary(fmu::FMU2)
     lastDirectory = pwd()
     cd(dirname(fmu.binaryPath))
@@ -518,7 +522,7 @@ function fmi2Instantiate!(fmu::FMU2;
         end
 
         if !isnothing(component)
-            logWarn(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
+            logWarning(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
         else
             component = FMU2Component(compAddr, fmu)
 
