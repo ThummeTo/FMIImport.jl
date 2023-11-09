@@ -1749,7 +1749,6 @@ function fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Uni
 end
 
 """
-
     fmi3GetFMUState(c::FMU3Instance)
 
 Makes a copy of the internal FMU state and returns a pointer to this copy.
