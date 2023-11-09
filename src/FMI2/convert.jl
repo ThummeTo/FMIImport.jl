@@ -308,7 +308,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function fmi2GetSolutionDerivative(solution::FMU2Solution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function fmi2GetSolutionDerivative(solution::FMU2Solution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false, order::Integer=1)
     indices = []
 
     if isIndex
@@ -342,10 +342,10 @@ function fmi2GetSolutionDerivative(solution::FMU2Solution, vrs::fmi2ValueReferen
     if length(indices) == length(vrs)
 
         if length(vrs) == 1  # single value
-            return collect(ForwardDiff.derivative(t -> solution.states(t)[indices[1]], myt) for myt in solution.states.t)
+            return collect(solution.states(t, Val{order})[indices[1]] for t in solution.states.t)
 
         else # multi value
-            return collect(collect(ForwardDiff.derivative(t -> solution.states(t)[indices[i]], myt) for myt in solution.states.t) for i in 1:length(indices))
+            return collect(collect(solution.states(t, Val{order})[indices[i]] for t in solution.states.t) for i in 1:length(indices))
         end
     end
 
