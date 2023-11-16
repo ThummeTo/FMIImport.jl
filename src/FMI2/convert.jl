@@ -134,7 +134,7 @@ Returns the ValueReference or an array of ValueReferences coresponding to the va
 See also [`fmi2StringToValueReference`](@ref)
 """
 function fmi2StringToValueReference(md::fmi2ModelDescription, name::String)
-    reference = nothing
+    reference = typemax(valtype(md.stringValueReferences))
     if haskey(md.stringValueReferences, name)
         reference = md.stringValueReferences[name]
     else
