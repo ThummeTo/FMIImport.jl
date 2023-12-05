@@ -353,10 +353,8 @@ function finishSolveFMU(fmu::FMU2, c::FMU2Component, freeInstance::Union{Nothing
         end
 
         # freeInstance (hard)
-        if freeInstance
-            fmi2FreeInstance!(c; popComponent=popComponent)
-            c = nothing
-        end
+        fmi2FreeInstance!(c; popComponent=popComponent, doccall=freeInstance)
+        c = nothing
     end
 
     return c

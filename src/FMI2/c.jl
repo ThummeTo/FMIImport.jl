@@ -116,7 +116,7 @@ Removes the component from the FMUs component list.
 See Also [`fmi2FreeInstance!`](@ref).
 """
 lk_fmi2FreeInstance = ReentrantLock()
-function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
+function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::Bool=true)
 
     global lk_fmi2FreeInstance
 
@@ -138,7 +138,9 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
         end
     end
 
-    fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
+    if doccall
+        fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
+    end
 
     nothing
 end
