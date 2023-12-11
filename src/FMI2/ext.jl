@@ -1585,3 +1585,64 @@ function fmi2SampleJacobian!(c::FMU2Component,
 
     nothing
 end
+
+"""
+    fmi2SetDiscreteStates(c::FMU2Component,
+                                 x::Union{AbstractArray{Float32},AbstractArray{Float64}})
+
+Set a new (discrete) state vector and reinitialize chaching of variables that depend on states.
+
+# Arguments
+[ToDo]
+"""
+function fmi2SetDiscreteStates(c::FMU2Component, xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}})
+
+    if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+        return fmi2StatusOK
+    end
+
+    status = fmi2Set(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
+    if status == fmi2StatusOK
+        fast_copy!(c, :x_d, xd)
+    end
+    return status
+end
+
+"""
+    fmi2GetDiscreteStates!(c::FMU2Component,
+                                 x::Union{AbstractArray{Float32},AbstractArray{Float64}})
+
+Set a new (discrete) state vector and reinitialize chaching of variables that depend on states.
+
+# Arguments
+[ToDo]
+"""
+function fmi2GetDiscreteStates!(c::FMU2Component, xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}})
+
+    if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+        return fmi2StatusOK
+    end
+
+    status = fmi2Get!(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
+    if status == fmi2StatusOK
+        fast_copy!(c, :x_d, xd)
+    end
+    return status
+end
+
+"""
+    fmi2GetDiscreteStates(c::FMU2Component,
+                                 x::Union{AbstractArray{Float32},AbstractArray{Float64}})
+
+Set a new (discrete) state vector and reinitialize chaching of variables that depend on states.
+
+# Arguments
+[ToDo]
+"""
+function fmi2GetDiscreteStates(c::FMU2Component)
+
+    ndx = length(c.fmu.modelDescription.discreteStateValueReferences)
+    xd = Vector{Union{fmi2Real, fmi2Integer, fmi2Boolean}}()
+    fmi2GetDiscreteStates!(c, xd)
+    return xd
+end
