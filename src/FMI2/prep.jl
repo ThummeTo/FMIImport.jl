@@ -140,6 +140,9 @@ function prepareSolveFMU(fmu::FMU2,
             #@assert retcode == fmi2StatusOK "fmi2Simulate(...): Setting initial state failed with return code $(retcode)."
             retcodes = fmi2Set(c, fmu.modelDescription.stateValueReferences, x0; filter=setInInitialization)
             @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcodes)."
+
+            # safe start state in component
+            c.x = copy(x0)
         end
 
         # exit setup (hard)
@@ -172,6 +175,20 @@ end
 function handleEvents(c::FMU2Component)
 
     @assert c.state == fmi2ComponentStateEventMode "handleEvents(...): Must be in event mode!"
+
+    # invalidate all cached jacobians/gradients 
+    invalidate!(c.∂ẋ_∂x) 
+    invalidate!(c.∂ẋ_∂u)
+    invalidate!(c.∂ẋ_∂p)  
+    invalidate!(c.∂y_∂x) 
+    invalidate!(c.∂y_∂u)
+    invalidate!(c.∂y_∂p)
+    invalidate!(c.∂e_∂x) 
+    invalidate!(c.∂e_∂u)
+    invalidate!(c.∂e_∂p)
+    invalidate!(c.∂ẋ_∂t)
+    invalidate!(c.∂y_∂t)
+    invalidate!(c.∂e_∂t)
 
     #@debug "Handle Events..."
 

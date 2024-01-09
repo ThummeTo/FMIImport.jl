@@ -13,6 +13,7 @@ using FMICore.Requires
 import FMICore.ChainRulesCore: ignore_derivatives
 
 using RelocatableFolders
+using FMICore: invalidate!, check_invalidate!
 
 # functions that have (currently) no better place
 

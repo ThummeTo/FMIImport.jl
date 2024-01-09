@@ -586,7 +586,7 @@ function fmi2Reload(fmu::FMU2)
 end
 
 """
-    fmi2Unload(fmu::FMU2, cleanUp::Bool = true)
+    fmi2Unload(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
 
 Unload a FMU.
 Free the allocated memory, close the binaries and remove temporary zip and unziped FMU model description.
@@ -598,15 +598,28 @@ Free the allocated memory, close the binaries and remove temporary zip and unzip
 # Keywords
 - `secure_pointers=true` whether pointers to C-functions should be overwritten with dummies with Julia assertions, instead of pointing to dead memory (slower, but more user safe)
 """
-function fmi2Unload(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool=true)
+function fmi2Unload(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
 
     while length(fmu.components) > 0
-        fmi2FreeInstance!(fmu.components[end])
+        c = fmu.components[end]
+
+        # release allocated memory for snapshots (they might be used elsewhere too)
+        if !isnothing(c.solution)
+            for iter in c.solution.snapshots
+                t, snapshot = iter 
+                cleanup!(c, snapshot)
+            end
+        end
+
+        fmi2FreeInstance!(c)
     end
 
     # the components are removed from the component list via call to fmi2FreeInstance!
     @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
 
+    # release auto finalized snapshots 
+    GC.gc()
+    
     if secure_pointers
         unloadBinary(fmu)
     end
@@ -1171,7 +1184,7 @@ More detailed:
 function fmi2Set(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
     vrs = prepareValueReference(comp, vrs)
 
-    @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references doesn't match number of `srcArray` elements."
+    @assert length(vrs) == length(srcArray) "fmi2Set(...): Number of value references [$(length(vrs))] doesn't match number of `srcArray` elements [$(length(srcArray))]."
 
     retcodes = zeros(fmi2Status, length(vrs)) # fmi2StatusOK
 
