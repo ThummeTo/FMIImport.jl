@@ -604,12 +604,12 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
         c = fmu.components[end]
 
         # release allocated memory for snapshots (they might be used elsewhere too)
-        if !isnothing(c.solution)
-            for iter in c.solution.snapshots
-                t, snapshot = iter 
-                cleanup!(c, snapshot)
-            end
-        end
+        # if !isnothing(c.solution)
+        #     for iter in c.solution.snapshots
+        #         t, snapshot = iter 
+        #         cleanup!(c, snapshot)
+        #     end
+        # end
 
         fmi2FreeInstance!(c)
     end
@@ -618,7 +618,7 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
     @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
 
     # release auto finalized snapshots 
-    GC.gc()
+    #GC.gc()
     
     if secure_pointers
         unloadBinary(fmu)

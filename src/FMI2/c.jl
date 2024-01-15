@@ -123,9 +123,9 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::B
     @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.compAddr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
 
     # invalidate all active snapshots 
-    # for snapshot in c.snapshots
-    #     cleanup!(snapshot)
-    # end
+    for snapshot in c.snapshots
+        cleanup!(c, snapshot)
+    end
 
     if popComponent
         lock(lk_fmi2FreeInstance) do 
