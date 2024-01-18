@@ -616,9 +616,6 @@ function fmi2Unload(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
 
     # the components are removed from the component list via call to fmi2FreeInstance!
     @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
-
-    # release auto finalized snapshots 
-    #GC.gc()
     
     if secure_pointers
         unloadBinary(fmu)
