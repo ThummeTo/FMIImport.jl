@@ -21,8 +21,6 @@ import FMICore: fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, 
 import FMICore: fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
 import FMICore: fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!
 
-using FMICore: invalidate!, check_invalidate!
-
 """
 Source: FMISpec2.0.2[p.21]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 
@@ -116,11 +114,16 @@ Removes the component from the FMUs component list.
 See Also [`fmi2FreeInstance!`](@ref).
 """
 lk_fmi2FreeInstance = ReentrantLock()
-function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
+function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::Bool=true)
 
     global lk_fmi2FreeInstance
 
     compAddr = c.compAddr
+
+    # invalidate all active snapshots 
+    while length(c.snapshots) > 0
+        FMICore.freeSnapshot!(c.snapshots[end])
+    end
 
     @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.compAddr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
 
@@ -138,7 +141,9 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
         end
     end
 
-    fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
+    if doccall
+        fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
+    end
 
     nothing
 end
@@ -1141,6 +1146,23 @@ function fmi2GetDirectionalDerivative!(c::FMU2Component,
     status = fmi2GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
           c.compAddr, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
     checkStatus(c, status)
+    return status
+end
+
+# for AD primitives
+function fmi2GetDirectionalDerivative!(c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    nUnknown::Csize_t,
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    nKnown::Csize_t,
+    dvKnown::AbstractArray{fmi2Real},
+    dvUnknown::AbstractArray{<:Real})
+
+    logWarning(c.fmu, "fmi2GetDirectionalDerivative! is called on `dvUnknown::AbstractArray{<:Real}`, this is slow.\nConsider using `Float64` instead.", 1)
+
+    _dvUnknown = zeros(fmi2Real, length(dvUnknown))
+    status = fmi2GetDirectionalDerivative!(c::FMU2Component, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, _dvUnknown)
+    dvUnknown[:] = _dvUnknown
     return status
 end
 

@@ -13,6 +13,7 @@ using FMICore.Requires
 import FMICore.ChainRulesCore: ignore_derivatives
 
 using RelocatableFolders
+using FMICore: invalidate!, check_invalidate!
 
 # functions that have (currently) no better place
 
@@ -54,6 +55,7 @@ export fmi2GetFMUstate!, fmi2SetFMUstate, fmi2FreeFMUstate!, fmi2SerializedFMUst
 export fmi2GetDirectionalDerivative!, fmi2SetRealInputDerivatives, fmi2GetRealOutputDerivatives
 export fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, fmi2GetIntegerStatus!, fmi2GetBooleanStatus!, fmi2GetStringStatus!
 export fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
+export fmi2SetDiscreteStates, fmi2GetDiscreteStates!, fmi2GetDiscreteStates
 export fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!, fmi2GetRealOutputDerivatives!
 
 # FMI2_convert.jl
