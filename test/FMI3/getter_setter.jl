@@ -7,7 +7,7 @@
 # Prepare FMU #
 ###############
 
-myFMU = fmi3Load("Feedthrough", "ModelicaReferenceFMUs", "0.0.20")
+myFMU = loadFMU("Feedthrough", "ModelicaReferenceFMUs", "0.0.20", "3.0")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
@@ -98,10 +98,10 @@ binary = fmi3GetBinary(inst, binaryValueReferences[1])
 @test unsafe_string(binary) == rndString
 
 # TODO test after latest PR
-fmi3Set(inst, 
+setValue(inst, 
         [float64ValueReferences[1], int32ValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]], 
         [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                rndString])
-# @test fmi3Get(inst, 
+# @test getValue(inst, 
 #                 [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) == 
 #                 [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                unsafe_string(rndString)]
 
@@ -255,4 +255,4 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # Clean up #
 ############
 
-fmi3Unload(myFMU)
+unloadFMU(myFMU)

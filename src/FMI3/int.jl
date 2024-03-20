@@ -7,7 +7,315 @@
 # - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
 
 # Best practices:
-# - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
+# - no direct access on C-pointers (`addr`), use existing FMICore-functions
+
+"""
+
+    fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+        logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new modelExchange instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU modelExchange instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateModelExchange`](#@ref).
+"""
+function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.modelName, type::fmi3Type = fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallBacks::Bool = fmu.executionConfig.externalCallbacks,
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+
+    ptrInstanceEnvironment = Ptr{Cvoid}(pointer_from_objref(instEnv))
+    
+    instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
+    
+    addr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), ptrInstanceEnvironment, ptrLogger)
+
+    if addr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.addr == addr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateModelExchange!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        
+        instance = FMU3Instance(addr, fmu)
+        instance.instanceEnvironment = instEnv
+        instance.instanceName = instanceName
+        instance.z_prev  = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
+        instance.rootsFound  = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
+        instance.stateEvent  = fmi3False
+        instance.timeEvent   = fmi3False
+        instance.stepEvent   = fmi3False
+        instance.type = fmi3TypeModelExchange
+
+        if pushInstances
+            push!(fmu.instances, instance)
+        end
+    end 
+
+    instance
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateModelExchange`
+export fmi3InstantiateModelExchange!
+
+"""
+
+    fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+        eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new coSimulation instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `eventModeUsed::Bool = false`: Defines if the FMU instance can use the event mode. (default=`false`)
+- `ptrIntermediateUpdate=nothing`: Points to a function handling intermediate Updates (defalut=`nothing`) 
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU coSimulation instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateCoSimulation`](#@ref).
+"""
+function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+    eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    
+    if ptrIntermediateUpdate === nothing
+        ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
+    end
+    if fmu.modelDescription.coSimulation.hasEventMode !== nothing
+        mode = eventModeUsed
+    else
+        mode = false
+    end
+    ptrInstanceEnvironment = Ptr{Cvoid}(pointer_from_objref(instEnv))
+    
+    instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
+    
+    addr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
+                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !== nothing), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), ptrInstanceEnvironment, ptrLogger, ptrIntermediateUpdate)
+
+    if addr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateCoSimulation!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.addr == addr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateCoSimulation!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(addr, fmu)
+        instance.instanceEnvironment = instEnv
+        instance.instanceName = instanceName
+        instance.type = fmi3TypeCoSimulation
+
+        if pushInstances
+            push!(fmu.instances, instance)
+        end
+    end 
+
+    instance
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateCoSimulation`
+export fmi3InstantiateCoSimulation!
+
+# TODO not tested
+"""
+
+    fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+        logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+Create a new ScheduledExecution instance of the given fmu, adds a logger if `logginOn == true`.
+
+# Arguments
+- `fmu::FMU3`: Mutable struct representing a FMU and all it instantiated instances in the FMI 3.0 Standard.
+
+# Keywords
+- `ptrlockPreemption::Ptr{Cvoid}`: Points to a function handling locking Preemption
+- `ptrunlockPreemption::Ptr{Cvoid}`: Points to a function handling unlocking Preemption
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi3Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushInstances::Bool = true`: Defines if the fmu instances should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi3CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi3OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi3Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi3Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi3Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi3Fatal` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU ScheduledExecution instance.
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.4.7  Model variables
+- FMISpec3.0: 2.3.1. Super State: FMU State Setable
+
+See also [`fmi3InstantiateScheduledExecution`](#@ref).
+"""
+function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
+    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+
+    instEnv = FMU3InstanceEnvironment()
+    instEnv.logStatusOK = logStatusOK
+    instEnv.logStatusWarning = logStatusWarning
+    instEnv.logStatusDiscard = logStatusDiscard
+    instEnv.logStatusError = logStatusError
+    instEnv.logStatusFatal = logStatusFatal
+
+    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
+
+    ptrInstanceEnvironment = Ptr{FMU3InstanceEnvironment}(pointer_from_objref(instEnv))
+    
+    instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
+   
+    addr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), ptrInstanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
+
+    if addr == Ptr{Cvoid}(C_NULL)
+        @error "fmi3InstantiateScheduledExecution!(...): Instantiation failed!"
+        return nothing
+    end
+
+    instance = nothing
+
+    # check if address is already inside of the instance (this may be)
+    for c in fmu.instances
+        if c.addr == addr
+            instance = c
+            break 
+        end
+    end
+
+    if instance !== nothing
+        @info "fmi3InstantiateScheduledExecution!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
+    else
+        instance = FMU3Instance(addr, fmu)
+        instance.instanceEnvironment = instEnv
+        instance.instanceName = instanceName
+        instance.type = fmi3TypeScheduledExecution
+
+        if pushInstances
+            push!(fmu.instances, instance)
+        end
+    end 
+
+    instance
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateScheduledExecution`
+export fmi3InstantiateScheduledExecution!
+
+"""
+    
+    fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
+
+Disposes the given instance, unloads the loaded model, and frees all the allocated memory and other resources that have been allocated by the functions of the FMU interface.
+If a null pointer is provided for “c”, the function call is ignored (does not have an effect).
+
+Removes the component from the FMUs component list.
+            
+# Arguments
+- `c::FMU3Instance`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Keywords
+- `popInstance::Bool=true`: If the Keyword `popInstance = true` the freed instance is deleted
+
+# Returns
+- nothing
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0, Version D5ef1c1: 2.3.1. Super State: FMU State Setable
+"""
+function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
+
+    if popInstance
+        ind = findall(x->x.addr==c.addr, c.fmu.instances)
+        @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
+        deleteat!(c.fmu.instances, ind)
+    end
+    fmi3FreeInstance(c.fmu.cFreeInstance, c.addr)
+
+    nothing
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3FreeInstance`
+export fmi3FreeInstance!
 
 """
 
@@ -76,7 +384,7 @@ function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Not
     end
 
     if startTime === nothing
-        startTime = fmi3GetDefaultStartTime(c.fmu.modelDescription)
+        startTime = getDefaultStartTime(c.fmu.modelDescription)
         if startTime === nothing
             startTime = 0.0
         end
@@ -93,7 +401,7 @@ function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Not
         stopTime = 0.0 # dummy value, will be ignored
     end
 
-    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
+    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.addr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
     checkStatus(c, status)
     if status == fmi3StatusOK
         c.state = fmi3InstanceStateInitializationMode
@@ -136,6 +444,8 @@ function fmi3GetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetFloat32!`
+export fmi3GetFloat32
 
 """
 
@@ -253,6 +563,8 @@ function fmi3GetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetFloat64!`
+export fmi3GetFloat64
 
 """
 
@@ -371,6 +683,8 @@ function fmi3GetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetInt8!`
+export fmi3GetInt8
 
 """
 
@@ -488,6 +802,8 @@ function fmi3GetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetUInt8!`
+export fmi3GetUInt8
 
 """
 
@@ -605,6 +921,8 @@ function fmi3GetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetInt16!`
+export fmi3GetInt16
 
 """
 
@@ -722,6 +1040,8 @@ function fmi3GetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetUInt16!`
+export fmi3GetUInt16
 
 """
 
@@ -839,6 +1159,8 @@ function fmi3GetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetInt32!`
+export fmi3GetInt32
 
 """
 
@@ -956,6 +1278,8 @@ function fmi3GetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetUInt32!`
+export fmi3GetUInt32
 
 """
 
@@ -1073,6 +1397,9 @@ function fmi3GetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetInt64!`
+export fmi3GetInt64
+
 
 """
 
@@ -1190,6 +1517,8 @@ function fmi3GetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetUInt64!`
+export fmi3GetUInt64
 
 """
 
@@ -1307,6 +1636,8 @@ function fmi3GetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetBoolean!`
+export fmi3GetBoolean
 
 """
 
@@ -1427,6 +1758,8 @@ function fmi3GetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetString!`
+export fmi3GetString
 
 """
 
@@ -1548,6 +1881,8 @@ function fmi3GetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetBinary!`
+export fmi3GetBinary
 
 """
 
@@ -1666,6 +2001,8 @@ function fmi3GetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetClock!`
+export fmi3GetClock
 
 """
 
@@ -1774,6 +2111,8 @@ function fmi3GetFMUState(c::FMU3Instance)
     state = stateRef[]
     state
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetFMUState!`
+export fmi3GetFMUState
 
 """
     
@@ -1793,9 +2132,9 @@ Free the allocated memory for the FMU state.
 - FMISpec3.0: 2.2.3 Platform Dependent Definitions 
 - FMISpec3.0: 2.2.6.4. Getting and Setting the Complete FMU State
 """
-function fmi3FreeFMUState!(c::FMU3Instance, state::fmi3FMUState)
+function fmi3FreeFMUState(c::FMU3Instance, state::fmi3FMUState)
     stateRef = Ref(state)
-    fmi3FreeFMUState!(c, stateRef)
+    fmi3FreeFMUState(c, stateRef)
     state = stateRef[]
 end
 
@@ -1825,6 +2164,8 @@ function fmi3SerializedFMUStateSize(c::FMU3Instance, state::fmi3FMUState)
     fmi3SerializedFMUStateSize!(c, state, sizeRef)
     size = sizeRef[]
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3SerializedFMUStateSize!`
+export fmi3SerializedFMUStateSize
 
 """
     
@@ -1853,6 +2194,8 @@ function fmi3SerializeFMUState(c::FMU3Instance, state::fmi3FMUState)
     @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
     serializedState
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3SerializeFMUState!`
+export fmi3SerializeFMUState
 
 """
     
@@ -1884,6 +2227,8 @@ function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray
     
     state = stateRef[]
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3DeSerializeFMUState!`
+export fmi3DeSerializeFMUState
 
 """
 
@@ -1939,6 +2284,9 @@ function fmi3GetDirectionalDerivative(c::FMU3Instance,
     
     return sensitivity
 end
+fmi3GetDirectionalDerivative(c::FMU3Instance, unknown::fmi3ValueReference, known::fmi3ValueReference, seed::fmi3Float64 = 1.0) = fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetDirectionalDerivative!`
+export fmi3GetDirectionalDerivative
 
 """
 
@@ -2012,54 +2360,6 @@ end
 
 """
 
-    fmi3GetDirectionalDerivative(c::FMU3Instance,
-        unknowns::AbstractArray{fmi3ValueReference},
-        knowns::AbstractArray{fmi3ValueReference},
-        seed::fmi3Float64)
-
-Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
-
-Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
-unknowns = 𝐡(knowns, rest)
-
-- `unknowns`: vector of unknown Real variables computed in the actual Mode:
-    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
-    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
-    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
-    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
-- `knowns`: Real input variables of function h that changes its value in the actual Mode.
-- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
-
-Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
-
-Δunknowns = (δh / δknowns) Δknowns
-
-# Arguments
-- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
-- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
-- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
-- `seed::fmi3Float64 = 1.0`:  If no seed value is passed the value `seed = 1.0` is used. Compute the partial derivative with respect to `knowns` with the value `seed = 1.0`.  # gehört das zu den v_rest values
-
-# Returns
-- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
-
-# Source
-- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
-- FMISpec3.0: 2.2.11. Getting Partial Derivatives
-
-See also [`fmi3GetDirectionalDerivative`](@ref).
-"""
-function fmi3GetDirectionalDerivative(c::FMU3Instance,
-                                      unknown::fmi3ValueReference,
-                                      known::fmi3ValueReference,
-                                      seed::fmi3Float64 = 1.0)
-
-    fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
-end
-
-"""
-
     fmi3GetAdjointDerivative(c::FMU3Instance,
         unknowns::AbstractArray{fmi3ValueReference},
         knowns::AbstractArray{fmi3ValueReference},
@@ -2110,6 +2410,9 @@ function fmi3GetAdjointDerivative(c::FMU3Instance,
     
     return sensitivity
 end
+fmi3GetAdjointDerivative(c::FMU3Instance, unknowns::fmi3ValueReference, knowns::fmi3ValueReference, seed::fmi3Float64 = 1.0) = fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetAdjointDerivative!`
+export fmi3GetAdjointDerivative
 
 """
 
@@ -2183,54 +2486,6 @@ end
 
 """
 
-    fmi3GetAdjointDerivative(c::FMU3Instance,
-        unknowns::AbstractArray{fmi3ValueReference},
-        knowns::AbstractArray{fmi3ValueReference},
-        seed::fmi3Float64)
-
-Wrapper Function call to compute the partial derivative with respect to the variables `unknowns`.
-
-Computes the adjoint derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns. The precise definitions are given in the mathematical descriptions of Model Exchange (section 3) and Co-Simulation (section 4). In every Mode, the general form of the FMU equations are:
-unknowns = 𝐡(knowns, rest)
-
-- `unknowns`: vector of unknown Real variables computed in the actual Mode:
-    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknown>` that have type Real.
-    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><ContinuousStateDerivative>)`.
-    - Event Mode (ModelExchange/CoSimulation): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Output>` with type Real and variability = `discrete`.
-    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Output>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><ContinuousStateDerivative>` is present, also the variables listed here as state derivatives.
-- `knowns`: Real input variables of function h that changes its value in the actual Mode.
-- `rest`: Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
-
-Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
-
-Δunknowns = (δh / δknowns) Δknowns
-
-# Arguments
-- `c::FMU3Instance` Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
-- `unknowns::AbstracArray{fmi3ValueReference}`: Argument `unknowns` contains values of type`fmi3ValueReference` which are identifiers of a variable value of the model. `unknowns` can be equated with `unknowns`(variable described above).
-- `knowns::AbstractArray{fmi3ValueReference}`: Argument `knowns` contains values of type `fmi3ValueReference` which are identifiers of a variable value of the model.`knowns` can be equated with `knowns`(variable described above).
-- `seed::fmi3Float64 = 1.0`:  If no seed value is passed the value `seed = 1.0` is used. Compute the partial derivative with respect to `knowns` with the value `seed = 1.0`.  # gehört das zu den v_rest values
-
-# Returns
-- `sensitivity::Array{fmi3Float64}`: Return `sensitivity` contains the directional derivative vector values.
-
-# Source
-- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
-- FMISpec3.0: 2.2.11. Getting Partial Derivatives
-
-See also [`fmi3GetAdjointDerivative`](@ref).
-"""
-function fmi3GetAdjointDerivative(c::FMU3Instance,
-                                      unknowns::fmi3ValueReference,
-                                      knowns::fmi3ValueReference,
-                                      seed::fmi3Float64 = 1.0)
-
-    fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
-end
-
-"""
-
 fmi3GetOutputDerivatives!(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nValueReferences::Csize_t, order::AbstractArray{fmi3Int32}, values::AbstractArray{fmi3Float64}, nValues::Csize_t)
 
 Retrieves the n-th derivative of output values.
@@ -2263,6 +2518,8 @@ function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat,
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetOutputDerivatives!`
+export fmi3GetOutputDerivatives
 
 """
 
@@ -2292,6 +2549,8 @@ function fmi3GetNumberOfContinuousStates(c::FMU3Instance)
     size = sizeRef[]
     Int32(size)
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetNumberOfContinuousStates!`
+export fmi3GetNumberOfContinuousStates
 
 """
 
@@ -2321,6 +2580,8 @@ function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
     size = sizeRef[]
     Int32(size)
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetNumberOfEventIndicators!`
+export fmi3GetNumberOfEventIndicators
 
 """
 
@@ -2354,6 +2615,8 @@ function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3Valu
     size = sizeRef[]
     Int32(size)
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetNumberOfVariableDependencies!`
+export fmi3GetNumberOfVariableDependencies
 
 """
 
@@ -2397,6 +2660,8 @@ function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReferen
 
     return elementIndiceOfDependents, independents, elementIndiceOfIndependents, dependencyKinds
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetVariableDependencies!`
+export fmi3GetVariableDependencies
 
 """
 
@@ -2423,6 +2688,8 @@ function fmi3GetContinuousStates(c::FMU3Instance)
     fmi3GetContinuousStates!(c, x, nx)
     x
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetContinuousStates!`
+export fmi3GetContinuousStates
 
 """
 
@@ -2449,6 +2716,8 @@ function fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
     fmi3GetNominalsOfContinuousStates!(c, x, nx)
     x
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetNominalsOfContinuousStates!`
+export fmi3GetNominalsOfContinuousStates
 
 """
 
@@ -2544,6 +2813,8 @@ function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     fmi3GetContinuousStateDerivatives!(c, derivatives)
     return derivatives
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetContinuousStateDerivatives!`
+export fmi3GetContinuousStateDerivatives
 
 """
 
@@ -2654,6 +2925,8 @@ function fmi3GetEventIndicators(c::FMU3Instance)
     fmi3GetEventIndicators!(c, eventIndicators, ni)
     return eventIndicators
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi3GetEventIndicators!`
+export fmi3GetEventIndicators
 
 """
 
