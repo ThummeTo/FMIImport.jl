@@ -12,8 +12,6 @@ using FMIImport.FMICore: fmi2Integer, fmi2Boolean, fmi2Real, fmi2String
 using FMIImport.FMICore: fmi3Float32, fmi3Float64, fmi3Int8, fmi3UInt8, fmi3Int16, fmi3UInt16, fmi3Int32, fmi3UInt32, fmi3Int64, fmi3UInt64
 using FMIImport.FMICore: fmi3Boolean, fmi3String, fmi3Binary
 
-import FMIImport.FMICore: FMU2_EXECUTION_CONFIGURATIONS, FMU3_EXECUTION_CONFIGURATIONS
-
 exportingToolsWindows = [("Dymola", "2022x")]
 exportingToolsLinux = [("Dymola", "2022x")]
 
@@ -22,7 +20,7 @@ function runtestsFMI2(exportingTool)
     ENV["EXPORTINGVERSION"] = exportingTool[2]
 
     # enable assertions for warnings/errors for all default execution configurations 
-    for exec in FMU2_EXECUTION_CONFIGURATIONS
+    for exec in FMU_EXECUTION_CONFIGURATIONS
         exec.assertOnError = true
         exec.assertOnWarning = true
     end
@@ -55,7 +53,7 @@ function runtestsFMI3(exportingTool)
     ENV["EXPORTINGVERSION"] = exportingTool[2]
 
     # enable assertions for warnings/errors for all default execution configurations 
-    for exec in FMU3_EXECUTION_CONFIGURATIONS
+    for exec in FMU_EXECUTION_CONFIGURATIONS
         exec.assertOnError = true
         exec.assertOnWarning = true
     end
@@ -67,10 +65,6 @@ function runtestsFMI3(exportingTool)
             end
             @testset "State Manipulation" begin
                 include("FMI3/state.jl")
-            end
-            @testset "Directional derivatives" begin
-                @warn "Skipping FMI3 directional derivative testing..."
-                #include("FMI3/dir_ders.jl")
             end
         end
 

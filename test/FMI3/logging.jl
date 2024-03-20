@@ -3,9 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMIImport: fmi3StatusError
-
-myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
 myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
@@ -75,4 +73,4 @@ end
 
 # cleanup
 myFMU.executionConfig.assertOnError = true
-fmi3Unload(myFMU)
+unloadFMU(myFMU)
