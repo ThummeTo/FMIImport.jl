@@ -53,6 +53,7 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
 
     return nothing
 end
+export getState
 
 """
     getStateDerivative(solution::FMUSolution, i::fmi2ValueReferenceFormat; isIndex::Bool=false)
@@ -102,6 +103,7 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
 
     return nothing
 end
+export getStateDerivative
 
 """
     getValue(solution::FMU2Solution, i::fmi2ValueReferenceFormat; isIndex::Bool=false)
@@ -109,7 +111,7 @@ end
 Returns the values for a given value reference `i` (for `isIndex=false`) or the i-th value (for `isIndex=true`). 
 Recording of values must be enabled.
 """
-function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function FMIBase.getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
     indices = []
 
@@ -154,6 +156,7 @@ function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
 
     return nothing
 end
+export getValue
 
 """
     getTime(solution::FMU2Solution)
@@ -169,3 +172,4 @@ function getTime(solution::FMUSolution)
         return nothing
     end
 end
+export getTime

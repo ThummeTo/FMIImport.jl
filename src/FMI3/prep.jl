@@ -3,6 +3,9 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+import FMIBase: isEventMode, isContinuousTimeMode, isTrue, isStatusOK
+using FMIBase: handleEvents
+
 function setBeforeInitialization(mv::FMIImport.fmi3Variable)
     return mv.variability != fmi3VariabilityConstant && mv.initial ∈ (fmi3InitialApprox, fmi3InitialExact)
 end
@@ -12,11 +15,11 @@ function setInInitialization(mv::FMIImport.fmi3Variable)
 end
 
 function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3Type=fmu.type;
-    instantiate::Union{Nothing, Bool}=nothing, 
-    freeInstance::Union{Nothing, Bool}=nothing, 
-    terminate::Union{Nothing, Bool}=nothing, 
-    reset::Union{Nothing, Bool}=nothing, 
-    setup::Union{Nothing, Bool}=nothing, 
+    instantiate::Union{Nothing, Bool}=fmu.executionConfig.instantiate, 
+    freeInstance::Union{Nothing, Bool}=fmu.executionConfig.freeInstance, 
+    terminate::Union{Nothing, Bool}=fmu.executionConfig.terminate, 
+    reset::Union{Nothing, Bool}=fmu.executionConfig.reset, 
+    setup::Union{Nothing, Bool}=fmu.executionConfig.setup, 
     parameters::Union{Dict{<:Any, <:Any}, Nothing}=nothing, 
     t_start::Real=0.0, 
     t_stop::Union{Real, Nothing}=nothing, 
@@ -24,216 +27,143 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
     x0::Union{AbstractArray{<:Real}, Nothing}=nothing, 
     inputs::Union{Dict{<:Any, <:Any}, Nothing}=nothing, 
     cleanup::Bool=false, 
-    handleEvents=handleEvents)
+    handleEvents=handleEvents,
+    instantiateKwargs...)
 
     ignore_derivatives() do
-        if instantiate === nothing 
-            instantiate = fmu.executionConfig.instantiate
-        end
-    
-        if terminate === nothing 
-            terminate = fmu.executionConfig.terminate
-        end
-    
-        if reset === nothing 
-            reset = fmu.executionConfig.reset 
-        end
-    
-        if setup === nothing 
-            setup = fmu.executionConfig.setup 
-        end 
     
         c = nothing
     
         # instantiate (hard)
         if instantiate
             if type == fmi3TypeCoSimulation
-                c = fmi3InstantiateCoSimulation!(fmu)
+                c = fmi3InstantiateCoSimulation!(fmu; instantiateKwargs...)
             elseif type == fmi3TypeModelExchange
-                c = fmi3InstantiateModelExchange!(fmu)
+                c = fmi3InstantiateModelExchange!(fmu; instantiateKwargs...)
+            elseif type == fmi3TypeScheduledExecution
+                c = fmi3InstantiateScheduledExecution!(fmu; instantiateKwargs...)
             else
-                c = fmi3InstantiateScheduledExecution!(fmu)
+                @assert false "Unknwon fmi3Type `$(type)`"
             end
         else
             if c === nothing
                 if length(fmu.instances) > 0
                     c = fmu.instances[end]
                 else
-                    @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi3Instantiate(fmu)` to prevent this message."
+                    @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi3Instantiate[TYPE](fmu)` to prevent this message."
                     if type == fmi3TypeCoSimulation
-                        c = fmi3InstantiateCoSimulation!(fmu)
+                        c = fmi3InstantiateCoSimulation!(fmu; instantiateKwargs...)
                     elseif type == fmi3TypeModelExchange
-                        c = fmi3InstantiateModelExchange!(fmu)
+                        c = fmi3InstantiateModelExchange!(fmu; instantiateKwargs...)
+                    elseif type == fmi3TypeScheduledExecution
+                        c = fmi3InstantiateScheduledExecution!(fmu; instantiateKwargs...)
                     else
-                        c = fmi3InstantiateScheduledExecution!(fmu)
+                        @assert false "Unknwon FMU type `$(type)`."
                     end
                 end
             end
         end
-    
-        @assert c !== nothing "No FMU instance available, allocate one or use `fmu.executionConfig.instantiate=true`."
+
+        @assert !isnothing(c) "No FMU instance available, allocate one or use `fmu.executionConfig.instantiate=true`."
     
         # soft terminate (if necessary)
         if terminate
             retcode = fmi3Terminate(c; soft=true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Termination failed with return code $(retcode)."
         end
-    
+
         # soft reset (if necessary)
         if reset
             retcode = fmi3Reset(c; soft=true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Reset failed with return code $(retcode)."
         end 
-    
+
         # setup experiment (hard)
-        # TODO this part is handled by fmi3EnterInitializationMode
-        # if setup
-        #     retcode = fmi2SetupExperiment(c, t_start, t_stop; tolerance=tolerance)
-        #     @assert retcode == fmi3StatusOK "fmi3Simulate(...): Setting up experiment failed with return code $(retcode)."
-        # end
+        # [Note] this part is handled by fmi3EnterInitializationMode
     
         # parameters
-        if parameters !== nothing
-            retcodes = fmi3Set(c, collect(keys(parameters)), collect(values(parameters)); filter=setBeforeInitialization)
+        if !isnothing(parameters)
+            retcodes = setValue(c, collect(keys(parameters)), collect(values(parameters)); filter=setBeforeInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
-    
+
         # inputs
-        inputs = nothing
-        if inputFunction !== nothing && inputValueReferences !== nothing
-            # set inputs
-            inputs = Dict{fmi3ValueReference, Any}()
-    
-            inputValues = nothing
-            if hasmethod(inputFunction, Tuple{FMU3Instance, fmi3Float64}) # CS
-              inputValues = inputFunction(c, t_start)
-            else # ME
-                inputValues = inputFunction(c, nothing, t_start)
-            end
-    
-            for i in 1:length(inputValueReferences)
-                vr = inputValueReferences[i]
-                inputs[vr] = inputValues[i]
-            end
-        end
-    
-        # inputs
-        if inputs !== nothing
-            retcodes = fmi3Set(c, collect(keys(inputs)), collect(values(inputs)); filter=setBeforeInitialization)
+        if !isnothing(inputs)
+            retcodes = setValue(c, collect(keys(inputs)), collect(values(inputs)); filter=setBeforeInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
-    
+
         # start state
-        if x0 !== nothing
+        if !isnothing(x0)
             #retcode = fmi3SetContinuousStates(c, x0)
             #@assert retcode == fmi3StatusOK "fmi3Simulate(...): Setting initial state failed with return code $(retcode)."
-            retcodes = fmi3Set(c, fmu.modelDescription.stateValueReferences, x0; filter=setBeforeInitialization)
+            retcodes = setValue(c, fmu.modelDescription.stateValueReferences, x0; filter=setBeforeInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
-    
+
         # enter (hard)
         if setup
             retcode = fmi3EnterInitializationMode(c, t_start, t_stop; tolerance = tolerance)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Entering initialization mode failed with return code $(retcode)."
         end
-    
+
         # parameters
         if parameters !== nothing
-            retcodes = fmi3Set(c, collect(keys(parameters)), collect(values(parameters)); filter=setInInitialization)
+            retcodes = setValue(c, collect(keys(parameters)), collect(values(parameters)); filter=setInInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
-    
+
         if inputs !== nothing
-            retcodes = fmi3Set(c, collect(keys(inputs)), collect(values(inputs)); filter=setInInitialization)
+            retcodes = setValue(c, collect(keys(inputs)), collect(values(inputs)); filter=setInInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
-    
+
         # start state
         if x0 !== nothing
             #retcode = fmi3SetContinuousStates(c, x0)
             #@assert retcode == fmi3StatusOK "fmi3Simulate(...): Setting initial state failed with return code $(retcode)."
-            retcodes = fmi3Set(c, fmu.modelDescription.stateValueReferences, x0; filter=setInInitialization)
+            retcodes = setValue(c, fmu.modelDescription.stateValueReferences, x0; filter=setInInitialization)
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
-    
+
         # exit setup (hard)
         if setup
             retcode = fmi3ExitInitializationMode(c)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Exiting initialization mode failed with return code $(retcode)."
         end
+
+        # allocate a solution object
+        c.solution = FMUSolution(c)
     
+        # ME specific
         if type == fmi3TypeModelExchange
-            if x0 === nothing
+            if isnothing(x0) && !c.fmu.isZeroState
                 x0 = fmi3GetContinuousStates(c)
             end
+
+            if instantiate || reset # we have a fresh instance 
+                @debug "[NEW INST]"
+                handleEvents(c) 
+            end
+
+            c.fmu.hasStateEvents = (c.fmu.modelDescription.numberOfEventIndicators > 0)
+            c.fmu.hasTimeEvents = isTrue(c.nextEventTimeDefined)
         end
+
     end
 
     return c, x0
 end
-
-# Handles events and returns the values and nominals of the changed continuous states.
-function handleEvents(c::FMU3Instance)
-
-    @assert c.state == fmi2ComponentStateEventMode "handleEvents(...): Must be in event mode!"
-
-    # invalidate all cached jacobians/gradients 
-    invalidate!(c.∂ẋ_∂x) 
-    invalidate!(c.∂ẋ_∂u)
-    invalidate!(c.∂ẋ_∂p)  
-    invalidate!(c.∂y_∂x) 
-    invalidate!(c.∂y_∂u)
-    invalidate!(c.∂y_∂p)
-    invalidate!(c.∂e_∂x) 
-    invalidate!(c.∂e_∂u)
-    invalidate!(c.∂e_∂p)
-    invalidate!(c.∂ẋ_∂t)
-    invalidate!(c.∂y_∂t)
-    invalidate!(c.∂e_∂t)
-
-    #@debug "Handle Events..."
-
-    # trigger the loop
-    c.eventInfo.newDiscreteStatesNeeded = fmi2True
-
-    valuesOfContinuousStatesChanged = fmi2False
-    nominalsOfContinuousStatesChanged = fmi2False
-    nextEventTimeDefined = fmi2False
-    nextEventTime = 0.0
-
-    numCalls = 0
-    while c.eventInfo.newDiscreteStatesNeeded == fmi2True
-        numCalls += 1
-        fmi2NewDiscreteStates!(c, c.eventInfo)
-
-        if c.eventInfo.valuesOfContinuousStatesChanged == fmi2True
-            valuesOfContinuousStatesChanged = fmi2True
-        end
-
-        if c.eventInfo.nominalsOfContinuousStatesChanged == fmi2True
-            nominalsOfContinuousStatesChanged = fmi2True
-        end
-
-        if c.eventInfo.nextEventTimeDefined == fmi2True
-            nextEventTimeDefined = fmi2True
-            nextEventTime = c.eventInfo.nextEventTime
-        end
-
-        if c.eventInfo.terminateSimulation == fmi2True
-            @error "handleEvents(...): FMU throws `terminateSimulation`!"
-        end
-
-        @assert numCalls <= c.fmu.executionConfig.maxNewDiscreteStateCalls "handleEvents(...): `fmi2NewDiscreteStates!` exceeded $(c.fmu.executionConfig.maxNewDiscreteStateCalls) calls, this may be an error in the FMU. If not, you can change the max value for this FMU in `fmu.executionConfig.maxNewDiscreteStateCalls`."
+function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::Symbol; kwargs...)
+    if type == :CS
+        return prepareSolveFMU(fmu, c, fmi3TypeCoSimulation; kwargs...)
+    elseif type == :ME
+        return prepareSolveFMU(fmu, c, fmi3TypeModelExchange; kwargs...)
+    elseif type == :SE
+        return prepareSolveFMU(fmu, c, fmi3TypeScheduledExecution; kwargs...)
+    else
+        @assert false "Unknwon FMU type `$(type)`"
     end
-
-    c.eventInfo.valuesOfContinuousStatesChanged = valuesOfContinuousStatesChanged
-    c.eventInfo.nominalsOfContinuousStatesChanged = nominalsOfContinuousStatesChanged
-    c.eventInfo.nextEventTimeDefined = nextEventTimeDefined
-    c.eventInfo.nextEventTime = nextEventTime
-
-    @assert fmi2EnterContinuousTimeMode(c) == fmi2StatusOK "FMU is not in state continuous time after event handling."
-
-    return nothing
 end
 
 function finishSolveFMU(fmu::FMU3, c::FMU3Instance;

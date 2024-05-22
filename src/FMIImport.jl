@@ -7,7 +7,9 @@ module FMIImport
 
 using FMIBase.Reexport
 @reexport using FMIBase
+@reexport using FMIBase.FMICore
 
+using FMIBase
 using FMIBase.FMICore
 using FMIBase: fast_copy!, invalidate!, check_invalidate!
 using FMIBase.Requires
@@ -21,19 +23,18 @@ include("convert.jl")
 include("zip.jl")
 include("binary.jl")
 include("md_parse.jl")
-include("get_set.jl")
 
 ### FMI2 ###
-include("FMI2/prep.jl")
 include("FMI2/c.jl")
 include("FMI2/int.jl")
+include("FMI2/prep.jl")
 include("FMI2/ext.jl")
 include("FMI2/md.jl")
 
 ### FMI3 ###
-include("FMI3/prep.jl")
 include("FMI3/c.jl")
 include("FMI3/int.jl")
+include("FMI3/prep.jl")
 include("FMI3/ext.jl")
 include("FMI3/md.jl")
 

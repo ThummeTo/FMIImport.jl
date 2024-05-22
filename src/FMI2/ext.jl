@@ -3,9 +3,6 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# What is included in the file `ext.jl` (external/additional functions)?
-# - TODO
-
 using Libdl
 
 const CB_LIB_PATH = @path joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")

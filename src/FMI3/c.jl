@@ -49,23 +49,24 @@ Function that is called in the FMU, usually if an fmi3XXX function, does not beh
 - FMISpec3.0: 2.3.1. Super State: FMU State Setable
 """
 function fmi3CallbackLogger(_instanceEnvironment::Ptr{FMU3InstanceEnvironment},
-    _status::Cuint,
+    status::fmi3Status,
     _category::Ptr{Cchar},
     _message::Ptr{Cchar})
 
     message = unsafe_string(_message)
     category = unsafe_string(_category)
-    status = "$(_status)" # statusToString(md, _status)
     instanceEnvironment = unsafe_load(_instanceEnvironment)
 
     if status == fmi3StatusOK && instanceEnvironment.logStatusOK
-        @info "[$status][$category][$instanceName]: $message"
+        @info "[$(status)][$(category)]: $(message)"
     elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning)
-        @warn "[$status][$category][$instanceName]: $message"
+        @warn "[$(status)][$(category)]: $(message)"
     elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
            (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
            (status == fmi3StatusFatal   && instanceEnvironment.logStatusFatal)
-        @error "[$status][$category][$instanceName]: $message"
+        @error "[$(status)][$(category)]: $(message)"
+    else
+        @assert false "Unknown message received, status: $(status)"
     end
 
     return nothing
@@ -115,7 +116,7 @@ function fmi3CallbackIntermediateUpdate(instanceEnvironment::Ptr{Cvoid},
     earlyReturnRequested::Ptr{fmi3Boolean},
     earlyReturnTime::Ptr{fmi3Float64})
 
-    @assert false "Not implemented yet!"
+    @debug "fmi3CallbackIntermediateUpdate be implemented!" # [ToDo]
 end
 
 """
@@ -139,7 +140,8 @@ A model partition of a Scheduled Execution FMU calls `fmi3CallbackClockUpdate` t
 - FMISpec3.0, Version D5ef1c1: 5.2.2. State: Clock Activation Mode
 """
 function fmi3CallbackClockUpdate(_instanceEnvironment::Ptr{Cvoid})
-    @debug "to be implemented!"
+    
+    @debug " fmi3CallbackClockUpdateto be implemented!" # [ToDo]
 end
 
 """
@@ -2493,7 +2495,6 @@ end
 
 This function is called to signal a converged solution at the current super-dense time instant. fmi3UpdateDiscreteStates must be called at least once per super-dense time instant.
 
-# TODO Arguments
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 - `discreteStatesNeedUpdate::Ref{fmi3Boolean}`: 

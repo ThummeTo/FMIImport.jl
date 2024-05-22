@@ -221,25 +221,27 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
         modelVariables[index].annotations = parseNode(node, "annotations", String)
         modelVariables[index].clocks = parseArrayValueReferences(md, parseNode(node, "clocks", String))
         
-        if typename != "Clock" && typename != "String"
+        if typename ∉ ("Clock", "String")
             modelVariables[index].intermediateUpdate = parseNode(node, "intermediateUpdate", Bool)
         else
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `intermediateUpdate`."
         end
         
-        if typename != "Clock" && typename != "String"
+        if typename ∉ ("Clock", "String")
             modelVariables[index].previous = parseNode(node, "previous", Bool)
         else
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `previous`."
         end
 
-        if haskey(node, "initial") && typename != "Clock" && typename != "String" && typename != "Enumeration"
-            modelVariables[index].initial = stringToInitial(md, parseNode(node, "initial", String))
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `initial`."
+        if haskey(node, "initial")
+            if typename ∉ ("Clock", "String", "Enumeration")
+                modelVariables[index].initial = stringToInitial(md, parseNode(node, "initial", String))
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `initial`."
+            end
         end
         
-        if typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+        if typename ∉ ("Clock", "String", "Binary", "Boolean")
             modelVariables[index].quantity = parseNode(node, "quantity", String)
         else
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `quantity`."
@@ -256,13 +258,13 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `declaredType`."
         end
 
-        if typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+        if typename ∉ ("Clock", "String", "Binary", "Boolean")
             modelVariables[index].min = parseNode(node, "min", stringToDataType(md, typename))
         else
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `min`."
         end
 
-        if typename != "Clock" && typename != "String" && typename != "Binary" && typename != "Boolean"
+        if typename ∉ ("Clock", "String", "Binary", "Boolean")
             modelVariables[index].max = parseNode(node, "max", stringToDataType(md, typename))
         else
             @warn "Unsupported typename `$(typename)` for modelVariable attribute `max`."
@@ -273,7 +275,7 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
             modelVariables[index].unbounded = parseNode(node, "unbounded", stringToDataType(md, typename))
         end
 
-        if typename != "Binary" && typename != "Clock"
+        if typename ∉ ("Binary", "Clock")
             if !isnothing(node.firstelement) && node.firstelement.name == "Dimension"
                 substrings = split(node["start"], " ")
 
@@ -330,6 +332,7 @@ function parseModelStructure(md::fmi3ModelDescription, nodes::EzXML.Node)
     md.modelStructure.initialUnknowns = []
     md.modelStructure.eventIndicators = []
     md.modelStructure.outputs = []
+
     for node in eachelement(nodes)
         if haskey(node, "valueReference")
             varDep = parseDependencies(md, node)
@@ -338,20 +341,19 @@ function parseModelStructure(md::fmi3ModelDescription, nodes::EzXML.Node)
             elseif node.name == "EventIndicator"
                 md.numberOfEventIndicators += 1
                 push!(md.modelStructure.eventIndicators)
-                # TODO parse valueReferences to another array
+                # [TODO] parse valueReferences to another array
             elseif node.name == "ContinuousStateDerivative"
 
-                # find states and derivatives^
-                derSV = modelVariablesForValueReference(md, parseNode(node, "valueReference", fmi3ValueReference))[1]
-                # derSV = md.modelVariables[varDep.index]
-                derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV.derivative].valueReference
+                # find states and derivatives
+                derValueRef = parseNode(node, "valueReference", fmi3ValueReference)
+                derVar = modelVariablesForValueReference(md, derValueRef)[1]
+                stateValueRef = modelVariablesForValueReference(md, derVar.derivative)[1].valueReference
     
-                if stateVR ∉ md.stateValueReferences
-                    push!(md.stateValueReferences, stateVR)
+                if stateValueRef ∉ md.stateValueReferences
+                    push!(md.stateValueReferences, stateValueRef)
                 end
-                if derVR ∉ md.derivativeValueReferences
-                    push!(md.derivativeValueReferences, derVR)
+                if derValueRef ∉ md.derivativeValueReferences
+                    push!(md.derivativeValueReferences, derValueRef)
                 end
     
                 push!(md.modelStructure.continuousStateDerivatives, varDep)

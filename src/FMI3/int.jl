@@ -1,13 +1,7 @@
 #
-# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
-
-# What is included in the file `FMI3_int.jl` (internal functions)?
-# - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
-
-# Best practices:
-# - no direct access on C-pointers (`addr`), use existing FMICore-functions
 
 """
 
@@ -82,8 +76,8 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
         instance = FMU3Instance(addr, fmu)
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
-        instance.z_prev  = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
-        instance.rootsFound  = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(fmu.modelDescription))
+        instance.z_prev  = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(instance))
+        instance.rootsFound  = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(instance))
         instance.stateEvent  = fmi3False
         instance.timeEvent   = fmi3False
         instance.stepEvent   = fmi3False
@@ -316,6 +310,7 @@ function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3FreeInstance`
 export fmi3FreeInstance!
+
 
 """
 
@@ -2578,7 +2573,7 @@ function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
     sizeRef = Ref(Csize_t(size))
     fmi3GetNumberOfEventIndicators!(c, sizeRef)
     size = sizeRef[]
-    Int32(size)
+    return Int32(size)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetNumberOfEventIndicators!`
 export fmi3GetNumberOfEventIndicators
@@ -2686,7 +2681,7 @@ function fmi3GetContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     x = zeros(fmi3Float64, nx)
     fmi3GetContinuousStates!(c, x, nx)
-    x
+    return x
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetContinuousStates!`
 export fmi3GetContinuousStates
@@ -2714,7 +2709,7 @@ function fmi3GetNominalsOfContinuousStates(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     x = zeros(fmi3Float64, nx)
     fmi3GetNominalsOfContinuousStates!(c, x, nx)
-    x
+    return x
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetNominalsOfContinuousStates!`
 export fmi3GetNominalsOfContinuousStates
@@ -2855,11 +2850,11 @@ end
     fmi3UpdateDiscreteStates(c::FMU3Instance)
 
 This function is called to signal a converged solution at the current super-dense time instant. fmi3UpdateDiscreteStates must be called at least once per super-dense time instant.
+Results are returned, use `fmi3UpdateDiscreteStates!` for the inplace variant.
 
 # Arguments
 - `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
 
-# TODO returns
 # Returns
 - `discreteStatesNeedUpdate`
 - `terminateSimulation`
@@ -2875,6 +2870,7 @@ This function is called to signal a converged solution at the current super-dens
 
 """
 function fmi3UpdateDiscreteStates(c::FMU3Instance)
+
     discreteStatesNeedUpdate = fmi3True
     terminateSimulation = fmi3True
     nominalsOfContinuousStatesChanged = fmi3True
@@ -2888,7 +2884,7 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance)
     refnETD = Ref(nextEventTimeDefined)
     refnET = Ref(nextEventTime)
 
-    fmi3UpdateDiscreteStates(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET)
+    fmi3UpdateDiscreteStates(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET) 
 
     discreteStatesNeedUpdate = refdS[]
     terminateSimulation = reftS[]
@@ -2898,6 +2894,36 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance)
     nextEventTime = refnET[]
 
     discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime
+end
+
+"""
+    fmi3UpdateDiscreteStates!(c::FMU3Instance)
+
+This function is called to signal a converged solution at the current super-dense time instant. fmi3UpdateDiscreteStates must be called at least once per super-dense time instant.
+Results are returned, use `fmi3UpdateDiscreteStates` for the out-of-place variant.
+
+# Arguments
+- `c::FMU3Instance`: Mutable struct represents an instantiated instance of an FMU in the FMI 3.0 Standard.
+
+# Returns
+- `fmi3Status`
+
+# Source
+- FMISpec3.0 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec3.0: 2.2.3 Platform Dependent Definitions 
+- FMISpec3.0: 2.3.5. State: Event Mode
+"""
+function fmi3UpdateDiscreteStates!(c::FMU3Instance)
+   
+    status = fmi3UpdateDiscreteStates(c, 
+        c._ptr_discreteStatesNeedUpdate, 
+        c._ptr_terminateSimulation, 
+        c._ptr_nominalsOfContinuousStatesChanged, 
+        c._ptr_valuesOfContinuousStatesChanged, 
+        c._ptr_nextEventTimeDefined, 
+        c._ptr_nextEventTime)
+
+    return status
 end
 
 """
@@ -2959,18 +2985,13 @@ See also [`fmi3CompletedIntegratorStep`](@ref).
 """
 function fmi3CompletedIntegratorStep(c::FMU3Instance,
     noSetFMUStatePriorToCurrentPoint::fmi3Boolean)
-    enterEventMode = fmi3Boolean(true)
-    terminateSimulation = fmi3Boolean(true)
-    refEventMode = Ref(enterEventMode)
-    refterminateSimulation = Ref(terminateSimulation)
-    status = fmi3CompletedIntegratorStep!(c,
-                                        noSetFMUStatePriorToCurrentPoint,
-                                        refEventMode,
-                                        refterminateSimulation)
-    enterEventMode = refEventMode[]
-    terminateSimulation = refterminateSimulation[]
     
-    return (status, enterEventMode, terminateSimulation)
+    status = fmi3CompletedIntegratorStep!(c,
+        noSetFMUStatePriorToCurrentPoint,
+        c._ptr_enterEventMode,
+        c._ptr_terminateSimulation)
+
+    return (status, c.enterEventMode, c.terminateSimulation)
 end
 
 """
@@ -3045,12 +3066,6 @@ See also [`fmi3DoStep!`](@ref).
 """
 function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Nothing} = nothing, communicationStepSize::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true,
     eventEncountered::fmi3Boolean = fmi3False, terminateSimulation::fmi3Boolean = fmi3False, earlyReturn::fmi3Boolean = fmi3False, lastSuccessfulTime::fmi3Float64 = 0.0)
-
-    # skip `fmi3DoStep` if this is set (allows evaluation of a CS_NeuralFMUs at t_0)
-    if c.skipNextDoStep
-        c.skipNextDoStep = false
-        return fmi3StatusOK
-    end
 
     if currentCommunicationPoint === nothing
         currentCommunicationPoint = c.t

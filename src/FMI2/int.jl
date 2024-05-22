@@ -1,13 +1,7 @@
 #
-# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
-
-# What is included in the file `FMI2_int.jl` (internal functions)?
-# - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
-
-# Best practices:
-# - no direct access on C-pointers (`addr`), use existing FMICore-functions
 
 lk_fmi2Instantiate = ReentrantLock()
 """
@@ -234,6 +228,7 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::B
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi2FreeInstance`
 export fmi2FreeInstance!
+
 
 """
     fmi2SetDebugLogging(c::FMU2Component)
@@ -1391,7 +1386,7 @@ function fmi2CompletedIntegratorStep(c::FMU2Component,
                                           c._ptr_enterEventMode,
                                           c._ptr_terminateSimulation)
 
-    return (status, c._enterEventMode, c._terminateSimulation)
+    return (status, c.enterEventMode, c.terminateSimulation)
 end
 export fmi2CompletedIntegratorStep
 

@@ -46,20 +46,21 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol, Nothing}=nothing)
     # parse modelDescription.xml
     fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
     fmu.modelName = fmu.modelDescription.modelName
+    fmu.isZeroState = (length(fmu.modelDescription.stateValueReferences) == 0)
 
     # TODO special use case? not complete, some combinations are missing
     if isCoSimulation(fmu.modelDescription) && isModelExchange(fmu.modelDescription) && type==:CS
-        fmu.type = fmi3TypeCoSimulation::fmi3Type
+        fmu.type = fmi3TypeCoSimulation
     elseif isCoSimulation(fmu.modelDescription) && isModelExchange(fmu.modelDescription) && type==:ME
-        fmu.type = fmi3TypeModelExchange::fmi3Type
+        fmu.type = fmi3TypeModelExchange
     elseif isScheduledExecution(fmu.modelDescription) && type==:SE
-        fmu.type = fmi3TypeScheduledExecution::fmi3Type
+        fmu.type = fmi3TypeScheduledExecution
     elseif isCoSimulation(fmu.modelDescription) && (type===nothing || type==:CS)
-        fmu.type = fmi3TypeCoSimulation::fmi3Type
+        fmu.type = fmi3TypeCoSimulation
     elseif isModelExchange(fmu.modelDescription) && (type===nothing || type==:ME)
-        fmu.type = fmi3TypeModelExchange::fmi3Type
+        fmu.type = fmi3TypeModelExchange
     elseif isScheduledExecution(fmu.modelDescription) && (type === nothing || type ==:SE)
-        fmu.type = fmi3TypeScheduledExecution::Fmi3Type
+        fmu.type = fmi3TypeScheduledExecution
     else
         error(unknownFMUType)
     end

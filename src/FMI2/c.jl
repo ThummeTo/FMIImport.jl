@@ -1733,8 +1733,8 @@ import FMIBase.FMICore: fmi2CompletedIntegratorStep!
 """
     fmi2CompletedIntegratorStep!(c::FMU2Component,
                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                    enterEventMode::Ref{fmi2Boolean},
-                                    terminateSimulation::Ref{fmi2Boolean})
+                                    enterEventMode::Ptr{fmi2Boolean},
+                                    terminateSimulation::Ptr{fmi2Boolean})
 
 This function must be called by the environment after every completed step of the integrator provided the capability flag completedIntegratorStepNotNeeded = false.
 
