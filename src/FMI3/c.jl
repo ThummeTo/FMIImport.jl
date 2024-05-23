@@ -581,10 +581,30 @@ More detailed:
 - FMISpec3.0: 2.2.6.2. Getting and Setting Variable Values
 See also [`fmi3SetFloat64`](@ref).
 """
-function fmi3SetFloat64(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Float64}, nvalue::Csize_t)
+function fmi3SetFloat64(c::FMU3Instance, vr::AbstractArray{fmi3ValueReference}, nvr::Csize_t, value::AbstractArray{fmi3Float64}, nvalue::Csize_t; track::Bool=true)
     status = fmi3SetFloat64(c.fmu.cSetFloat64,
                c.addr, vr, nvr, value, nvalue)
     checkStatus(c, status)
+
+    if track && status == fmi2StatusOK 
+        check_invalidate!(vr, c.∂ẋ_∂x) 
+        check_invalidate!(vr, c.∂ẋ_∂u)
+        check_invalidate!(vr, c.∂ẋ_∂p)
+        
+        check_invalidate!(vr, c.∂y_∂x) 
+        check_invalidate!(vr, c.∂y_∂u)
+        check_invalidate!(vr, c.∂y_∂p)
+
+        check_invalidate!(vr, c.∂e_∂x) 
+        check_invalidate!(vr, c.∂e_∂u)
+        check_invalidate!(vr, c.∂e_∂p)
+
+        # [NOTE] No need to check for:
+        #        check_invalidate!(vr, c.∂ẋ_∂t)
+        #        check_invalidate!(vr, c.∂y_∂t)
+        #        check_invalidate!(vr, c.∂e_∂t)
+    end
+
     return status
 end
 
@@ -2078,7 +2098,8 @@ function fmi3GetDirectionalDerivative!(c::FMU3Instance,
                                        nSeed::Csize_t,
                                        sensitivity::AbstractArray{fmi3Float64},
                                        nSensitivity::Csize_t)
-    @assert fmi3ProvidesDirectionalDerivatives(c.fmu) ["fmi3GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!"]
+                                       
+    @assert providesDirectionalDerivatives(c.fmu) ["fmi3GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!"]
 
     status = fmi3GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
           c.addr, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
@@ -2153,7 +2174,7 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
                                        nSeed::Csize_t,
                                        sensitivity::AbstractArray{fmi3Float64},
                                        nSensitivity::Csize_t)
-    @assert fmi3ProvidesAdjointDerivatives(c.fmu) ["fmi3GetAdjointDerivative!(...): This FMU does not support build-in adjoint derivatives!"]
+    @assert providesAdjointDerivatives(c.fmu) ["fmi3GetAdjointDerivative!(...): This FMU does not support build-in adjoint derivatives!"]
 
     status = fmi3GetAdjointDerivative!(c.fmu.cGetAdjointDerivative,
           c.addr, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
@@ -2652,14 +2673,22 @@ More detailed:
 
 See also [`fmi3SetTime`](@ref).
 """
-function fmi3SetTime(c::FMU3Instance, time::fmi3Float64)
+function fmi3SetTime(c::FMU3Instance, time::fmi3Float64; track::Bool=true)
     
     status = fmi3SetTime(c.fmu.cSetTime,
           c.addr, time + c.t_offset)
     checkStatus(c, status)
-    if status == fmi3StatusOK
-        c.t = time
+    
+    if track
+        if isStatusOK(c, status)
+            c.t = time
+
+            invalidate!(c.∂ẋ_∂t)
+            invalidate!(c.∂y_∂t)
+            invalidate!(c.∂e_∂t)
+        end
     end
+
     return status
 end
 

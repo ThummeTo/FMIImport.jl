@@ -23,6 +23,7 @@ include("convert.jl")
 include("zip.jl")
 include("binary.jl")
 include("md_parse.jl")
+include("info.jl")
 
 ### FMI2 ###
 include("FMI2/c.jl")

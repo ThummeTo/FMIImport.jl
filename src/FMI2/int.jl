@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
@@ -1019,17 +1019,17 @@ See also [`fmi2GetDirectionalDerivative!`](@ref).
 function fmi2GetDirectionalDerivative(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+                                      dvKnown::AbstractArray{fmi2Real})
 
     nUnknown = Csize_t(length(vUnknown_ref))     
 
     dvUnknown = zeros(fmi2Real, nUnknown)
-    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, dvKnown)
+    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvKnown, dvUnknown)
     @assert status == fmi2StatusOK ["Failed with status `$status`."]
 
     return dvUnknown
 end
-fmi2GetDirectionalDerivative(c::FMU2Component, vUnknown_ref::fmi2ValueReference, vKnown_ref::fmi2ValueReference, dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing) = fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
+fmi2GetDirectionalDerivative(c::FMU2Component, vUnknown_ref::fmi2ValueReference, vKnown_ref::fmi2ValueReference, dvKnown::fmi2Real) = fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi2GetDirectionalDerivative!`
 export fmi2GetDirectionalDerivative
 
@@ -1037,8 +1037,8 @@ export fmi2GetDirectionalDerivative
     fmiGetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray,
-                                      dvKnown::Union{Array{fmi2Real}, Nothing} = nothing)
+                                      dvKnown::Array{fmi2Real},
+                                      dvUnknown::AbstractArray)
 
 Wrapper Function call to compute the partial derivative with respect to the variables `vKnown_ref`.
 
@@ -1086,15 +1086,11 @@ See also [`fmi2GetDirectionalDerivative!`](@ref).
 function fmi2GetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray, # ToDo: Data-type
-                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+                                      dvKnown::AbstractArray{fmi2Real},
+                                      dvUnknown::AbstractArray)
 
     nKnown = Csize_t(length(vKnown_ref))
     nUnknown = Csize_t(length(vUnknown_ref))
-
-    if dvKnown == nothing
-        dvKnown = ones(fmi2Real, nKnown)
-    end
 
     status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
 

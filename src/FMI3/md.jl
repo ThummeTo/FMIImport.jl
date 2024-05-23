@@ -211,6 +211,8 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
                 push!(md.outputValueReferences, valueReference)
             elseif causality == fmi3CausalityInput
                 push!(md.inputValueReferences, valueReference)
+            elseif causality == fmi3CausalityParameter
+                push!(md.parameterValueReferences, valueReference)
             end
         end
 

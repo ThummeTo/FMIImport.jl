@@ -28,7 +28,7 @@ function _parse(type, s)
         return true
     elseif s == "false"
         return false
-    elseif type == String
+    elseif type == String || type == Ptr{UInt8} # fmi3String
         return s
     else
         return parse(type, s)

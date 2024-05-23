@@ -86,9 +86,11 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
         if pushInstances
             push!(fmu.instances, instance)
         end
-    end 
 
-    instance
+        fmu.threadInstances[Threads.threadid()] = instance
+    end
+
+    return getCurrentInstance(fmu)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateModelExchange`
 export fmi3InstantiateModelExchange!
@@ -180,9 +182,11 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
         if pushInstances
             push!(fmu.instances, instance)
         end
-    end 
+    
+        fmu.threadInstances[Threads.threadid()] = instance
+    end
 
-    instance
+    return getCurrentInstance(fmu)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateCoSimulation`
 export fmi3InstantiateCoSimulation!
@@ -268,9 +272,11 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
         if pushInstances
             push!(fmu.instances, instance)
         end
-    end 
+    
+        fmu.threadInstances[Threads.threadid()] = instance
+    end
 
-    instance
+    return getCurrentInstance(fmu)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3InstantiateScheduledExecution`
 export fmi3InstantiateScheduledExecution!
@@ -299,10 +305,18 @@ Removes the component from the FMUs component list.
 """
 function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 
+    addr = c.addr
+
     if popInstance
         ind = findall(x->x.addr==c.addr, c.fmu.instances)
         @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
         deleteat!(c.fmu.instances, ind)
+
+        for key in keys(c.fmu.threadInstances)
+            if !isnothing(c.fmu.threadInstances[key]) && c.fmu.threadInstances[key].addr == addr
+                c.fmu.threadInstances[key] = nothing
+            end
+        end
     end
     fmi3FreeInstance(c.fmu.cFreeInstance, c.addr)
 
@@ -633,14 +647,14 @@ More detailed:
 
 See also [`fmi3SetFloat64`](@ref).
 """
-function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64})
+function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64}; kwargs...)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
     @assert length(vr) == length(values) "fmi3SetFloat64(...): `vr` and `values` need to be the same length."
 
     nvr = Csize_t(length(vr))
-    fmi3SetFloat64(c, vr, nvr, values, nvr)
+    return fmi3SetFloat64(c, vr, nvr, values, nvr; kwargs...)
 end
 
 """
@@ -2268,18 +2282,17 @@ See also [`fmi3GetDirectionalDerivative`](@ref).
 function fmi3GetDirectionalDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
-                                      seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
+                                      seed::AbstractArray{fmi3Float64})
     
     nUnknown = Csize_t(length(unknowns))
-    
     sensitivity = zeros(fmi3Float64, nUnknown)
 
-    status = fmi3GetDirectionalDerivative!(c, unknowns, knowns, sensitivity, seed)
-    @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
+    status = fmi3GetDirectionalDerivative!(c, unknowns, knowns, seed, sensitivity)
+    @assert isStatusOK(c, status) "Failed with status `$(status)`."
     
     return sensitivity
 end
-fmi3GetDirectionalDerivative(c::FMU3Instance, unknown::fmi3ValueReference, known::fmi3ValueReference, seed::fmi3Float64 = 1.0) = fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
+fmi3GetDirectionalDerivative(c::FMU3Instance, unknown::fmi3ValueReference, known::fmi3ValueReference, seed::fmi3Float64) = fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetDirectionalDerivative!`
 export fmi3GetDirectionalDerivative
 
@@ -2335,15 +2348,11 @@ See also [`fmi3GetDirectionalDerivative!`](@ref).
 function fmi3GetDirectionalDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
-                                      sensitivity::AbstractArray,
-                                      seed::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+                                      seed::AbstractArray{fmi3Float64},
+                                      sensitivity::AbstractArray{fmi3Float64})
 
-    nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
-
-    if seed === nothing
-        seed = ones(fmi3Float64, nKnowns)
-    end
+    nKnowns = Csize_t(length(knowns))
 
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
@@ -2395,17 +2404,17 @@ See also [`fmi3GetAdjointDerivative`](@ref).
 function fmi3GetAdjointDerivative(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
-                                      seed::AbstractArray{fmi3Float64} = Array{fmi3Float64}([]))
+                                      seed::AbstractArray{fmi3Float64})
+    
     nUnknown = Csize_t(length(unknowns))
-
     sensitivity = zeros(fmi3Float64, nUnknown)
 
-    status = fmi3GetAdjointDerivative!(c, unknowns, knowns, sensitivity, seed)
+    status = fmi3GetAdjointDerivative!(c, unknowns, knowns, seed, sensitivity)
     @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
     
     return sensitivity
 end
-fmi3GetAdjointDerivative(c::FMU3Instance, unknowns::fmi3ValueReference, knowns::fmi3ValueReference, seed::fmi3Float64 = 1.0) = fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
+fmi3GetAdjointDerivative(c::FMU3Instance, unknowns::fmi3ValueReference, knowns::fmi3ValueReference, seed::fmi3Float64) = fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetAdjointDerivative!`
 export fmi3GetAdjointDerivative
 
@@ -2462,21 +2471,17 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
                                       unknowns::AbstractArray{fmi3ValueReference},
                                       knowns::AbstractArray{fmi3ValueReference},
                                       sensitivity::AbstractArray,
-                                      seed::Union{AbstractArray{fmi3Float64}, Nothing} = nothing)
+                                      seed::AbstractArray{fmi3Float64})
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
-
-    if seed === nothing
-        seed = ones(fmi3Float64, nKnowns)
-    end
 
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
 
     status = fmi3GetAdjointDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
 
-    status
+    return status
 end
 
 """
@@ -2540,9 +2545,9 @@ See also [`fmi3GetNumberOfContinuousStates`](@ref).
 function fmi3GetNumberOfContinuousStates(c::FMU3Instance)
     size = 0
     sizeRef = Ref(Csize_t(size))
-    fmi3GetNumberOfContinuousStates!(c, sizeRef)
+    fmi3GetNumberOfContinuousStates!(c, sizeRef) # [ToDo, Refactor] this needs to be inplace/non-allocating!
     size = sizeRef[]
-    Int32(size)
+    return Int32(size)
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetNumberOfContinuousStates!`
 export fmi3GetNumberOfContinuousStates
@@ -2571,7 +2576,7 @@ See also [`fmi3GetNumberOfEventIndicators`](@ref).
 function fmi3GetNumberOfEventIndicators(c::FMU3Instance)
     size = 0
     sizeRef = Ref(Csize_t(size))
-    fmi3GetNumberOfEventIndicators!(c, sizeRef)
+    fmi3GetNumberOfEventIndicators!(c, sizeRef) # [ToDo, Refactor] this needs to be inplace/non-allocating!
     size = sizeRef[]
     return Int32(size)
 end
@@ -2606,7 +2611,7 @@ function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3Valu
     end
     size = 0
     sizeRef = Ref(Csize_t(size))
-    fmi3GetNumberOfVariableDependencies!(c, vr, sizeRef)
+    fmi3GetNumberOfVariableDependencies!(c, vr, sizeRef) # [ToDo, Refactor] this needs to be inplace/non-allocating!
     size = sizeRef[]
     Int32(size)
 end
