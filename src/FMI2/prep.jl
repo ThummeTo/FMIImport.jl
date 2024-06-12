@@ -48,8 +48,8 @@ function prepareSolveFMU(fmu::FMU2, c::Union{Nothing, FMU2Component}, type::fmi2
             c = fmi2Instantiate!(fmu; type=type, instantiateKwargs...)
         else # use existing instance
             if c === nothing
-                if hasCurrentComponent(fmu)
-                    c = getCurrentComponent(fmu)
+                if hasCurrentInstance(fmu)
+                    c = getCurrentInstance(fmu)
                 else
                     @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one.\nUse `fmi2Instantiate(fmu)` to prevent this message."
                     c = fmi2Instantiate!(fmu; type=type, instantiateKwargs...)
@@ -57,7 +57,7 @@ function prepareSolveFMU(fmu::FMU2, c::Union{Nothing, FMU2Component}, type::fmi2
             end
         end
 
-        @assert c != nothing "No FMU instance available, allocate one or use `fmu.executionConfig.instantiate=true`."
+        @assert !isnothing(c) "No FMU instance available, allocate one or use `fmu.executionConfig.instantiate=true`."
 
         # soft terminate (if necessary)
         # if terminate
