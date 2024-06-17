@@ -5,8 +5,9 @@
 
 import FMIImport: fmi2StatusError, fmi2StatusOK
 
-myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = loadFMU("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 myFMU.executionConfig.assertOnError = false
+myFMU.executionConfig.assertOnWarning = false
 
 ### CASE A: Print log ###
 comp = fmi2Instantiate!(myFMU; loggingOn=true)
@@ -74,7 +75,8 @@ open(joinpath(pwd(), "stdout"), "w") do out
         end
     end 
 end
-# ToDo: this test is wrong / not working (capture doesn't work for color output)
+
+# [ToDo]: the following test is wrong / not working (capture doesn't work for color output)
 #output = read(joinpath(pwd(), "stdout"), String)
 #@test output == ""
 #output = read(joinpath(pwd(), "stderr"), String)
@@ -82,4 +84,6 @@ end
 
 # cleanup
 myFMU.executionConfig.assertOnError = true
-fmi2Unload(myFMU)
+myFMU.executionConfig.assertOnWarning = true
+
+unloadFMU(myFMU)

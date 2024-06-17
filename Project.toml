@@ -1,21 +1,27 @@
 name = "FMIImport"
 uuid = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>", "JK <josef.kircher@student.uni-augsburg.de>"]
-version = "0.16.4"
+version = "1.0.0"
 
 [deps]
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
-FMICore = "8af89139-c281-408e-bce2-3005eb87462f"
+FMIBase = "900ee838-d029-460e-b485-d98a826ceef2"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+PackageExtensionCompat = "65ce6f38-6b18-4e1d-a461-8949797d7930"
 RelocatableFolders = "05181044-ff0b-4ac5-8273-598c1e38db00"
-ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
+Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+
+[weakdeps]
+FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+
+[extensions]
+FMIZooExt = ["FMIZoo"]
 
 [compat]
 Downloads = "1"
-EzXML = "1.1.0"
-FMICore = "0.20.0"
+FMIBase = "1.0.0"
 Libdl = "1"
+PackageExtensionCompat = "1.0.0"
 RelocatableFolders = "1"
-ZipFile = "0.10.0"
+Requires = "1.3.0"
 julia = "1.6"
