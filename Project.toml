@@ -9,6 +9,12 @@ FMIBase = "900ee838-d029-460e-b485-d98a826ceef2"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 RelocatableFolders = "05181044-ff0b-4ac5-8273-598c1e38db00"
 
+[weakdeps]
+FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+
+[extensions]
+FMIZooExt = ["FMIZoo"]
+
 [compat]
 Downloads = "1"
 FMIBase = "1.0.0"
