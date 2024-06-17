@@ -57,14 +57,26 @@ function fmi3CallbackLogger(_instanceEnvironment::Ptr{FMU3InstanceEnvironment},
     category = unsafe_string(_category)
     instanceEnvironment = unsafe_load(_instanceEnvironment)
 
-    if status == fmi3StatusOK && instanceEnvironment.logStatusOK
-        @info "[$(status)][$(category)]: $(message)"
-    elseif (status == fmi3StatusWarning && instanceEnvironment.logStatusWarning)
-        @warn "[$(status)][$(category)]: $(message)"
-    elseif (status == fmi3StatusDiscard && instanceEnvironment.logStatusDiscard) ||
-           (status == fmi3StatusError   && instanceEnvironment.logStatusError) ||
-           (status == fmi3StatusFatal   && instanceEnvironment.logStatusFatal)
-        @error "[$(status)][$(category)]: $(message)"
+    if status == fmi3StatusOK
+        if instanceEnvironment.logStatusOK
+            @info "[$(status)][$(category)]: $(message)"
+        end
+    elseif status == fmi3StatusWarning
+        if instanceEnvironment.logStatusWarning
+            @warn "[$(status)][$(category)]: $(message)"
+        end
+    elseif status == fmi3StatusDiscard
+        if instanceEnvironment.logStatusDiscard
+            @error "[$(status)][$(category)]: $(message)"
+        end
+    elseif status == fmi3StatusError 
+        if instanceEnvironment.logStatusError 
+            @error "[$(status)][$(category)]: $(message)"
+        end
+    elseif status == fmi3StatusFatal 
+        if instanceEnvironment.logStatusFatal
+            @error "[$(status)][$(category)]: $(message)"
+        end
     else
         @assert false "Unknown message received, status: $(status)"
     end

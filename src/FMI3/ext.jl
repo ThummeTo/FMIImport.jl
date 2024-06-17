@@ -76,7 +76,7 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol, Nothing}=nothing)
     osStr = ""
 
     juliaArch = Sys.WORD_SIZE
-    @assert (juliaArch == 64 || juliaArch == 32) "fmi3Load(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
+    @assert (juliaArch == 64 || juliaArch == 32) "createFMU3(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
     
     if Sys.iswindows()
         if juliaArch == 64
@@ -103,10 +103,10 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol, Nothing}=nothing)
         osStr = "Mac"
         fmuExt = "dylib"
     else
-        @assert false "fmi3Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS."
+        @assert false "createFMU3(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS."
     end
 
-    @assert (length(directories) > 0) "fmi3Load(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
+    @assert (length(directories) > 0) "createFMU3(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
     for directory in directories
         directoryBinary = joinpath(fmu.path, directory)
         if isdir(directoryBinary)
@@ -114,17 +114,17 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol, Nothing}=nothing)
             break
         end
     end
-    @assert isfile(pathToBinary) "fmi3Load(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+    @assert isfile(pathToBinary) "createFMU3(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
 
     # make URI ressource location
     tmpResourceLocation = string("file:///", fmu.path)
     tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
     fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") 
 
-    @info "fmi3Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
+    @info "createFMU3(...): FMU resources location is `$(fmu.fmuResourceLocation)`"
 
     if isCoSimulation(fmu) && isModelExchange(fmu) 
-        @info "fmi3Load(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
+        @info "createFMU3(...): FMU supports both CS and ME, using CS as default if nothing specified." # TODO ScheduledExecution
     end
 
     fmu.binaryPath = pathToBinary

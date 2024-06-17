@@ -68,7 +68,7 @@ function createFMU2(fmuPath, fmuZipPath; type::Union{Symbol, fmi2Type, Nothing}=
     else # type==nothing
         if isCoSimulation(fmu.modelDescription) && isModelExchange(fmu.modelDescription)
             fmu.type = fmi2TypeCoSimulation
-            logInfo(fmu, "fmi2Load(...): FMU supports both CS and ME, using CS as default if nothing specified.")
+            logInfo(fmu, "createFMU2(...): FMU supports both CS and ME, using CS as default if nothing specified.")
 
         elseif isCoSimulation(fmu.modelDescription)
             fmu.type = fmi2TypeCoSimulation
@@ -92,7 +92,7 @@ function createFMU2(fmuPath, fmuZipPath; type::Union{Symbol, fmi2Type, Nothing}=
     osStr = ""
 
     juliaArch = Sys.WORD_SIZE
-    @assert (juliaArch == 64 || juliaArch == 32) "fmi2Load(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
+    @assert (juliaArch == 64 || juliaArch == 32) "createFMU2(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
 
     if Sys.iswindows()
         if juliaArch == 64
@@ -119,10 +119,10 @@ function createFMU2(fmuPath, fmuZipPath; type::Union{Symbol, fmi2Type, Nothing}=
         osStr = "Mac"
         fmuExt = "dylib"
     else
-        @assert false "fmi2Load(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS/architecture."
+        @assert false "createFMU2(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS/architecture."
     end
 
-    @assert (length(directories) > 0) "fmi2Load(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
+    @assert (length(directories) > 0) "createFMU2(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
     for directory in directories
         directoryBinary = joinpath(fmu.path, directory)
         if isdir(directoryBinary)
@@ -130,14 +130,14 @@ function createFMU2(fmuPath, fmuZipPath; type::Union{Symbol, fmi2Type, Nothing}=
             break
         end
     end
-    @assert isfile(pathToBinary) "fmi2Load(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+    @assert isfile(pathToBinary) "createFMU2(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
 
     # make URI ressource location
     tmpResourceLocation = string("file:///", fmu.path)
     tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
     fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") # URIs.escapeuri(tmpResourceLocation)
 
-    logInfo(fmu, "fmi2Load(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
+    logInfo(fmu, "createFMU2(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
 
     fmu.binaryPath = pathToBinary
     loadPointers(fmu)
