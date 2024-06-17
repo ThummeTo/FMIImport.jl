@@ -39,4 +39,14 @@ include("FMI3/prep.jl")
 include("FMI3/ext.jl")
 include("FMI3/md.jl")
 
+# extensions
+using Requires
+using PackageExtensionCompat
+function __init__()
+    @require_extensions
+end
+
+# FMIZoo.jl
+# nothing to declare
+
 end # module
