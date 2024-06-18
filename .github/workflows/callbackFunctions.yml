@@ -15,6 +15,7 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: ['']
         include:
           - os: windows-latest
             arch: -A Win32
