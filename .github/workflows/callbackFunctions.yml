@@ -15,6 +15,10 @@ jobs:
       fail-fast: true
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: ['']
+        include:
+          - os: windows-latest
+            arch: -A Win32
     env:
       BUILD_TYPE: RelWithDebInfo
       CMAKE_SOURCE_DIR: ${{github.workspace}}/src/FMI2/callbackFunctions
@@ -22,10 +26,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure CMake
-        run:  cmake -S ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions -B ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        run:  cmake -S ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions -B ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}  ${{ matrix.arch }}
 
       - name: Build C++ Sources
         run:  cmake --build ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build --config ${{env.BUILD_TYPE}} --target install
@@ -39,22 +43,29 @@ jobs:
         run: ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build/test
 
       - name: Archive production artifacts (win)
-        if: success() && matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v3
+        if: success() && matrix.os == 'windows-latest' && matrix.arch == ''
+        uses: actions/upload-artifact@v4
         with:
           name: callbackFunctions-win-binaries
           path: src/FMI2/callbackFunctions/binaries/win64/
 
+      - name: Archive production artifacts (win32)
+        if: success() && matrix.os == 'windows-latest' && matrix.arch != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: callbackFunctions-win32-binaries
+          path: src/FMI2/callbackFunctions/binaries/win32/
+
       - name: Archive production artifacts (linux)
         if: success() && matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: callbackFunctions-linux-binaries
           path: src/FMI2/callbackFunctions/binaries/linux64/
 
       - name: Archive production artifacts (darwin)
         if: success() && matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: callbackFunctions-mac-binaries
           path: src/FMI2/callbackFunctions/binaries/darwin64/
@@ -64,29 +75,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download windows binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: callbackFunctions-win-binaries
           path: src/FMI2/callbackFunctions/binaries/win64/
 
+      - name: Download windows x86 binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: callbackFunctions-win32-binaries
+          path: src/FMI2/callbackFunctions/binaries/win32/
+
       - name: Download linux binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: callbackFunctions-linux-binaries
           path: src/FMI2/callbackFunctions/binaries/linux64/
 
       - name: Download darwin binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: callbackFunctions-mac-binaries
           path: src/FMI2/callbackFunctions/binaries/darwin64/
 
       - name: "Auto commit"
         if: ${{ github.event_name == 'push' }}
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Update callbackFunctions
           push_options: '--force-with-lease'
