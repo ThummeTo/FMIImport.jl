@@ -87,7 +87,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: callbackFunctions-win-binaries
-          path: src/FMI2/callbackFunctions/binaries/win3/
+          path: src/FMI2/callbackFunctions/binaries/win32/
 
       - name: Download linux binaries
         uses: actions/download-artifact@v3
