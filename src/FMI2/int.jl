@@ -71,11 +71,14 @@ function fmi2Instantiate!(fmu::FMU2;
     ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{FMU2ComponentEnvironment}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
-            @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
-
+            @assert Sys.WORD_SIZE == 64 || (Sys.iswindows() && Sys.WORD_SIZE == 32) "`externalCallbacks=true` is only supported for 64-bit and 32-Bit Windows"
             cbLibPath = CB_LIB_PATH
             if Sys.iswindows()
-                cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+                if Sys.WORD_SIZE == 64
+                    cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+                else
+                    cbLibPath = joinpath(cbLibPath, "win32", "callbackFunctions.dll")
+                end
             elseif Sys.islinux()
                 cbLibPath = joinpath(cbLibPath, "linux64", "libcallbackFunctions.so")
             elseif Sys.isapple()
