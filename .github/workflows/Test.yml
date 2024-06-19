@@ -22,6 +22,9 @@ jobs:
         julia-arch: [x64]
         os: [ubuntu-latest, windows-latest]
         experimental: [false]
+        include:
+          - os: windows-latest
+            julia-arch: x86
 
     steps:
       # Checks-out your repository
