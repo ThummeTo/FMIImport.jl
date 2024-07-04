@@ -5,7 +5,7 @@
 
 import FMIImport.FMICore: fmi3VariableNamingConventionFlat
 
-myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 
 @test fmi3GetVersion(myFMU) == "3.0"
 

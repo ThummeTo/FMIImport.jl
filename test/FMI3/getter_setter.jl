@@ -7,7 +7,7 @@
 # Prepare FMU #
 ###############
 
-myFMU = loadFMU("Feedthrough", "ModelicaReferenceFMUs", "0.0.20", "3.0")
+myFMU = loadFMU("Feedthrough", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
@@ -255,4 +255,4 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # Clean up #
 ############
 
-unloadFMU(myFMU)
+# unloadFMU(myFMU)

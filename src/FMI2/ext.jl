@@ -98,7 +98,7 @@ function createFMU2(fmuPath, fmuZipPath; type::Union{Symbol, fmi2Type, Nothing}=
         if juliaArch == 64
             directories = [joinpath("binaries", "win64"), joinpath("binaries","x86_64-windows")]
         else
-            directories = [joinpath("binaries", "win32"), joinpath("binaries","i686-windows")]
+            directories = [joinpath("binaries", "win32"), joinpath("binaries","x86-windows")]
         end
         osStr = "Windows"
         fmuExt = "dll"

@@ -12,7 +12,7 @@ myFMU = loadFMU("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 comp = fmi2Instantiate!(myFMU; loggingOn=false)
 @test comp != 0
 
-@test fmi2SetupExperiment(comp, 0.0) == 0
+@test fmi2SetupExperiment(comp, fmi2Real(0.0)) == 0
 
 @test fmi2EnterInitializationMode(comp) == 0
 
@@ -25,12 +25,12 @@ stringValueReferences = ["p_string", "p_string"]
 # Testing Single Values #
 #########################
 
-rndReal = 100 * rand()
+rndReal = fmi2Real(100 * rand())
 rndInteger = round(Integer, 100 * rand())
 rndBoolean = rand() > 0.5
 rndString = Random.randstring(12)
 
-cacheReal = 0.0
+cacheReal = fmi2Real(0.0)
 cacheInteger = 0
 cacheBoolean = false
 cacheString = ""
@@ -63,14 +63,13 @@ setValue(comp,
 ##################
 # Testing Arrays #
 ##################
-
-rndReal = [100 * rand(), 100 * rand()]
+rndReal = fmi2Real.([100 * rand(), 100 * rand()])
 rndInteger = [round(Integer, 100 * rand()), round(Integer, 100 * rand())]
 rndBoolean = [(rand() > 0.5), (rand() > 0.5)]
 tmp = Random.randstring(8)
 rndString = [tmp, tmp]
 
-cacheReal = [0.0, 0.0]
+cacheReal = fmi2Real.([0.0, 0.0])
 cacheInteger =  [fmi2Integer(0), fmi2Integer(0)]
 cacheBoolean = [fmi2Boolean(false), fmi2Boolean(false)]
 cacheString = [pointer(""), pointer("")]
@@ -114,7 +113,7 @@ dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(fmi2Integer, 1))
 @test fmi2SetRealInputDerivatives(comp, ["u_real"], ones(fmi2Integer, 1), zeros(1)) == 0
 
 @test fmi2ExitInitializationMode(comp) == 0
-@test fmi2DoStep(comp, 0.1) == 0
+@test fmi2DoStep(comp, fmi2Real(0.1)) == 0
 
 dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(fmi2Integer, 1))
 @test dirs == 0.0

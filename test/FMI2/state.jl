@@ -17,7 +17,7 @@ comp = fmi2Instantiate!(myFMU; loggingOn=true)
 @test fmi2EnterInitializationMode(comp) == 0
 @test fmi2ExitInitializationMode(comp) == 0
 
-@test fmi2SetupExperiment(comp, 0.0) == 0
+@test fmi2SetupExperiment(comp, fmi2Real(0.0)) == 0
 
 ###########################
 # Testing state functions #
@@ -33,7 +33,7 @@ if canGetSetFMUState(myFMU) && canSerializeFMUState(myFMU)
     @test length(serial) == len
     @test typeof(serial) == Array{Char,1}
 
-    fmi2SetReal(comp, "mass.s", 10.0)
+    fmi2SetReal(comp, "mass.s", fmi2Real(10.0))
     FMUstate = fmi2GetFMUstate(comp)
     @test fmi2GetReal(comp, "mass.s") == 10.0
 
