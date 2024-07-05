@@ -83,7 +83,7 @@ end
         @info "Automated testing is supported on Windows."
         for exportingTool in exportingToolsWindows
             runtestsFMI2(exportingTool)
-            # runtestsFMI3(exportingTool)
+            runtestsFMI3(exportingTool)
         end
     elseif Sys.islinux()
         @info "Automated testing is supported on Linux."
