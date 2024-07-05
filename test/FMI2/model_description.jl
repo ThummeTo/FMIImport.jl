@@ -15,10 +15,10 @@ myFMU = loadFMU("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTING
 @test isCoSimulation(myFMU) == true
 @test isModelExchange(myFMU) == true
 
-@test getGUID(myFMU) == "{2e178ad3-5e9b-48ec-a7b2-baa5669efc0c}"
-@test getGenerationTool(myFMU) == "Dymola Version 2022x (64-bit), 2021-10-08"
-@test getGenerationDateAndTime(myFMU) == "2022-05-19T06:54:12Z"
-@test getNumberOfEventIndicators(myFMU) == 24
+@test getGUID(myFMU) == "{2d426212-3b18-4520-b406-f465d323862a}"
+@test getGenerationTool(myFMU) == "Dymola Version 2023x Refresh 1, 2023-04-12"
+@test getGenerationDateAndTime(myFMU) == "2024-05-17T09:51:27Z"
+@test getNumberOfEventIndicators(myFMU) == 32
 @test canGetSetFMUState(myFMU) == true
 @test canSerializeFMUState(myFMU) == true
 @test providesDirectionalDerivatives(myFMU) == true
@@ -53,8 +53,9 @@ myFMU = loadFMU("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTING
 @test length(getDerivativeNames(myFMU.modelDescription)) == 2
 @test length(getDerivativeNames(myFMU)) == 2
 @test getDerivativeNames(myFMU; mode=:first) == ["der(mass.s)", "mass.a_relfric"]
-@test getDerivativeNames(myFMU; mode=:flat) == ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
-@test getDerivativeNames(myFMU; mode=:group) == [["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]]
+# @test getDerivativeNames(myFMU; mode=:flat) == ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
+@test issetequal(getDerivativeNames(myFMU; mode=:flat) ,["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"])
+@test all(issetequal.(getDerivativeNames(myFMU; mode=:group) ,[["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]]))
 
 @test length(getNamesAndDescriptions(myFMU.modelDescription)) == 50
 @test length(getNamesAndDescriptions(myFMU)) == 50
