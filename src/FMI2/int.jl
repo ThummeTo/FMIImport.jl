@@ -365,9 +365,6 @@ function fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
     nvr = Csize_t(length(vr))
     values = zeros(fmi2Real, nvr)
     fmi2GetReal!(c, vr, nvr, values)
-    println(values)
-    println(length(values))
-    println(typeof(values))
     if length(values) == 1
         return values[1]
     else
