@@ -6,7 +6,7 @@
 """
     getState(solution::FMUSolution, i::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-Returns the solution state for a given value reference `i` (for `isIndex=false`) or the i-th state (for `isIndex=true`). 
+Returns the solution state for a given value reference `i` (for `isIndex=false`) or the i-th state (for `isIndex=true`).
 """
 function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
@@ -28,7 +28,7 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
                     for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
                         if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -58,7 +58,7 @@ export getState
 """
     getStateDerivative(solution::FMUSolution, i::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-Returns the solution state derivative for a given value reference `i` (for `isIndex=false`) or the i-th state (for `isIndex=true`). 
+Returns the solution state derivative for a given value reference `i` (for `isIndex=false`) or the i-th state (for `isIndex=true`).
 """
 function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false, order::Integer=1)
     indices = []
@@ -79,7 +79,7 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
                     for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
                         if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -108,7 +108,7 @@ export getStateDerivative
 """
     getValue(solution::FMU2Solution, i::fmi2ValueReferenceFormat; isIndex::Bool=false)
 
-Returns the values for a given value reference `i` (for `isIndex=false`) or the i-th value (for `isIndex=true`). 
+Returns the values for a given value reference `i` (for `isIndex=false`) or the i-th value (for `isIndex=true`).
 Recording of values must be enabled.
 """
 function FMIBase.getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
@@ -131,7 +131,7 @@ function FMIBase.getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; 
                     for i in 1:length(solution.valueReferences)
                         if solution.valueReferences[i] == vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -161,7 +161,7 @@ export getValue
 """
     getTime(solution::FMU2Solution)
 
-Returns the points in time of the solution `solution`. 
+Returns the points in time of the solution `solution`.
 """
 function getTime(solution::FMUSolution)
     if !isnothing(solution.states)
