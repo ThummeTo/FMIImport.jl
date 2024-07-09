@@ -32,7 +32,7 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -83,7 +83,7 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -135,7 +135,7 @@ function FMIBase.getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; 
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not exist for this system."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not exist for this system."
                 end
             end
 
