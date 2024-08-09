@@ -13,6 +13,11 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 
 [weakdeps]
 FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+
+[extensions]
+FMIZooExt = ["FMIZoo"]
+
+[compat]
 Downloads = "1"
 FMIBase = "1.0.0"
 Libdl = "1"
