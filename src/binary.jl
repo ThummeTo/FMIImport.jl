@@ -8,7 +8,7 @@ using FMIBase.EzXML
 """
     dlsym_opt(fmu, libHandle, symbol)
 
-The same as `dlsym(libHandle, symbol)`, but returns - `libHandle`: The library handle, see `dlsym`. if the function `symbol` is not available.
+The same as `dlsym(libHandle, symbol)`, but returns - `Ptr{Cvoid}(C_NULL)` if the symbol `symbol` is not available.
 
 # Arguments
 - `fmu`: The FMU to log a info message if not available.
