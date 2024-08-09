@@ -187,29 +187,29 @@ function loadPointers(fmu::FMU3)
     fmu.cGetBoolean                                = dlsym(fmu.libHandle, :fmi3GetBoolean)
     fmu.cSetBoolean                                = dlsym(fmu.libHandle, :fmi3SetBoolean)
 
-    fmu.cGetString                                 = dlsym_opt(fmu.libHandle, :fmi3GetString)
-    fmu.cSetString                                 = dlsym_opt(fmu.libHandle, :fmi3SetString)
-    fmu.cGetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3GetBinary)
-    fmu.cSetBinary                                 = dlsym_opt(fmu.libHandle, :fmi3SetBinary)
+    fmu.cGetString                                 = dlsym_opt(fmu, fmu.libHandle, :fmi3GetString)
+    fmu.cSetString                                 = dlsym_opt(fmu, fmu.libHandle, :fmi3SetString)
+    fmu.cGetBinary                                 = dlsym_opt(fmu, fmu.libHandle, :fmi3GetBinary)
+    fmu.cSetBinary                                 = dlsym_opt(fmu, fmu.libHandle, :fmi3SetBinary)
 
     if canGetSetFMUState(fmu)
-        fmu.cGetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3GetFMUState)
-        fmu.cSetFMUState                           = dlsym_opt(fmu.libHandle, :fmi3SetFMUState)
-        fmu.cFreeFMUState                          = dlsym_opt(fmu.libHandle, :fmi3FreeFMUState)
+        fmu.cGetFMUState                           = dlsym_opt(fmu, fmu.libHandle, :fmi3GetFMUState)
+        fmu.cSetFMUState                           = dlsym_opt(fmu, fmu.libHandle, :fmi3SetFMUState)
+        fmu.cFreeFMUState                          = dlsym_opt(fmu, fmu.libHandle, :fmi3FreeFMUState)
     end
 
     if canSerializeFMUState(fmu)
-        fmu.cSerializedFMUStateSize                = dlsym_opt(fmu.libHandle, :fmi3SerializedFMUStateSize)
-        fmu.cSerializeFMUState                     = dlsym_opt(fmu.libHandle, :fmi3SerializeFMUState)
-        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu.libHandle, :fmi3DeserializeFMUState)
+        fmu.cSerializedFMUStateSize                = dlsym_opt(fmu, fmu.libHandle, :fmi3SerializedFMUStateSize)
+        fmu.cSerializeFMUState                     = dlsym_opt(fmu, fmu.libHandle, :fmi3SerializeFMUState)
+        fmu.cDeSerializeFMUState                   = dlsym_opt(fmu, fmu.libHandle, :fmi3DeserializeFMUState)
     end
 
     if providesDirectionalDerivatives(fmu)
-        fmu.cGetDirectionalDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetDirectionalDerivative)
+        fmu.cGetDirectionalDerivative              = dlsym_opt(fmu, fmu.libHandle, :fmi3GetDirectionalDerivative)
     end
 
     if providesAdjointDerivatives(fmu)
-        fmu.cGetAdjointDerivative              = dlsym_opt(fmu.libHandle, :fmi3GetAdjointDerivative)
+        fmu.cGetAdjointDerivative              = dlsym_opt(fmu, fmu.libHandle, :fmi3GetAdjointDerivative)
     end
 
     # CS specific function calls
