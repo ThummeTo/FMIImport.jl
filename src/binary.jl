@@ -5,13 +5,26 @@
 
 using FMIBase.EzXML
 
-function dlsym_opt(libHandle, symbol)
+"""
+    dlsym_opt(fmu, libHandle, symbol)
+
+The same as `dlsym(libHandle, symbol)`, but returns - `libHandle`: The library handle, see `dlsym`. if the function `symbol` is not available.
+
+# Arguments
+- `fmu`: The FMU to log a info message if not available.
+- `libHandle`: The library handle, see `dlsym`.
+- `symbol`: The library symbol, see `dlsym`.
+
+# Returns 
+Library symbol if available, else `Ptr{Cvoid}(C_NULL)`.
+"""
+function dlsym_opt(fmu, libHandle, symbol)
     addr = dlsym(libHandle, symbol; throw_error=false)
-    if addr == nothing
-        logWarning(fmu, "This FMU does not support function '$symbol'.")
+    if isnothing(addr)
+        logInfo(fmu, "This FMU does not support the optional function '$symbol'.")
         addr = Ptr{Cvoid}(C_NULL)
     end
-    addr
+    return addr
 end
 
 """
