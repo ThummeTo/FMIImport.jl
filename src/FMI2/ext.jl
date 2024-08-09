@@ -175,23 +175,23 @@ function loadPointers(fmu::FMU2)
     fmu.cSetInteger                   = dlsym(fmu.libHandle, :fmi2SetInteger)
     fmu.cGetBoolean                   = dlsym(fmu.libHandle, :fmi2GetBoolean)
     fmu.cSetBoolean                   = dlsym(fmu.libHandle, :fmi2SetBoolean)
-    fmu.cGetString                    = dlsym_opt(fmu.libHandle, :fmi2GetString)
-    fmu.cSetString                    = dlsym_opt(fmu.libHandle, :fmi2SetString)
+    fmu.cGetString                    = dlsym_opt(fmu, fmu.libHandle, :fmi2GetString)
+    fmu.cSetString                    = dlsym_opt(fmu, fmu.libHandle, :fmi2SetString)
 
     if canGetSetFMUState(fmu.modelDescription)
-        fmu.cGetFMUstate                  = dlsym_opt(fmu.libHandle, :fmi2GetFMUstate)
-        fmu.cSetFMUstate                  = dlsym_opt(fmu.libHandle, :fmi2SetFMUstate)
-        fmu.cFreeFMUstate                 = dlsym_opt(fmu.libHandle, :fmi2FreeFMUstate)
+        fmu.cGetFMUstate                  = dlsym_opt(fmu, fmu.libHandle, :fmi2GetFMUstate)
+        fmu.cSetFMUstate                  = dlsym_opt(fmu, fmu.libHandle, :fmi2SetFMUstate)
+        fmu.cFreeFMUstate                 = dlsym_opt(fmu, fmu.libHandle, :fmi2FreeFMUstate)
     end
 
     if canSerializeFMUState(fmu.modelDescription)
-        fmu.cSerializedFMUstateSize       = dlsym_opt(fmu.libHandle, :fmi2SerializedFMUstateSize)
-        fmu.cSerializeFMUstate            = dlsym_opt(fmu.libHandle, :fmi2SerializeFMUstate)
-        fmu.cDeSerializeFMUstate          = dlsym_opt(fmu.libHandle, :fmi2DeSerializeFMUstate)
+        fmu.cSerializedFMUstateSize       = dlsym_opt(fmu, fmu.libHandle, :fmi2SerializedFMUstateSize)
+        fmu.cSerializeFMUstate            = dlsym_opt(fmu, fmu.libHandle, :fmi2SerializeFMUstate)
+        fmu.cDeSerializeFMUstate          = dlsym_opt(fmu, fmu.libHandle, :fmi2DeSerializeFMUstate)
     end
 
     if providesDirectionalDerivatives(fmu.modelDescription)
-        fmu.cGetDirectionalDerivative     = dlsym_opt(fmu.libHandle, :fmi2GetDirectionalDerivative)
+        fmu.cGetDirectionalDerivative     = dlsym_opt(fmu, fmu.libHandle, :fmi2GetDirectionalDerivative)
     end
 
     # CS specific function calls
