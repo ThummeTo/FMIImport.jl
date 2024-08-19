@@ -36,8 +36,20 @@ Create a new modelExchange instance of the given fmu, adds a logger if `logginOn
 
 See also [`fmi3InstantiateModelExchange`](#@ref).
 """
-function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.modelName, type::fmi3Type = fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallBacks::Bool = fmu.executionConfig.externalCallbacks,
-    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+function fmi3InstantiateModelExchange!(
+    fmu::FMU3;
+    instanceName::String = fmu.modelName,
+    type::fmi3Type = fmu.type,
+    pushInstances::Bool = true,
+    visible::Bool = false,
+    loggingOn::Bool = fmu.executionConfig.loggingOn,
+    externalCallBacks::Bool = fmu.executionConfig.externalCallbacks,
+    logStatusOK::Bool = true,
+    logStatusWarning::Bool = true,
+    logStatusDiscard::Bool = true,
+    logStatusError::Bool = true,
+    logStatusFatal::Bool = true,
+)
 
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
@@ -46,13 +58,26 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    ptrLogger = @cfunction(
+        fmi3CallbackLogger,
+        Cvoid,
+        (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar})
+    )
 
     ptrInstanceEnvironment = Ptr{Cvoid}(pointer_from_objref(instEnv))
-    
+
     instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
-    
-    addr = fmi3InstantiateModelExchange(fmu.cInstantiateModelExchange, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), ptrInstanceEnvironment, ptrLogger)
+
+    addr = fmi3InstantiateModelExchange(
+        fmu.cInstantiateModelExchange,
+        pointer(instanceName),
+        pointer(instantiationTokenStr),
+        pointer(fmu.fmuResourceLocation),
+        fmi3Boolean(visible),
+        fmi3Boolean(loggingOn),
+        ptrInstanceEnvironment,
+        ptrLogger,
+    )
 
     if addr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateModelExchange!(...): Instantiation failed!"
@@ -65,22 +90,22 @@ function fmi3InstantiateModelExchange!(fmu::FMU3; instanceName::String = fmu.mod
     for c in fmu.instances
         if c.addr == addr
             instance = c
-            break 
+            break
         end
     end
 
     if instance !== nothing
         @info "fmi3InstantiateModelExchange!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl."
     else
-        
+
         instance = FMU3Instance(addr, fmu)
         instance.instanceEnvironment = instEnv
         instance.instanceName = instanceName
-        instance.z_prev  = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(instance))
-        instance.rootsFound  = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(instance))
-        instance.stateEvent  = fmi3False
-        instance.timeEvent   = fmi3False
-        instance.stepEvent   = fmi3False
+        instance.z_prev = zeros(fmi3Float64, fmi3GetNumberOfEventIndicators(instance))
+        instance.rootsFound = zeros(fmi3Int32, fmi3GetNumberOfEventIndicators(instance))
+        instance.stateEvent = fmi3False
+        instance.timeEvent = fmi3False
+        instance.stepEvent = fmi3False
         instance.type = fmi3TypeModelExchange
 
         if pushInstances
@@ -130,8 +155,22 @@ Create a new coSimulation instance of the given fmu, adds a logger if `logginOn 
 
 See also [`fmi3InstantiateCoSimulation`](#@ref).
 """
-function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-    eventModeUsed::Bool = false, ptrIntermediateUpdate=nothing, logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+function fmi3InstantiateCoSimulation!(
+    fmu::FMU3;
+    instanceName::String = fmu.modelName,
+    type::fmi3Type = fmu.type,
+    pushInstances::Bool = true,
+    visible::Bool = false,
+    loggingOn::Bool = fmu.executionConfig.loggingOn,
+    externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    eventModeUsed::Bool = false,
+    ptrIntermediateUpdate = nothing,
+    logStatusOK::Bool = true,
+    logStatusWarning::Bool = true,
+    logStatusDiscard::Bool = true,
+    logStatusError::Bool = true,
+    logStatusFatal::Bool = true,
+)
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
     instEnv.logStatusWarning = logStatusWarning
@@ -139,10 +178,27 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
-    
+    ptrLogger = @cfunction(
+        fmi3CallbackLogger,
+        Cvoid,
+        (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar})
+    )
+
     if ptrIntermediateUpdate === nothing
-        ptrIntermediateUpdate = @cfunction(fmi3CallbackIntermediateUpdate, Cvoid, (Ptr{Cvoid}, fmi3Float64, fmi3Boolean, fmi3Boolean, fmi3Boolean, fmi3Boolean, Ptr{fmi3Boolean}, Ptr{fmi3Float64}))
+        ptrIntermediateUpdate = @cfunction(
+            fmi3CallbackIntermediateUpdate,
+            Cvoid,
+            (
+                Ptr{Cvoid},
+                fmi3Float64,
+                fmi3Boolean,
+                fmi3Boolean,
+                fmi3Boolean,
+                fmi3Boolean,
+                Ptr{fmi3Boolean},
+                Ptr{fmi3Float64},
+            )
+        )
     end
     if fmu.modelDescription.coSimulation.hasEventMode !== nothing
         mode = eventModeUsed
@@ -150,11 +206,27 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
         mode = false
     end
     ptrInstanceEnvironment = Ptr{Cvoid}(pointer_from_objref(instEnv))
-    
+
     instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
-    
-    addr = fmi3InstantiateCoSimulation(fmu.cInstantiateCoSimulation, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), 
-                                            fmi3Boolean(mode), fmi3Boolean(fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !== nothing), fmu.modelDescription.intermediateUpdateValueReferences, Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)), ptrInstanceEnvironment, ptrLogger, ptrIntermediateUpdate)
+
+    addr = fmi3InstantiateCoSimulation(
+        fmu.cInstantiateCoSimulation,
+        pointer(instanceName),
+        pointer(instantiationTokenStr),
+        pointer(fmu.fmuResourceLocation),
+        fmi3Boolean(visible),
+        fmi3Boolean(loggingOn),
+        fmi3Boolean(mode),
+        fmi3Boolean(
+            fmu.modelDescription.coSimulation.canReturnEarlyAfterIntermediateUpdate !==
+            nothing,
+        ),
+        fmu.modelDescription.intermediateUpdateValueReferences,
+        Csize_t(length(fmu.modelDescription.intermediateUpdateValueReferences)),
+        ptrInstanceEnvironment,
+        ptrLogger,
+        ptrIntermediateUpdate,
+    )
 
     if addr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateCoSimulation!(...): Instantiation failed!"
@@ -167,7 +239,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
     for c in fmu.instances
         if c.addr == addr
             instance = c
-            break 
+            break
         end
     end
 
@@ -182,7 +254,7 @@ function fmi3InstantiateCoSimulation!(fmu::FMU3; instanceName::String=fmu.modelN
         if pushInstances
             push!(fmu.instances, instance)
         end
-    
+
         fmu.threadInstances[Threads.threadid()] = instance
     end
 
@@ -227,8 +299,22 @@ Create a new ScheduledExecution instance of the given fmu, adds a logger if `log
 
 See also [`fmi3InstantiateScheduledExecution`](#@ref).
 """
-function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cvoid}, ptrunlockPreemption::Ptr{Cvoid}, instanceName::String=fmu.modelName, type::fmi3Type=fmu.type, pushInstances::Bool = true, visible::Bool = false, loggingOn::Bool = fmu.executionConfig.loggingOn, externalCallbacks::Bool = fmu.executionConfig.externalCallbacks, 
-    logStatusOK::Bool=true, logStatusWarning::Bool=true, logStatusDiscard::Bool=true, logStatusError::Bool=true, logStatusFatal::Bool=true)
+function fmi3InstantiateScheduledExecution!(
+    fmu::FMU3;
+    ptrlockPreemption::Ptr{Cvoid},
+    ptrunlockPreemption::Ptr{Cvoid},
+    instanceName::String = fmu.modelName,
+    type::fmi3Type = fmu.type,
+    pushInstances::Bool = true,
+    visible::Bool = false,
+    loggingOn::Bool = fmu.executionConfig.loggingOn,
+    externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    logStatusOK::Bool = true,
+    logStatusWarning::Bool = true,
+    logStatusDiscard::Bool = true,
+    logStatusError::Bool = true,
+    logStatusFatal::Bool = true,
+)
 
     instEnv = FMU3InstanceEnvironment()
     instEnv.logStatusOK = logStatusOK
@@ -237,14 +323,30 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
     instEnv.logStatusError = logStatusError
     instEnv.logStatusFatal = logStatusFatal
 
-    ptrLogger = @cfunction(fmi3CallbackLogger, Cvoid, (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
-    ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid}, ))
+    ptrLogger = @cfunction(
+        fmi3CallbackLogger,
+        Cvoid,
+        (Ptr{FMU3InstanceEnvironment}, Cuint, Ptr{Cchar}, Ptr{Cchar})
+    )
+    ptrClockUpdate = @cfunction(fmi3CallbackClockUpdate, Cvoid, (Ptr{Cvoid},))
 
     ptrInstanceEnvironment = Ptr{FMU3InstanceEnvironment}(pointer_from_objref(instEnv))
-    
+
     instantiationTokenStr = "$(fmu.modelDescription.instantiationToken)"
-   
-    addr = fmi3InstantiateScheduledExecution(fmu.cInstantiateScheduledExecution, pointer(instanceName), pointer(instantiationTokenStr), pointer(fmu.fmuResourceLocation), fmi3Boolean(visible), fmi3Boolean(loggingOn), ptrInstanceEnvironment, ptrLogger, ptrClockUpdate, ptrlockPreemption, ptrunlockPreemption)
+
+    addr = fmi3InstantiateScheduledExecution(
+        fmu.cInstantiateScheduledExecution,
+        pointer(instanceName),
+        pointer(instantiationTokenStr),
+        pointer(fmu.fmuResourceLocation),
+        fmi3Boolean(visible),
+        fmi3Boolean(loggingOn),
+        ptrInstanceEnvironment,
+        ptrLogger,
+        ptrClockUpdate,
+        ptrlockPreemption,
+        ptrunlockPreemption,
+    )
 
     if addr == Ptr{Cvoid}(C_NULL)
         @error "fmi3InstantiateScheduledExecution!(...): Instantiation failed!"
@@ -257,7 +359,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
     for c in fmu.instances
         if c.addr == addr
             instance = c
-            break 
+            break
         end
     end
 
@@ -272,7 +374,7 @@ function fmi3InstantiateScheduledExecution!(fmu::FMU3; ptrlockPreemption::Ptr{Cv
         if pushInstances
             push!(fmu.instances, instance)
         end
-    
+
         fmu.threadInstances[Threads.threadid()] = instance
     end
 
@@ -308,12 +410,13 @@ function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
     addr = c.addr
 
     if popInstance
-        ind = findall(x->x.addr==c.addr, c.fmu.instances)
+        ind = findall(x -> x.addr == c.addr, c.fmu.instances)
         @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."
         deleteat!(c.fmu.instances, ind)
 
         for key in keys(c.fmu.threadInstances)
-            if !isnothing(c.fmu.threadInstances[key]) && c.fmu.threadInstances[key].addr == addr
+            if !isnothing(c.fmu.threadInstances[key]) &&
+               c.fmu.threadInstances[key].addr == addr
                 c.fmu.threadInstances[key] = nothing
             end
         end
@@ -387,7 +490,12 @@ More detailed:
 
 See also [`fmi3EnterInitializationMode`](@ref).
 """
-function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Nothing} = nothing, stopTime::Union{Real, Nothing} = nothing; tolerance::Union{Real, Nothing} = nothing)
+function fmi3EnterInitializationMode(
+    c::FMU3Instance,
+    startTime::Union{Real,Nothing} = nothing,
+    stopTime::Union{Real,Nothing} = nothing;
+    tolerance::Union{Real,Nothing} = nothing,
+)
     if c.state != fmi3InstanceStateInstantiated
         @warn "fmi3EnterInitializationMode(...): Needs to be called in state `fmi3IntanceStateInstantiated`."
     end
@@ -410,7 +518,15 @@ function fmi3EnterInitializationMode(c::FMU3Instance, startTime::Union{Real, Not
         stopTime = 0.0 # dummy value, will be ignored
     end
 
-    status = fmi3EnterInitializationMode(c.fmu.cEnterInitializationMode, c.addr, fmi3Boolean(toleranceDefined), fmi3Float64(tolerance), fmi3Float64(startTime), fmi3Boolean(stopTimeDefined), fmi3Float64(stopTime))
+    status = fmi3EnterInitializationMode(
+        c.fmu.cEnterInitializationMode,
+        c.addr,
+        fmi3Boolean(toleranceDefined),
+        fmi3Float64(tolerance),
+        fmi3Float64(startTime),
+        fmi3Boolean(stopTimeDefined),
+        fmi3Float64(stopTime),
+    )
     checkStatus(c, status)
     if status == fmi3StatusOK
         c.state = fmi3InstanceStateInitializationMode
@@ -486,7 +602,11 @@ More detailed:
 
 See also [`fmi3GetFloat32!`](@ref).
 """
-function fmi3GetFloat32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float32})
+function fmi3GetFloat32!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Float32},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetFloat32!(...): `vr` and `values` need to be the same length."
@@ -527,7 +647,11 @@ More detailed:
 
 See also [`fmi3SetFloat32`](@ref).
 """
-function fmi3SetFloat32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float32}, fmi3Float32})
+function fmi3SetFloat32(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Float32},fmi3Float32},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -605,7 +729,11 @@ More detailed:
 
 See also [`fmi3GetFloat64!`](@ref).
 """
-function fmi3GetFloat64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Float64})
+function fmi3GetFloat64!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Float64},
+)
 
     vr = prepareValueReference(c, vr)
 
@@ -647,7 +775,12 @@ More detailed:
 
 See also [`fmi3SetFloat64`](@ref).
 """
-function fmi3SetFloat64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Float64}, fmi3Float64}; kwargs...)
+function fmi3SetFloat64(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Float64},fmi3Float64};
+    kwargs...,
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -725,7 +858,11 @@ More detailed:
 
 See also [`fmi3GetInt8!`](@ref).
 """
-function fmi3GetInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int8})
+function fmi3GetInt8!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Int8},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt8!(...): `vr` and `values` need to be the same length."
@@ -766,7 +903,11 @@ More detailed:
 
 See also [`fmi3SetInt8`](@ref).
 """
-function fmi3SetInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int8}, fmi3Int8})
+function fmi3SetInt8(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Int8},fmi3Int8},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -844,7 +985,11 @@ More detailed:
 
 See also [`fmi3GetUInt8!`](@ref).
 """
-function fmi3GetUInt8!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt8})
+function fmi3GetUInt8!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3UInt8},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt8!(...): `vr` and `values` need to be the same length."
@@ -885,7 +1030,11 @@ More detailed:
 
 See also [`fmi3SetUInt8`](@ref).
 """
-function fmi3SetUInt8(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt8}, fmi3UInt8})
+function fmi3SetUInt8(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3UInt8},fmi3UInt8},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -963,7 +1112,11 @@ More detailed:
 
 See also [`fmi3GetInt16!`](@ref).
 """
-function fmi3GetInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int16})
+function fmi3GetInt16!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Int16},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt16!(...): `vr` and `values` need to be the same length."
@@ -1004,7 +1157,11 @@ More detailed:
 
 See also [`fmi3SetInt16`](@ref).
 """
-function fmi3SetInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int16}, fmi3Int16})
+function fmi3SetInt16(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Int16},fmi3Int16},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1082,7 +1239,11 @@ More detailed:
 
 See also [`fmi3GetUInt16!`](@ref).
 """
-function fmi3GetUInt16!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt16})
+function fmi3GetUInt16!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3UInt16},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt16!(...): `vr` and `values` need to be the same length."
@@ -1123,7 +1284,11 @@ More detailed:
 
 See also [`fmi3SetUInt16`](@ref).
 """
-function fmi3SetUInt16(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt16}, fmi3UInt16})
+function fmi3SetUInt16(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3UInt16},fmi3UInt16},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1201,7 +1366,11 @@ More detailed:
 
 See also [`fmi3GetInt32!`](@ref).
 """
-function fmi3GetInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int32})
+function fmi3GetInt32!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Int32},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt32!(...): `vr` and `values` need to be the same length."
@@ -1242,7 +1411,11 @@ More detailed:
 
 See also [`fmi3SetInt32`](@ref).
 """
-function fmi3SetInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int32}, fmi3Int32})
+function fmi3SetInt32(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Int32},fmi3Int32},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1320,7 +1493,11 @@ More detailed:
 
 See also [`fmi3GetUInt32!`](@ref).
 """
-function fmi3GetUInt32!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt32})
+function fmi3GetUInt32!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3UInt32},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt32!(...): `vr` and `values` need to be the same length."
@@ -1361,7 +1538,11 @@ More detailed:
 
 See also [`fmi3SetUInt32`](@ref).
 """
-function fmi3SetUInt32(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt32}, fmi3UInt32})
+function fmi3SetUInt32(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3UInt32},fmi3UInt32},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1440,7 +1621,11 @@ More detailed:
 
 See also [`fmi3GetInt64!`](@ref).
 """
-function fmi3GetInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Int64})
+function fmi3GetInt64!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Int64},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetInt64!(...): `vr` and `values` need to be the same length."
@@ -1481,7 +1666,11 @@ More detailed:
 
 See also [`fmi3SetInt64`](@ref).
 """
-function fmi3SetInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Int64}, fmi3Int64})
+function fmi3SetInt64(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Int64},fmi3Int64},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1559,7 +1748,11 @@ More detailed:
 
 See also [`fmi3GetUInt64!`](@ref).
 """
-function fmi3GetUInt64!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3UInt64})
+function fmi3GetUInt64!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3UInt64},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetUInt64!(...): `vr` and `values` need to be the same length."
@@ -1600,7 +1793,11 @@ More detailed:
 
 See also [`fmi3SetUInt64`](@ref).
 """
-function fmi3SetUInt64(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3UInt64}, fmi3UInt64})
+function fmi3SetUInt64(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3UInt64},fmi3UInt64},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1678,7 +1875,11 @@ More detailed:
 
 See also [`fmi3GetBoolean!`](@ref).
 """
-function fmi3GetBoolean!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Boolean})
+function fmi3GetBoolean!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Boolean},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetBoolean!(...): `vr` and `values` need to be the same length."
@@ -1720,7 +1921,11 @@ More detailed:
 
 See also [`fmi3SetBoolean`](@ref).
 """
-function fmi3SetBoolean(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
+function fmi3SetBoolean(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{Bool},Bool},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1800,7 +2005,11 @@ More detailed:
 
 See also [`fmi3GetString!`](@ref).
 """
-function fmi3GetString!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3String})
+function fmi3GetString!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3String},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetString!(...): `vr` and `values` need to be the same length."
@@ -1844,7 +2053,11 @@ More detailed:
 
 See also [`fmi3SetString`](@ref).
 """
-function fmi3SetString(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{String}, String})
+function fmi3SetString(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{String},String},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -1923,7 +2136,11 @@ More detailed:
 
 See also [`fmi3GetBinary!`](@ref).
 """
-function fmi3GetBinary!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Binary})
+function fmi3GetBinary!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Binary},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetBinary!(...): `vr` and `values` need to be the same length."
@@ -1965,7 +2182,12 @@ More detailed:
 
 See also [`fmi3SetBinary`](@ref).
 """
-function fmi3SetBinary(c::FMU3Instance, vr::fmi3ValueReferenceFormat, valueSizes::Union{AbstractArray{Csize_t}, Csize_t}, values::Union{AbstractArray{fmi3Binary}, fmi3Binary})
+function fmi3SetBinary(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    valueSizes::Union{AbstractArray{Csize_t},Csize_t},
+    values::Union{AbstractArray{fmi3Binary},fmi3Binary},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -2043,7 +2265,11 @@ More detailed:
 
 See also [`fmi3GetClock!`](@ref).
 """
-function fmi3GetClock!(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::AbstractArray{fmi3Clock})
+function fmi3GetClock!(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::AbstractArray{fmi3Clock},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi3GetClock!(...): `vr` and `values` need to be the same length."
@@ -2084,7 +2310,11 @@ More detailed:
 
 See also [`fmi3SetClock`](@ref).
 """
-function fmi3SetClock(c::FMU3Instance, vr::fmi3ValueReferenceFormat, values::Union{AbstractArray{fmi3Clock}, fmi3Clock})
+function fmi3SetClock(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    values::Union{AbstractArray{fmi3Clock},fmi3Clock},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -2233,7 +2463,7 @@ function fmi3DeSerializeFMUState(c::FMU3Instance, serializedState::AbstractArray
 
     status = fmi3DeSerializeFMUState!(c, serializedState, Csize_t(size), stateRef)
     @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
-    
+
     state = stateRef[]
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3DeSerializeFMUState!`
@@ -2279,20 +2509,27 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi3GetDirectionalDerivative`](@ref).
 """
-function fmi3GetDirectionalDerivative(c::FMU3Instance,
-                                      unknowns::AbstractArray{fmi3ValueReference},
-                                      knowns::AbstractArray{fmi3ValueReference},
-                                      seed::AbstractArray{fmi3Float64})
-    
+function fmi3GetDirectionalDerivative(
+    c::FMU3Instance,
+    unknowns::AbstractArray{fmi3ValueReference},
+    knowns::AbstractArray{fmi3ValueReference},
+    seed::AbstractArray{fmi3Float64},
+)
+
     nUnknown = Csize_t(length(unknowns))
     sensitivity = zeros(fmi3Float64, nUnknown)
 
     status = fmi3GetDirectionalDerivative!(c, unknowns, knowns, seed, sensitivity)
     @assert isStatusOK(c, status) "Failed with status `$(status)`."
-    
+
     return sensitivity
 end
-fmi3GetDirectionalDerivative(c::FMU3Instance, unknown::fmi3ValueReference, known::fmi3ValueReference, seed::fmi3Float64) = fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
+fmi3GetDirectionalDerivative(
+    c::FMU3Instance,
+    unknown::fmi3ValueReference,
+    known::fmi3ValueReference,
+    seed::fmi3Float64,
+) = fmi3GetDirectionalDerivative(c, [unknown], [known], [seed])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetDirectionalDerivative!`
 export fmi3GetDirectionalDerivative
 
@@ -2345,11 +2582,13 @@ More detailed:
 
 See also [`fmi3GetDirectionalDerivative!`](@ref).
 """
-function fmi3GetDirectionalDerivative!(c::FMU3Instance,
-                                      unknowns::AbstractArray{fmi3ValueReference},
-                                      knowns::AbstractArray{fmi3ValueReference},
-                                      seed::AbstractArray{fmi3Float64},
-                                      sensitivity::AbstractArray{fmi3Float64})
+function fmi3GetDirectionalDerivative!(
+    c::FMU3Instance,
+    unknowns::AbstractArray{fmi3ValueReference},
+    knowns::AbstractArray{fmi3ValueReference},
+    seed::AbstractArray{fmi3Float64},
+    sensitivity::AbstractArray{fmi3Float64},
+)
 
     nUnknowns = Csize_t(length(unknowns))
     nKnowns = Csize_t(length(knowns))
@@ -2357,7 +2596,17 @@ function fmi3GetDirectionalDerivative!(c::FMU3Instance,
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
 
-    status = fmi3GetDirectionalDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
+    status = fmi3GetDirectionalDerivative!(
+        c,
+        unknowns,
+        nUnknowns,
+        knowns,
+        nKnowns,
+        seed,
+        nSeed,
+        sensitivity,
+        nSensitivity,
+    )
 
     return status
 end
@@ -2401,20 +2650,27 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi3GetAdjointDerivative`](@ref).
 """
-function fmi3GetAdjointDerivative(c::FMU3Instance,
-                                      unknowns::AbstractArray{fmi3ValueReference},
-                                      knowns::AbstractArray{fmi3ValueReference},
-                                      seed::AbstractArray{fmi3Float64})
-    
+function fmi3GetAdjointDerivative(
+    c::FMU3Instance,
+    unknowns::AbstractArray{fmi3ValueReference},
+    knowns::AbstractArray{fmi3ValueReference},
+    seed::AbstractArray{fmi3Float64},
+)
+
     nUnknown = Csize_t(length(unknowns))
     sensitivity = zeros(fmi3Float64, nUnknown)
 
     status = fmi3GetAdjointDerivative!(c, unknowns, knowns, seed, sensitivity)
     @assert status == Int(fmi3StatusOK) ["Failed with status `$status`."]
-    
+
     return sensitivity
 end
-fmi3GetAdjointDerivative(c::FMU3Instance, unknowns::fmi3ValueReference, knowns::fmi3ValueReference, seed::fmi3Float64) = fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
+fmi3GetAdjointDerivative(
+    c::FMU3Instance,
+    unknowns::fmi3ValueReference,
+    knowns::fmi3ValueReference,
+    seed::fmi3Float64,
+) = fmi3GetAdjointDerivative(c, [unknowns], [knowns], [seed])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetAdjointDerivative!`
 export fmi3GetAdjointDerivative
 
@@ -2467,11 +2723,13 @@ More detailed:
 
 See also [`fmi3GetAdjointDerivative!`](@ref).
 """
-function fmi3GetAdjointDerivative!(c::FMU3Instance,
-                                      unknowns::AbstractArray{fmi3ValueReference},
-                                      knowns::AbstractArray{fmi3ValueReference},
-                                      sensitivity::AbstractArray,
-                                      seed::AbstractArray{fmi3Float64})
+function fmi3GetAdjointDerivative!(
+    c::FMU3Instance,
+    unknowns::AbstractArray{fmi3ValueReference},
+    knowns::AbstractArray{fmi3ValueReference},
+    sensitivity::AbstractArray,
+    seed::AbstractArray{fmi3Float64},
+)
 
     nKnowns = Csize_t(length(knowns))
     nUnknowns = Csize_t(length(unknowns))
@@ -2479,7 +2737,17 @@ function fmi3GetAdjointDerivative!(c::FMU3Instance,
     nSeed = Csize_t(length(seed))
     nSensitivity = Csize_t(length(sensitivity))
 
-    status = fmi3GetAdjointDerivative!(c, unknowns, nUnknowns, knowns, nKnowns, seed, nSeed, sensitivity, nSensitivity)
+    status = fmi3GetAdjointDerivative!(
+        c,
+        unknowns,
+        nUnknowns,
+        knowns,
+        nKnowns,
+        seed,
+        nSeed,
+        sensitivity,
+        nSensitivity,
+    )
 
     return status
 end
@@ -2505,13 +2773,17 @@ Retrieves the n-th derivative of output values.
 
 See also [`fmi3GetOutputDerivatives`](@ref).
 """
-function fmi3GetOutputDerivatives(c::FMU3Instance, vr::fmi3ValueReferenceFormat, order::AbstractArray{Integer})
+function fmi3GetOutputDerivatives(
+    c::FMU3Instance,
+    vr::fmi3ValueReferenceFormat,
+    order::AbstractArray{Integer},
+)
     vr = prepareValueReference(c, vr)
     order = prepareValue(order)
     nvr = Csize_t(length(vr))
     values = zeros(fmi3Float64, nvr)
     fmi3GetOutputDerivatives!(c, vr, nvr, order, values, nvr)
-    
+
     if length(values) == 1
         return values[1]
     else
@@ -2605,7 +2877,10 @@ This information can only be retrieved if the 'providesPerElementDependencies' t
 
 See also [`fmi3GetNumberOfVariableDependencies`](@ref).
 """
-function fmi3GetNumberOfVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
+function fmi3GetNumberOfVariableDependencies(
+    c::FMU3Instance,
+    vr::Union{fmi3ValueReference,String},
+)
     if typeof(vr) == String
         vr = fmi3String2ValueReference(c.fmu.modelDescription, vr)
     end
@@ -2646,7 +2921,7 @@ The actual dependencies (of type dependenciesKind) can be retrieved by calling t
 
 See also [`fmi3GetVariableDependencies!`](@ref).
 """
-function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference, String})
+function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReference,String})
     if typeof(vr) == String
         vr = fmi3String2ValueReference(c.fmu.modelDescription, vr)
     end
@@ -2656,9 +2931,20 @@ function fmi3GetVariableDependencies(c::FMU3Instance, vr::Union{fmi3ValueReferen
     elementIndiceOfIndependents = Array{Csize_t}(undef, nDependencies)
     dependencyKinds = Array{fmi3DependencyKind}(undef, nDependencies)
 
-    fmi3GetVariableDependencies!(c, vr, elementIndiceOfDependents, independents, elementIndiceOfIndependents, dependencyKinds, nDependencies)
+    fmi3GetVariableDependencies!(
+        c,
+        vr,
+        elementIndiceOfDependents,
+        independents,
+        elementIndiceOfIndependents,
+        dependencyKinds,
+        nDependencies,
+    )
 
-    return elementIndiceOfDependents, independents, elementIndiceOfIndependents, dependencyKinds
+    return elementIndiceOfDependents,
+    independents,
+    elementIndiceOfIndependents,
+    dependencyKinds
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi3GetVariableDependencies!`
 export fmi3GetVariableDependencies
@@ -2778,12 +3064,15 @@ More detailed:
 
 See also [`fmi3SetContinuousStates`](@ref).
 """
-function fmi3SetContinuousStates(c::FMU3Instance, x::Union{AbstractArray{Float32}, AbstractArray{Float64}})
+function fmi3SetContinuousStates(
+    c::FMU3Instance,
+    x::Union{AbstractArray{Float32},AbstractArray{Float64}},
+)
     nx = Csize_t(length(x))
     status = fmi3SetContinuousStates(c, Array{fmi3Float64}(x), nx)
     if status == fmi3StatusOK
         c.x = x
-    end 
+    end
     return status
 end
 
@@ -2807,7 +3096,7 @@ vector.
 
 See also [`fmi3GetContinuousStateDerivatives`](@ref).
 """
-function  fmi3GetContinuousStateDerivatives(c::FMU3Instance)
+function fmi3GetContinuousStateDerivatives(c::FMU3Instance)
     nx = Csize_t(c.fmu.modelDescription.numberOfContinuousStates)
     derivatives = zeros(fmi3Float64, nx)
     fmi3GetContinuousStateDerivatives!(c, derivatives)
@@ -2843,8 +3132,12 @@ More detailed:
 
 See also [`fmi3GetContinuousStateDerivatives!`](@ref).
 """
-function  fmi3GetContinuousStateDerivatives!(c::FMU3Instance, derivatives::AbstractArray{fmi3Float64})
-    status = fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
+function fmi3GetContinuousStateDerivatives!(
+    c::FMU3Instance,
+    derivatives::AbstractArray{fmi3Float64},
+)
+    status =
+        fmi3GetContinuousStateDerivatives!(c, derivatives, Csize_t(length(derivatives)))
     if status == fmi3StatusOK
         c.ẋ = derivatives
     end
@@ -2889,16 +3182,21 @@ function fmi3UpdateDiscreteStates(c::FMU3Instance)
     refnETD = Ref(nextEventTimeDefined)
     refnET = Ref(nextEventTime)
 
-    fmi3UpdateDiscreteStates(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET) 
+    fmi3UpdateDiscreteStates(c, refdS, reftS, refnOCS, refvOCS, refnETD, refnET)
 
     discreteStatesNeedUpdate = refdS[]
     terminateSimulation = reftS[]
-    nominalsOfContinuousStatesChanged =refnOCS[]
+    nominalsOfContinuousStatesChanged = refnOCS[]
     valuesOfContinuousStatesChanged = refvOCS[]
     nextEventTimeDefined = refnETD[]
     nextEventTime = refnET[]
 
-    discreteStatesNeedUpdate, terminateSimulation, nominalsOfContinuousStatesChanged, valuesOfContinuousStatesChanged, nextEventTimeDefined, nextEventTime
+    discreteStatesNeedUpdate,
+    terminateSimulation,
+    nominalsOfContinuousStatesChanged,
+    valuesOfContinuousStatesChanged,
+    nextEventTimeDefined,
+    nextEventTime
 end
 
 """
@@ -2919,14 +3217,16 @@ Results are returned, use `fmi3UpdateDiscreteStates` for the out-of-place varian
 - FMISpec3.0: 2.3.5. State: Event Mode
 """
 function fmi3UpdateDiscreteStates!(c::FMU3Instance)
-   
-    status = fmi3UpdateDiscreteStates(c, 
-        c._ptr_discreteStatesNeedUpdate, 
-        c._ptr_terminateSimulation, 
-        c._ptr_nominalsOfContinuousStatesChanged, 
-        c._ptr_valuesOfContinuousStatesChanged, 
-        c._ptr_nextEventTimeDefined, 
-        c._ptr_nextEventTime)
+
+    status = fmi3UpdateDiscreteStates(
+        c,
+        c._ptr_discreteStatesNeedUpdate,
+        c._ptr_terminateSimulation,
+        c._ptr_nominalsOfContinuousStatesChanged,
+        c._ptr_valuesOfContinuousStatesChanged,
+        c._ptr_nextEventTimeDefined,
+        c._ptr_nextEventTime,
+    )
 
     return status
 end
@@ -2988,13 +3288,17 @@ More detailed:
 
 See also [`fmi3CompletedIntegratorStep`](@ref).
 """
-function fmi3CompletedIntegratorStep(c::FMU3Instance,
-    noSetFMUStatePriorToCurrentPoint::fmi3Boolean)
-    
-    status = fmi3CompletedIntegratorStep!(c,
+function fmi3CompletedIntegratorStep(
+    c::FMU3Instance,
+    noSetFMUStatePriorToCurrentPoint::fmi3Boolean,
+)
+
+    status = fmi3CompletedIntegratorStep!(
+        c,
         noSetFMUStatePriorToCurrentPoint,
         c._ptr_enterEventMode,
-        c._ptr_terminateSimulation)
+        c._ptr_terminateSimulation,
+    )
 
     return (status, c.enterEventMode, c.terminateSimulation)
 end
@@ -3031,8 +3335,22 @@ More detailed:
 
 See also [`fmi3EnterEventMode`](@ref).
 """
-function fmi3EnterEventMode(c::FMU3Instance, stepEvent::Bool, stateEvent::Bool, rootsFound::AbstractArray{fmi3Int32}, nEventIndicators::Csize_t, timeEvent::Bool)
-    fmi3EnterEventMode(c, fmi3Boolean(stepEvent), fmi3Boolean(stateEvent), rootsFound, nEventIndicators, fmi3Boolean(timeEvent))
+function fmi3EnterEventMode(
+    c::FMU3Instance,
+    stepEvent::Bool,
+    stateEvent::Bool,
+    rootsFound::AbstractArray{fmi3Int32},
+    nEventIndicators::Csize_t,
+    timeEvent::Bool,
+)
+    fmi3EnterEventMode(
+        c,
+        fmi3Boolean(stepEvent),
+        fmi3Boolean(stateEvent),
+        rootsFound,
+        nEventIndicators,
+        fmi3Boolean(timeEvent),
+    )
 end
 
 """
@@ -3069,8 +3387,16 @@ More detailed:
 
 See also [`fmi3DoStep!`](@ref).
 """
-function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Nothing} = nothing, communicationStepSize::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true,
-    eventEncountered::fmi3Boolean = fmi3False, terminateSimulation::fmi3Boolean = fmi3False, earlyReturn::fmi3Boolean = fmi3False, lastSuccessfulTime::fmi3Float64 = 0.0)
+function fmi3DoStep!(
+    c::FMU3Instance,
+    currentCommunicationPoint::Union{Real,Nothing} = nothing,
+    communicationStepSize::Union{Real,Nothing} = nothing,
+    noSetFMUStatePriorToCurrentPoint::Bool = true,
+    eventEncountered::fmi3Boolean = fmi3False,
+    terminateSimulation::fmi3Boolean = fmi3False,
+    earlyReturn::fmi3Boolean = fmi3False,
+    lastSuccessfulTime::fmi3Float64 = 0.0,
+)
 
     if currentCommunicationPoint === nothing
         currentCommunicationPoint = c.t
@@ -3089,7 +3415,16 @@ function fmi3DoStep!(c::FMU3Instance, currentCommunicationPoint::Union{Real, Not
     reflastSuccessfulTime = Ref(lastSuccessfulTime)
 
     c.t = currentCommunicationPoint
-    status = fmi3DoStep!(c, fmi3Float64(currentCommunicationPoint), fmi3Float64(communicationStepSize), fmi3Boolean(noSetFMUStatePriorToCurrentPoint), refeventEncountered, refterminateSimulation, refearlyReturn, reflastSuccessfulTime)
+    status = fmi3DoStep!(
+        c,
+        fmi3Float64(currentCommunicationPoint),
+        fmi3Float64(communicationStepSize),
+        fmi3Boolean(noSetFMUStatePriorToCurrentPoint),
+        refeventEncountered,
+        refterminateSimulation,
+        refearlyReturn,
+        reflastSuccessfulTime,
+    )
     c.t += communicationStepSize
 
     eventEncountered = refeventEncountered[]

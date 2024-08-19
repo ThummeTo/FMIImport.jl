@@ -7,33 +7,43 @@ import FMIBase: isEventMode, isContinuousTimeMode, isTrue, isStatusOK
 using FMIBase: handleEvents
 
 function setBeforeInitialization(mv::FMIImport.fmi3Variable)
-    return mv.variability != fmi3VariabilityConstant && mv.initial ∈ (fmi3InitialApprox, fmi3InitialExact)
+    return mv.variability != fmi3VariabilityConstant &&
+           mv.initial ∈ (fmi3InitialApprox, fmi3InitialExact)
 end
 
 function setInInitialization(mv::FMIImport.fmi3Variable)
-    return mv.causality == fmi3CausalityInput || (mv.causality != fmi3CausalityParameter && mv.variability == fmi3VariabilityTunable) || (mv.variability != fmi3VariabilityConstant && mv.initial == fmi3InitialExact)
+    return mv.causality == fmi3CausalityInput ||
+           (
+               mv.causality != fmi3CausalityParameter &&
+               mv.variability == fmi3VariabilityTunable
+           ) ||
+           (mv.variability != fmi3VariabilityConstant && mv.initial == fmi3InitialExact)
 end
 
-function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3Type=fmu.type;
-    instantiate::Union{Nothing, Bool}=fmu.executionConfig.instantiate, 
-    freeInstance::Union{Nothing, Bool}=fmu.executionConfig.freeInstance, 
-    terminate::Union{Nothing, Bool}=fmu.executionConfig.terminate, 
-    reset::Union{Nothing, Bool}=fmu.executionConfig.reset, 
-    setup::Union{Nothing, Bool}=fmu.executionConfig.setup, 
-    parameters::Union{Dict{<:Any, <:Any}, Nothing}=nothing, 
-    t_start::Real=0.0, 
-    t_stop::Union{Real, Nothing}=nothing, 
-    tolerance::Union{Real, Nothing}=nothing,
-    x0::Union{AbstractArray{<:Real}, Nothing}=nothing, 
-    inputs::Union{Dict{<:Any, <:Any}, Nothing}=nothing, 
-    cleanup::Bool=false, 
-    handleEvents=handleEvents,
-    instantiateKwargs...)
+function prepareSolveFMU(
+    fmu::FMU3,
+    c::Union{Nothing,FMU3Instance},
+    type::fmi3Type = fmu.type;
+    instantiate::Union{Nothing,Bool} = fmu.executionConfig.instantiate,
+    freeInstance::Union{Nothing,Bool} = fmu.executionConfig.freeInstance,
+    terminate::Union{Nothing,Bool} = fmu.executionConfig.terminate,
+    reset::Union{Nothing,Bool} = fmu.executionConfig.reset,
+    setup::Union{Nothing,Bool} = fmu.executionConfig.setup,
+    parameters::Union{Dict{<:Any,<:Any},Nothing} = nothing,
+    t_start::Real = 0.0,
+    t_stop::Union{Real,Nothing} = nothing,
+    tolerance::Union{Real,Nothing} = nothing,
+    x0::Union{AbstractArray{<:Real},Nothing} = nothing,
+    inputs::Union{Dict{<:Any,<:Any},Nothing} = nothing,
+    cleanup::Bool = false,
+    handleEvents = handleEvents,
+    instantiateKwargs...,
+)
 
     ignore_derivatives() do
-    
+
         c = nothing
-    
+
         # instantiate (hard)
         if instantiate
             if type == fmi3TypeCoSimulation
@@ -65,31 +75,41 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
         end
 
         @assert !isnothing(c) "No FMU instance available, allocate one or use `fmu.executionConfig.instantiate=true`."
-    
+
         # soft terminate (if necessary)
         if terminate
-            retcode = fmi3Terminate(c; soft=true)
+            retcode = fmi3Terminate(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Termination failed with return code $(retcode)."
         end
 
         # soft reset (if necessary)
         if reset
-            retcode = fmi3Reset(c; soft=true)
+            retcode = fmi3Reset(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Reset failed with return code $(retcode)."
-        end 
+        end
 
         # setup experiment (hard)
         # [Note] this part is handled by fmi3EnterInitializationMode
-    
+
         # parameters
         if !isnothing(parameters)
-            retcodes = setValue(c, collect(keys(parameters)), collect(values(parameters)); filter=setBeforeInitialization)
+            retcodes = setValue(
+                c,
+                collect(keys(parameters)),
+                collect(values(parameters));
+                filter = setBeforeInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
 
         # inputs
         if !isnothing(inputs)
-            retcodes = setValue(c, collect(keys(inputs)), collect(values(inputs)); filter=setBeforeInitialization)
+            retcodes = setValue(
+                c,
+                collect(keys(inputs)),
+                collect(values(inputs));
+                filter = setBeforeInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
 
@@ -97,7 +117,12 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
         if !isnothing(x0)
             #retcode = fmi3SetContinuousStates(c, x0)
             #@assert retcode == fmi3StatusOK "fmi3Simulate(...): Setting initial state failed with return code $(retcode)."
-            retcodes = setValue(c, fmu.modelDescription.stateValueReferences, x0; filter=setBeforeInitialization)
+            retcodes = setValue(
+                c,
+                fmu.modelDescription.stateValueReferences,
+                x0;
+                filter = setBeforeInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
 
@@ -109,12 +134,22 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
 
         # parameters
         if parameters !== nothing
-            retcodes = setValue(c, collect(keys(parameters)), collect(values(parameters)); filter=setInInitialization)
+            retcodes = setValue(
+                c,
+                collect(keys(parameters)),
+                collect(values(parameters));
+                filter = setInInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
 
         if inputs !== nothing
-            retcodes = setValue(c, collect(keys(inputs)), collect(values(inputs)); filter=setInInitialization)
+            retcodes = setValue(
+                c,
+                collect(keys(inputs)),
+                collect(values(inputs));
+                filter = setInInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
 
@@ -122,7 +157,12 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
         if x0 !== nothing
             #retcode = fmi3SetContinuousStates(c, x0)
             #@assert retcode == fmi3StatusOK "fmi3Simulate(...): Setting initial state failed with return code $(retcode)."
-            retcodes = setValue(c, fmu.modelDescription.stateValueReferences, x0; filter=setInInitialization)
+            retcodes = setValue(
+                c,
+                fmu.modelDescription.stateValueReferences,
+                x0;
+                filter = setInInitialization,
+            )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
 
@@ -134,7 +174,7 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
 
         # allocate a solution object
         c.solution = FMUSolution(c)
-    
+
         # ME specific
         if type == fmi3TypeModelExchange
             if isnothing(x0) && !c.fmu.isZeroState
@@ -143,7 +183,7 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
 
             if instantiate || reset # we have a fresh instance 
                 @debug "[NEW INST]"
-                handleEvents(c) 
+                handleEvents(c)
             end
 
             c.fmu.hasStateEvents = (c.fmu.modelDescription.numberOfEventIndicators > 0)
@@ -154,7 +194,7 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::fmi3T
 
     return c, x0
 end
-function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::Symbol; kwargs...)
+function prepareSolveFMU(fmu::FMU3, c::Union{Nothing,FMU3Instance}, type::Symbol; kwargs...)
     if type == :CS
         return prepareSolveFMU(fmu, c, fmi3TypeCoSimulation; kwargs...)
     elseif type == :ME
@@ -166,34 +206,37 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing, FMU3Instance}, type::Symbo
     end
 end
 
-function finishSolveFMU(fmu::FMU3, c::FMU3Instance;
-    freeInstance::Union{Nothing, Bool}=nothing, 
-    terminate::Union{Nothing, Bool}=nothing,
-    popComponent::Bool=true)
+function finishSolveFMU(
+    fmu::FMU3,
+    c::FMU3Instance;
+    freeInstance::Union{Nothing,Bool} = nothing,
+    terminate::Union{Nothing,Bool} = nothing,
+    popComponent::Bool = true,
+)
 
-    if isnothing(c) 
-        return 
+    if isnothing(c)
+        return
     end
 
     ignore_derivatives() do
-        if c === nothing 
-            return 
+        if c === nothing
+            return
         end
-    
-        if terminate === nothing 
+
+        if terminate === nothing
             terminate = fmu.executionConfig.terminate
         end
-    
-        if freeInstance === nothing 
+
+        if freeInstance === nothing
             freeInstance = fmu.executionConfig.freeInstance
         end
-    
+
         # soft terminate (if necessary)
         if terminate
-            retcode = fmi3Terminate(c; soft=true)
+            retcode = fmi3Terminate(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Termination failed with return code $(retcode)."
         end
-    
+
         # freeInstance (hard)
         if freeInstance
             fmi3FreeInstance!(c)
@@ -203,10 +246,15 @@ function finishSolveFMU(fmu::FMU3, c::FMU3Instance;
     return c
 end
 
-function finishSolveFMU(fmu::Vector{FMU2}, c::AbstractVector{Union{FMU2Component, Nothing}}, freeInstance::Union{Nothing, Bool}, terminate::Union{Nothing, Bool})
+function finishSolveFMU(
+    fmu::Vector{FMU2},
+    c::AbstractVector{Union{FMU2Component,Nothing}},
+    freeInstance::Union{Nothing,Bool},
+    terminate::Union{Nothing,Bool},
+)
 
     ignore_derivatives() do
-        for i in 1:length(fmu)
+        for i = 1:length(fmu)
             if terminate === nothing
                 terminate = fmu[i].executionConfig.terminate
             end
@@ -219,7 +267,7 @@ function finishSolveFMU(fmu::Vector{FMU2}, c::AbstractVector{Union{FMU2Component
 
                 # soft terminate (if necessary)
                 if terminate
-                    retcode = fmi2Terminate(c[i]; soft=true)
+                    retcode = fmi2Terminate(c[i]; soft = true)
                     @assert retcode == fmi2StatusOK "fmi2Simulate(...): Termination failed with return code $(retcode)."
                 end
 

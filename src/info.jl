@@ -4,14 +4,14 @@
 #
 
 # Prints value references, but shortens if the number exceeds `max`.
-function printValueReferences(fmu, vrs; max=10)
+function printValueReferences(fmu, vrs; max = 10)
     len = length(vrs)
     if len <= max
         for vr in vrs
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
     else
-        half = floor(Integer, max)-1
+        half = floor(Integer, max) - 1
         for vr in vrs[1:half]
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
@@ -68,22 +68,44 @@ function info(fmu::FMU2)
 
     println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")
     if isCoSimulation(fmu)
-        println("\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)")
-        println("\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUstate)")
-        println("\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUstate)")
-        println("\t\tDir. Derivatives:\t$(fmu.modelDescription.coSimulation.providesDirectionalDerivative)")
+        println(
+            "\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)",
+        )
+        println(
+            "\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUstate)",
+        )
+        println(
+            "\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUstate)",
+        )
+        println(
+            "\t\tDir. Derivatives:\t$(fmu.modelDescription.coSimulation.providesDirectionalDerivative)",
+        )
 
-        println("\t\tVar. com. steps:\t$(fmu.modelDescription.coSimulation.canHandleVariableCommunicationStepSize)")
-        println("\t\tInput interpol.:\t$(fmu.modelDescription.coSimulation.canInterpolateInputs)")
-        println("\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)")
+        println(
+            "\t\tVar. com. steps:\t$(fmu.modelDescription.coSimulation.canHandleVariableCommunicationStepSize)",
+        )
+        println(
+            "\t\tInput interpol.:\t$(fmu.modelDescription.coSimulation.canInterpolateInputs)",
+        )
+        println(
+            "\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)",
+        )
     end
 
     println("\tSupports Model-Exchange:\t$(isModelExchange(fmu))")
     if isModelExchange(fmu)
-        println("\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)")
-        println("\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUstate)")
-        println("\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUstate)")
-        println("\t\tDir. Derivatives:\t$(fmu.modelDescription.modelExchange.providesDirectionalDerivative)")
+        println(
+            "\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)",
+        )
+        println(
+            "\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUstate)",
+        )
+        println(
+            "\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUstate)",
+        )
+        println(
+            "\t\tDir. Derivatives:\t$(fmu.modelDescription.modelExchange.providesDirectionalDerivative)",
+        )
     end
 
     println("##################### End information for FMU #####################")
@@ -101,7 +123,7 @@ function info(fmu::FMU3)
         println("flat")
     elseif getVariableNamingConvention(fmu) == fmi3VariableNamingConventionStructured
         println("structured")
-    else 
+    else
         println("[unknown]")
     end
     println("\tEvent indicators:\t\t$(getNumberOfEventIndicators(fmu))")
@@ -120,38 +142,80 @@ function info(fmu::FMU3)
 
     println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")
     if isCoSimulation(fmu)
-        println("\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)")
-        println("\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUState)")
-        println("\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUState)")
-        println("\t\tDir. Derivatives:\t$(fmu.modelDescription.coSimulation.providesDirectionalDerivatives)")
-        println("\t\tAdj. Derivatives:\t$(fmu.modelDescription.coSimulation.providesAdjointDerivatives)")
+        println(
+            "\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)",
+        )
+        println(
+            "\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUState)",
+        )
+        println(
+            "\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUState)",
+        )
+        println(
+            "\t\tDir. Derivatives:\t$(fmu.modelDescription.coSimulation.providesDirectionalDerivatives)",
+        )
+        println(
+            "\t\tAdj. Derivatives:\t$(fmu.modelDescription.coSimulation.providesAdjointDerivatives)",
+        )
         println("\t\tEvent Mode:\t$(fmu.modelDescription.coSimulation.hasEventMode)")
 
-        println("\t\tVar. com. steps:\t$(fmu.modelDescription.coSimulation.canHandleVariableCommunicationStepSize)")
-        println("\t\tInput interpol.:\t$(fmu.modelDescription.coSimulation.canInterpolateInputs)")
-        println("\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)")
+        println(
+            "\t\tVar. com. steps:\t$(fmu.modelDescription.coSimulation.canHandleVariableCommunicationStepSize)",
+        )
+        println(
+            "\t\tInput interpol.:\t$(fmu.modelDescription.coSimulation.canInterpolateInputs)",
+        )
+        println(
+            "\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)",
+        )
     end
 
     println("\tSupports Model-Exchange:\t$(isModelExchange(fmu))")
     if isModelExchange(fmu)
-        println("\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)")
-        println("\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUState)")
-        println("\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUState)")
-        println("\t\tDir. Derivatives:\t$(fmu.modelDescription.modelExchange.providesDirectionalDerivatives)")
-        println("\t\tAdj. Derivatives:\t$(fmu.modelDescription.modelExchange.providesAdjointDerivatives)")
+        println(
+            "\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)",
+        )
+        println(
+            "\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUState)",
+        )
+        println(
+            "\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUState)",
+        )
+        println(
+            "\t\tDir. Derivatives:\t$(fmu.modelDescription.modelExchange.providesDirectionalDerivatives)",
+        )
+        println(
+            "\t\tAdj. Derivatives:\t$(fmu.modelDescription.modelExchange.providesAdjointDerivatives)",
+        )
     end
 
     println("\tSupports Scheduled-Execution:\t$(isScheduledExecution(fmu))")
     if isScheduledExecution(fmu)
-        println("\t\tModel identifier:\t$(fmu.modelDescription.scheduledExecution.modelIdentifier)")
-        println("\t\tGet/Set State:\t\t$(fmu.modelDescription.scheduledExecution.canGetAndSetFMUState)")
-        println("\t\tSerialize State:\t$(fmu.modelDescription.scheduledExecution.canSerializeFMUState)")
-        println("\t\tNeeds Execution Tool:\t$(fmu.modelDescription.scheduledExecution.needsExecutionTool)")
-        println("\t\tInstantiated Once Per Process:\t$(fmu.modelDescription.scheduledExecution.canBeInstantiatedOnlyOncePerProcess)")
-        println("\t\tPer Element Dependencies:\t$(fmu.modelDescription.scheduledExecution.providesPerElementDependencies)")
-        
-        println("\t\tDir. Derivatives:\t$(fmu.modelDescription.scheduledExecution.providesDirectionalDerivatives)")
-        println("\t\tAdj. Derivatives:\t$(fmu.modelDescription.scheduledExecution.providesAdjointDerivatives)")
+        println(
+            "\t\tModel identifier:\t$(fmu.modelDescription.scheduledExecution.modelIdentifier)",
+        )
+        println(
+            "\t\tGet/Set State:\t\t$(fmu.modelDescription.scheduledExecution.canGetAndSetFMUState)",
+        )
+        println(
+            "\t\tSerialize State:\t$(fmu.modelDescription.scheduledExecution.canSerializeFMUState)",
+        )
+        println(
+            "\t\tNeeds Execution Tool:\t$(fmu.modelDescription.scheduledExecution.needsExecutionTool)",
+        )
+        println(
+            "\t\tInstantiated Once Per Process:\t$(fmu.modelDescription.scheduledExecution.canBeInstantiatedOnlyOncePerProcess)",
+        )
+        println(
+            "\t\tPer Element Dependencies:\t$(fmu.modelDescription.scheduledExecution.providesPerElementDependencies)",
+        )
+
+        println(
+            "\t\tDir. Derivatives:\t$(fmu.modelDescription.scheduledExecution.providesDirectionalDerivatives)",
+        )
+        println(
+            "\t\tAdj. Derivatives:\t$(fmu.modelDescription.scheduledExecution.providesAdjointDerivatives)",
+        )
     end
 
     println("##################### End information for FMU #####################")

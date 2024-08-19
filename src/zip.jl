@@ -25,7 +25,7 @@ Returns the paths to the zipped and unzipped folders.
 
 See also [`mktempdir`](https://docs.julialang.org/en/v1/base/file/#Base.Filesystem.mktempdir-Tuple{AbstractString}).
 """
-function unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
+function unzip(pathToFMU::String; unpackPath = nothing, cleanup = true)
 
     if startswith(pathToFMU, "http")
         pathToFMU = Downloads.download(pathToFMU)
@@ -36,7 +36,7 @@ function unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
     if unpackPath == nothing
         # cleanup = true leads to issues with automatic testing on linux server.
-        unpackPath = mktempdir(; prefix="fmijl_", cleanup=cleanup)
+        unpackPath = mktempdir(; prefix = "fmijl_", cleanup = cleanup)
     end
 
     zipPath = joinpath(unpackPath, fileName * ".zip")
@@ -44,12 +44,12 @@ function unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
 
     # only copy ZIP if not already there
     if !isfile(zipPath)
-        cp(pathToFMU, zipPath; force=true)
+        cp(pathToFMU, zipPath; force = true)
     end
 
     @assert isfile(zipPath) ["unzip(...): ZIP-Archive couldn't be copied to `$zipPath`."]
 
-    zipAbsPath = isabspath(zipPath) ?  zipPath : joinpath(pwd(), zipPath)
+    zipAbsPath = isabspath(zipPath) ? zipPath : joinpath(pwd(), zipPath)
     unzippedAbsPath = isabspath(unzippedPath) ? unzippedPath : joinpath(pwd(), unzippedPath)
 
     @assert isfile(zipAbsPath) ["unzip(...): Can't deploy ZIP-Archive at `$(zipAbsPath)`."]
@@ -64,10 +64,12 @@ function unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
         for f in zarchive.files
             fileAbsPath = normpath(joinpath(unzippedAbsPath, f.name))
 
-            if endswith(f.name,"/") || endswith(f.name,"\\")
+            if endswith(f.name, "/") || endswith(f.name, "\\")
                 mkpath(fileAbsPath) # mkdir(fileAbsPath)
 
-                @assert isdir(fileAbsPath) ["unzip(...): Can't create directory `$(f.name)` at `$(fileAbsPath)`."]
+                @assert isdir(fileAbsPath) [
+                    "unzip(...): Can't create directory `$(f.name)` at `$(fileAbsPath)`.",
+                ]
             else
                 # create directory if not forced by zip file folder
                 mkpath(dirname(fileAbsPath))
@@ -78,14 +80,18 @@ function unzip(pathToFMU::String; unpackPath=nothing, cleanup=true)
                     @debug "unzip(...): Written file `$(f.name)`, but file is empty."
                 end
 
-                @assert isfile(fileAbsPath) ["unzip(...): Can't unzip file `$(f.name)` at `$(fileAbsPath)`."]
+                @assert isfile(fileAbsPath) [
+                    "unzip(...): Can't unzip file `$(f.name)` at `$(fileAbsPath)`.",
+                ]
                 numFiles += 1
             end
         end
         close(zarchive)
     end
 
-    @assert isdir(unzippedAbsPath) ["unzip(...): ZIP-Archive couldn't be unzipped at `$(unzippedPath)`."]
+    @assert isdir(unzippedAbsPath) [
+        "unzip(...): ZIP-Archive couldn't be unzipped at `$(unzippedPath)`.",
+    ]
     @debug "funzip(...): Successfully unzipped $numFiles files at `$unzippedAbsPath`."
 
     (unzippedAbsPath, zipAbsPath)

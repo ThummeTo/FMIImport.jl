@@ -1,9 +1,9 @@
 using PkgEval
 using FMIImport
 
-config = Configuration(; julia="1.10");
+config = Configuration(; julia = "1.10");
 
-package = Package(; name="FMIImport");
+package = Package(; name = "FMIImport");
 
 @info "PkgEval"
 result = evaluate([config], [package])
