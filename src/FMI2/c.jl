@@ -143,13 +143,13 @@ end
 
 import FMIBase.FMICore: fmi2SetDebugLogging
 """
-    fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
+    fmi2SetDebugLogging(c::FMU2Component, loggingOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
 
 Control the use of the logging callback function, version independent.
 
 # Arguments
 - `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
+- `loggingOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
 - `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
 - `categories::Ptr{Nothing}`:
 
@@ -169,9 +169,9 @@ More detailed:
 - FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 See also [`fmi2SetDebugLogging`](@ref).
 """
-function FMICore.fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
+function FMICore.fmi2SetDebugLogging(c::FMU2Component, loggingOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
 
-    status = fmi2SetDebugLogging(c.fmu.cSetDebugLogging, c.addr, logginOn, nCategories, categories)
+    status = fmi2SetDebugLogging(c.fmu.cSetDebugLogging, c.addr, loggingOn, nCategories, categories)
     checkStatus(c, status)
     return status
 end
