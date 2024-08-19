@@ -3,6 +3,28 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+# Prints value references, but shortens if the number exceeds `max`.
+function printValueReferences(fmu, vrs; max=10)
+    len = length(vrs)
+    if len <= max
+        for vr in vrs
+            println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
+        end
+    else
+        half = floor(Integer, max)-1
+        for vr in vrs[1:half]
+            println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
+        end
+        println(".")
+        println(".")
+        println(".")
+        for vr in vrs[len-half:end]
+            println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
+        end
+    end
+    nothing
+end
+
 """
      info(fmu)
 
@@ -19,36 +41,33 @@ function info(fmu::FMU2)
 
     println("\tModel name:\t\t\t$(getModelName(fmu))")
     println("\tFMI-Version:\t\t\t$(fmi2GetVersion(fmu))")
-    println("\tGUID:\t\t\t\t$(fmi2GetGUID(fmu))")
+    println("\tGUID:\t\t\t\t$(getGUID(fmu))")
     println("\tGeneration tool:\t\t$(getGenerationTool(fmu))")
-    println("\tGeneration time:\t\t$(generationDateAndTime(fmu))")
+    println("\tGeneration time:\t\t$(getGenerationDateAndTime(fmu))")
     print("\tVar. naming conv.:\t\t")
-    if fmi2GetVariableNamingConvention(fmu) == fmi2VariableNamingConventionFlat
+    if getVariableNamingConvention(fmu) == fmi2VariableNamingConventionFlat
         println("flat")
-    elseif fmi2GetVariableNamingConvention(fmu) == fmi2VariableNamingConventionStructured
+    elseif getVariableNamingConvention(fmu) == fmi2VariableNamingConventionStructured
         println("structured")
     else
         println("[unknown]")
     end
-    println("\tEvent indicators:\t\t$(fmi2GetNumberOfEventIndicators(fmu))")
+    println("\tEvent indicators:\t\t$(getNumberOfEventIndicators(fmu))")
 
     println("\tInputs:\t\t\t\t$(length(fmu.modelDescription.inputValueReferences))")
-    for vr in fmu.modelDescription.inputValueReferences
-        println("\t\t$(vr) $(fmi2ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.inputValueReferences)
 
     println("\tOutputs:\t\t\t$(length(fmu.modelDescription.outputValueReferences))")
-    for vr in fmu.modelDescription.outputValueReferences
-        println("\t\t$(vr) $(fmi2ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.outputValueReferences)
 
     println("\tStates:\t\t\t\t$(length(fmu.modelDescription.stateValueReferences))")
-    for vr in fmu.modelDescription.stateValueReferences
-        println("\t\t$(vr) $(fmi2ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.stateValueReferences)
 
-    println("\tSupports Co-Simulation:\t\t$(fmi2IsCoSimulation(fmu))")
-    if fmi2IsCoSimulation(fmu)
+    println("\tParameters:\t\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
+    printValueReferences(fmu, fmu.modelDescription.parameterValueReferences)
+
+    println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")
+    if isCoSimulation(fmu)
         println("\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)")
         println("\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUstate)")
         println("\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUstate)")
@@ -59,8 +78,8 @@ function info(fmu::FMU2)
         println("\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)")
     end
 
-    println("\tSupports Model-Exchange:\t$(fmi2IsModelExchange(fmu))")
-    if fmi2IsModelExchange(fmu)
+    println("\tSupports Model-Exchange:\t$(isModelExchange(fmu))")
+    if isModelExchange(fmu)
         println("\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)")
         println("\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUstate)")
         println("\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUstate)")
@@ -72,38 +91,35 @@ end
 function info(fmu::FMU3)
     println("#################### Begin information for FMU ####################")
 
-    println("\tModel name:\t\t\t$(fmi3GetModelName(fmu))")
+    println("\tModel name:\t\t\t$(getModelName(fmu))")
     println("\tFMI-Version:\t\t\t$(fmi3GetVersion(fmu))")
-    println("\tInstantiation Token:\t\t\t\t$(fmi3GetInstantiationToken(fmu))")
-    println("\tGeneration tool:\t\t$(fmi3GetGenerationTool(fmu))")
-    println("\tGeneration time:\t\t$(fmi3GetGenerationDateAndTime(fmu))")
+    println("\tInstantiation Token:\t\t\t\t$(getInstantiationToken(fmu))")
+    println("\tGeneration tool:\t\t$(getGenerationTool(fmu))")
+    println("\tGeneration time:\t\t$(getGenerationDateAndTime(fmu))")
     print("\tVar. naming conv.:\t\t")
-    if fmi3GetVariableNamingConvention(fmu) == fmi3VariableNamingConventionFlat
+    if getVariableNamingConvention(fmu) == fmi3VariableNamingConventionFlat
         println("flat")
-    elseif fmi3GetVariableNamingConvention(fmu) == fmi3VariableNamingConventionStructured
+    elseif getVariableNamingConvention(fmu) == fmi3VariableNamingConventionStructured
         println("structured")
     else 
         println("[unknown]")
     end
-    println("\tEvent indicators:\t\t$(fmi3GetNumberOfEventIndicators(fmu))")
+    println("\tEvent indicators:\t\t$(getNumberOfEventIndicators(fmu))")
 
     println("\tInputs:\t\t\t\t$(length(fmu.modelDescription.inputValueReferences))")
-    for vr in fmu.modelDescription.inputValueReferences
-        println("\t\t$(vr) $(fmi3ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.inputValueReferences)
 
     println("\tOutputs:\t\t\t$(length(fmu.modelDescription.outputValueReferences))")
-    for vr in fmu.modelDescription.outputValueReferences
-        println("\t\t$(vr) $(fmi3ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.outputValueReferences)
 
     println("\tStates:\t\t\t\t$(length(fmu.modelDescription.stateValueReferences))")
-    for vr in fmu.modelDescription.stateValueReferences
-        println("\t\t$(vr) $(fmi3ValueReferenceToString(fmu, vr))")
-    end
+    printValueReferences(fmu, fmu.modelDescription.stateValueReferences)
 
-    println("\tSupports Co-Simulation:\t\t$(fmi3IsCoSimulation(fmu))")
-    if fmi3IsCoSimulation(fmu)
+    println("\tParameters:\t\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
+    printValueReferences(fmu, fmu.modelDescription.parameterValueReferences)
+
+    println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")
+    if isCoSimulation(fmu)
         println("\t\tModel identifier:\t$(fmu.modelDescription.coSimulation.modelIdentifier)")
         println("\t\tGet/Set State:\t\t$(fmu.modelDescription.coSimulation.canGetAndSetFMUstate)")
         println("\t\tSerialize State:\t$(fmu.modelDescription.coSimulation.canSerializeFMUstate)")
@@ -116,8 +132,8 @@ function info(fmu::FMU3)
         println("\t\tMax order out. der.:\t$(fmu.modelDescription.coSimulation.maxOutputDerivativeOrder)")
     end
 
-    println("\tSupports Model-Exchange:\t$(fmi3IsModelExchange(fmu))")
-    if fmi3IsModelExchange(fmu)
+    println("\tSupports Model-Exchange:\t$(isModelExchange(fmu))")
+    if isModelExchange(fmu)
         println("\t\tModel identifier:\t$(fmu.modelDescription.modelExchange.modelIdentifier)")
         println("\t\tGet/Set State:\t\t$(fmu.modelDescription.modelExchange.canGetAndSetFMUstate)")
         println("\t\tSerialize State:\t$(fmu.modelDescription.modelExchange.canSerializeFMUstate)")
@@ -125,8 +141,8 @@ function info(fmu::FMU3)
         println("\t\tAdj. Derivatives:\t$(fmu.modelDescription.modelExchange.providesAdjointDerivatives)")
     end
 
-    println("\tSupports Scheduled-Execution:\t$(fmi3IsScheduledExecution(fmu))")
-    if fmi3IsScheduledExecution(fmu)
+    println("\tSupports Scheduled-Execution:\t$(isScheduledExecution(fmu))")
+    if isScheduledExecution(fmu)
         println("\t\tModel identifier:\t$(fmu.modelDescription.scheduledExecution.modelIdentifier)")
         println("\t\tGet/Set State:\t\t$(fmu.modelDescription.scheduledExecution.canGetAndSetFMUstate)")
         println("\t\tSerialize State:\t$(fmu.modelDescription.scheduledExecution.canSerializeFMUstate)")

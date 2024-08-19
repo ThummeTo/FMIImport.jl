@@ -30,4 +30,6 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
 @test getDefaultTolerance(myFMU.modelDescription) === nothing
 @test getDefaultStepSize(myFMU.modelDescription) === 0.01
 
+info(myFMU) # check if there is an error thrown
+
 unloadFMU(myFMU)
