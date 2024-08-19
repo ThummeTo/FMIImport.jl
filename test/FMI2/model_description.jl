@@ -30,6 +30,8 @@ myFMU = loadFMU("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTING
 @test getDefaultTolerance(myFMU.modelDescription) ≈ 1e-4
 @test getDefaultStepSize(myFMU.modelDescription) === nothing
 
+info(myFMU) # check if there is an error thrown
+
 # comfort getters (dictionaries)
 
 @test length(getValueReferencesAndNames(myFMU.modelDescription)) == 42
