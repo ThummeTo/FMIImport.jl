@@ -40,8 +40,8 @@ include("FMI3/ext.jl")
 include("FMI3/md.jl")
 
 # extensions
-using Requires
-using PackageExtensionCompat
+using FMIBase.Requires
+using FMIBase.PackageExtensionCompat
 function __init__()
     @require_extensions
 end

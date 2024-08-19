@@ -41,10 +41,12 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function sampleJacobian(c::FMU2Component,
-                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                       steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function sampleJacobian(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
 
     mtx = zeros(fmi2Real, length(vUnknown_ref), length(vKnown_ref))
 
@@ -95,18 +97,20 @@ Computes a linear combination of the partial derivatives of h with respect to th
 
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function sampleJacobian!(mtx::Matrix{<:Real},
-                                c::FMU2Component,
-                                vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                vKnown_ref::AbstractArray{fmi2ValueReference},
-                                steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function sampleJacobian!(
+    mtx::Matrix{<:Real},
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
 
     step = 0.0
 
     negValues = zeros(length(vUnknown_ref))
     posValues = zeros(length(vUnknown_ref))
 
-    for i in 1:length(vKnown_ref)
+    for i = 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
@@ -117,29 +121,31 @@ function sampleJacobian!(mtx::Matrix{<:Real},
             step = steps[i]
         end
 
-        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2SetReal(c, vKnown, origValue - step; track = false)
         fmi2GetReal!(c, vUnknown_ref, negValues)
 
-        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2SetReal(c, vKnown, origValue + step; track = false)
         fmi2GetReal!(c, vUnknown_ref, posValues)
 
-        fmi2SetReal(c, vKnown, origValue; track=false)
+        fmi2SetReal(c, vKnown, origValue; track = false)
 
         if length(vUnknown_ref) == 1
-            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[1, i] = (posValues - negValues) ./ (step * 2.0)
         else
-            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[:, i] = (posValues - negValues) ./ (step * 2.0)
         end
     end
 
     nothing
 end
 
-function sampleJacobian!(mtx::Matrix{<:Real},
+function sampleJacobian!(
+    mtx::Matrix{<:Real},
     c::FMU2Component,
     vUnknown_ref::Symbol,
     vKnown_ref::AbstractArray{fmi2ValueReference},
-    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
 
     @assert vUnknown_ref == :indicators "vUnknown_ref::Symbol must be `:indicators`!"
 
@@ -150,7 +156,7 @@ function sampleJacobian!(mtx::Matrix{<:Real},
     negValues = zeros(len_vUnknown_ref)
     posValues = zeros(len_vUnknown_ref)
 
-    for i in 1:length(vKnown_ref)
+    for i = 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
@@ -160,29 +166,31 @@ function sampleJacobian!(mtx::Matrix{<:Real},
             step = steps[i]
         end
 
-        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2SetReal(c, vKnown, origValue - step; track = false)
         fmi2GetEventIndicators!(c, negValues)
 
-        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2SetReal(c, vKnown, origValue + step; track = false)
         fmi2GetEventIndicators!(c, posValues)
 
-        fmi2SetReal(c, vKnown, origValue; track=false)
+        fmi2SetReal(c, vKnown, origValue; track = false)
 
         if len_vUnknown_ref == 1
-            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[1, i] = (posValues - negValues) ./ (step * 2.0)
         else
-            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[:, i] = (posValues - negValues) ./ (step * 2.0)
         end
     end
 
     nothing
 end
 
-function sampleJacobian!(mtx::Matrix{<:Real},
+function sampleJacobian!(
+    mtx::Matrix{<:Real},
     c::FMU2Component,
     vUnknown_ref::AbstractArray{fmi2ValueReference},
     vKnown_ref::Symbol,
-    steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
 
     @assert vKnown_ref == :time "vKnown_ref::Symbol must be `:time`!"
 
@@ -191,7 +199,7 @@ function sampleJacobian!(mtx::Matrix{<:Real},
     negValues = zeros(length(vUnknown_ref))
     posValues = zeros(length(vUnknown_ref))
 
-    for i in 1:length(vKnown_ref)
+    for i = 1:length(vKnown_ref)
         vKnown = vKnown_ref[i]
         origValue = fmi2GetReal(c, vKnown)
 
@@ -201,18 +209,18 @@ function sampleJacobian!(mtx::Matrix{<:Real},
             step = steps[i]
         end
 
-        fmi2SetReal(c, vKnown, origValue - step; track=false)
+        fmi2SetReal(c, vKnown, origValue - step; track = false)
         fmi2GetEventIndicators!(c, negValues)
 
-        fmi2SetReal(c, vKnown, origValue + step; track=false)
+        fmi2SetReal(c, vKnown, origValue + step; track = false)
         fmi2GetEventIndicators!(c, posValues)
 
-        fmi2SetReal(c, vKnown, origValue; track=false)
+        fmi2SetReal(c, vKnown, origValue; track = false)
 
         if length(vUnknown_ref) == 1
-            mtx[1,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[1, i] = (posValues - negValues) ./ (step * 2.0)
         else
-            mtx[:,i] = (posValues-negValues) ./ (step * 2.0)
+            mtx[:, i] = (posValues - negValues) ./ (step * 2.0)
         end
     end
 
@@ -247,12 +255,14 @@ For optimization, if the FMU's model description has the optional entry 'depende
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 """
-function getJacobian(comp::FMU2Component,
-                         rdx::AbstractArray{fmi2ValueReference},
-                         rx::AbstractArray{fmi2ValueReference};
-                         steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function getJacobian(
+    comp::FMU2Component,
+    rdx::AbstractArray{fmi2ValueReference},
+    rx::AbstractArray{fmi2ValueReference};
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
     mat = zeros(fmi2Real, length(rdx), length(rx))
-    fmi2GetJacobian!(mat, comp, rdx, rx; steps=steps)
+    fmi2GetJacobian!(mat, comp, rdx, rx; steps = steps)
     return mat
 end
 
@@ -286,13 +296,17 @@ For optimization, if the FMU's model description has the optional entry 'depende
 - FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
 
 """
-function getJacobian!(jac::AbstractMatrix{fmi2Real},
-                          comp::FMU2Component,
-                          rdx::AbstractArray{fmi2ValueReference},
-                          rx::AbstractArray{fmi2ValueReference};
-                          steps::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function getJacobian!(
+    jac::AbstractMatrix{fmi2Real},
+    comp::FMU2Component,
+    rdx::AbstractArray{fmi2ValueReference},
+    rx::AbstractArray{fmi2ValueReference};
+    steps::Union{AbstractArray{fmi2Real},Nothing} = nothing,
+)
 
-    @assert size(jac) == (length(rdx), length(rx)) ["fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx))."]
+    @assert size(jac) == (length(rdx), length(rx)) [
+        "fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx)).",
+    ]
 
     if length(rdx) == 0 || length(rx) == 0
         jac = zeros(length(rdx), length(rx))
@@ -302,9 +316,9 @@ function getJacobian!(jac::AbstractMatrix{fmi2Real},
     # ToDo: Pick entries based on dependency matrix!
     #depMtx = fmi2GetDependencies(fmu)
     rdx_inds = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rdx)
-    rx_inds  = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
+    rx_inds = collect(comp.fmu.modelDescription.valueReferenceIndicies[vr] for vr in rx)
 
-    for i in 1:length(rx)
+    for i = 1:length(rx)
 
         sensitive_rdx_inds = 1:length(rdx)
         sensitive_rdx = rdx
@@ -321,7 +335,12 @@ function getJacobian!(jac::AbstractMatrix{fmi2Real},
 
         if length(sensitive_rdx) > 0
 
-            fmi2GetDirectionalDerivative!(comp, sensitive_rdx, [rx[i]], view(jac, sensitive_rdx_inds, i))
+            fmi2GetDirectionalDerivative!(
+                comp,
+                sensitive_rdx,
+                [rx[i]],
+                view(jac, sensitive_rdx_inds, i),
+            )
 
             #    jac[sensitive_rdx_inds, i] = fmi2GetDirectionalDerivative(comp, sensitive_rdx, [rx[i]])
 

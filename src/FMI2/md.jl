@@ -9,9 +9,23 @@
 # - [Sec. 2]  functions to get values from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 # - [Sec. 3]  additional functions to get useful information from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 
-using FMIBase.FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment, fmi2ModelDescriptionEnumerationItem
-using FMIBase.FMICore: fmi2RealAttributesExt, fmi2BooleanAttributesExt, fmi2IntegerAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
-using FMIBase.FMICore: fmi2RealAttributes, fmi2BooleanAttributes, fmi2IntegerAttributes, fmi2StringAttributes, fmi2EnumerationAttributes
+using FMIBase.FMICore:
+    fmi2ModelDescriptionModelExchange,
+    fmi2ModelDescriptionCoSimulation,
+    fmi2ModelDescriptionDefaultExperiment,
+    fmi2ModelDescriptionEnumerationItem
+using FMIBase.FMICore:
+    fmi2RealAttributesExt,
+    fmi2BooleanAttributesExt,
+    fmi2IntegerAttributesExt,
+    fmi2StringAttributesExt,
+    fmi2EnumerationAttributesExt
+using FMIBase.FMICore:
+    fmi2RealAttributes,
+    fmi2BooleanAttributes,
+    fmi2IntegerAttributes,
+    fmi2StringAttributes,
+    fmi2EnumerationAttributes
 using FMIBase.FMICore: fmi2ModelDescriptionModelStructure
 using FMIBase.FMICore: fmi2DependencyKind
 
@@ -34,7 +48,7 @@ Extract the FMU variables and meta data from the ModelDescription
 function fmi2LoadModelDescription(pathToModelDescription::String)
     md = fmi2ModelDescription()
 
-    md.stringValueReferences = Dict{String, fmi2ValueReference}()
+    md.stringValueReferences = Dict{String,fmi2ValueReference}()
     md.outputValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.inputValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.stateValueReferences = Array{fmi2ValueReference}(undef, 0)
@@ -50,13 +64,29 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
     md.guid = root["guid"]
 
     # optional
-    md.generationTool           = parseNode(root, "generationTool", String; onfail="[Unknown generation tool]")
-    md.generationDateAndTime    = parseNode(root, "generationDateAndTime", String; onfail="[Unknown generation date and time]")
-    variableNamingConventionStr = parseNode(root, "variableNamingConvention", String; onfail="flat")
-    @assert (variableNamingConventionStr == "flat" || variableNamingConventionStr == "structured") ["fmi2ReadModelDescription(...): Unknown entry for `variableNamingConvention=$(variableNamingConventionStr)`."]
-    md.variableNamingConvention = (variableNamingConventionStr == "flat" ? fmi2VariableNamingConventionFlat : fmi2VariableNamingConventionStructured)
-    md.numberOfEventIndicators  = parseNode(root, "numberOfEventIndicators", Int; onfail=0)
-    md.description              = parseNode(root, "description", String; onfail="[Unknown Description]")
+    md.generationTool =
+        parseNode(root, "generationTool", String; onfail = "[Unknown generation tool]")
+    md.generationDateAndTime = parseNode(
+        root,
+        "generationDateAndTime",
+        String;
+        onfail = "[Unknown generation date and time]",
+    )
+    variableNamingConventionStr =
+        parseNode(root, "variableNamingConvention", String; onfail = "flat")
+    @assert (
+        variableNamingConventionStr == "flat" ||
+        variableNamingConventionStr == "structured"
+    ) [
+        "fmi2ReadModelDescription(...): Unknown entry for `variableNamingConvention=$(variableNamingConventionStr)`.",
+    ]
+    md.variableNamingConvention = (
+        variableNamingConventionStr == "flat" ? fmi2VariableNamingConventionFlat :
+        fmi2VariableNamingConventionStructured
+    )
+    md.numberOfEventIndicators = parseNode(root, "numberOfEventIndicators", Int; onfail = 0)
+    md.description =
+        parseNode(root, "description", String; onfail = "[Unknown Description]")
 
     # defaults
     md.modelExchange = nothing
@@ -65,30 +95,43 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
 
     # additionals
     md.valueReferences = []
-    md.valueReferenceIndicies = Dict{UInt, UInt}()
+    md.valueReferenceIndicies = Dict{UInt,UInt}()
 
     for node in eachelement(root)
 
         if node.name == "CoSimulation" || node.name == "ModelExchange"
             if node.name == "CoSimulation"
                 md.coSimulation = fmi2ModelDescriptionCoSimulation()
-                md.coSimulation.modelIdentifier                        = parseNode(node, "modelIdentifier")
-                md.coSimulation.canHandleVariableCommunicationStepSize = parseNode(node, "canHandleVariableCommunicationStepSize", Bool; onfail=false)
-                md.coSimulation.canInterpolateInputs                   = parseNode(node, "canInterpolateInputs", Bool                  ; onfail=false)
-                md.coSimulation.maxOutputDerivativeOrder               = parseNode(node, "maxOutputDerivativeOrder", Int               ; onfail=nothing)
-                md.coSimulation.canGetAndSetFMUstate                   = parseNode(node, "canGetAndSetFMUstate", Bool                  ; onfail=false)
-                md.coSimulation.canSerializeFMUstate                   = parseNode(node, "canSerializeFMUstate", Bool                  ; onfail=false)
-                md.coSimulation.providesDirectionalDerivative          = parseNode(node, "providesDirectionalDerivative", Bool         ; onfail=false)
+                md.coSimulation.modelIdentifier = parseNode(node, "modelIdentifier")
+                md.coSimulation.canHandleVariableCommunicationStepSize = parseNode(
+                    node,
+                    "canHandleVariableCommunicationStepSize",
+                    Bool;
+                    onfail = false,
+                )
+                md.coSimulation.canInterpolateInputs =
+                    parseNode(node, "canInterpolateInputs", Bool; onfail = false)
+                md.coSimulation.maxOutputDerivativeOrder =
+                    parseNode(node, "maxOutputDerivativeOrder", Int; onfail = nothing)
+                md.coSimulation.canGetAndSetFMUstate =
+                    parseNode(node, "canGetAndSetFMUstate", Bool; onfail = false)
+                md.coSimulation.canSerializeFMUstate =
+                    parseNode(node, "canSerializeFMUstate", Bool; onfail = false)
+                md.coSimulation.providesDirectionalDerivative =
+                    parseNode(node, "providesDirectionalDerivative", Bool; onfail = false)
             end
 
             if node.name == "ModelExchange"
                 md.modelExchange = fmi2ModelDescriptionModelExchange()
-                md.modelExchange.modelIdentifier                        = parseNode(node, "modelIdentifier")
-                md.modelExchange.canGetAndSetFMUstate                   = parseNode(node, "canGetAndSetFMUstate", Bool                 ; onfail=false)
-                md.modelExchange.canSerializeFMUstate                   = parseNode(node, "canSerializeFMUstate", Bool                 ; onfail=false)
-                md.modelExchange.providesDirectionalDerivative          = parseNode(node, "providesDirectionalDerivative", Bool        ; onfail=false)
+                md.modelExchange.modelIdentifier = parseNode(node, "modelIdentifier")
+                md.modelExchange.canGetAndSetFMUstate =
+                    parseNode(node, "canGetAndSetFMUstate", Bool; onfail = false)
+                md.modelExchange.canSerializeFMUstate =
+                    parseNode(node, "canSerializeFMUstate", Bool; onfail = false)
+                md.modelExchange.providesDirectionalDerivative =
+                    parseNode(node, "providesDirectionalDerivative", Bool; onfail = false)
             end
-            
+
         elseif node.name == "TypeDefinitions"
             md.typeDefinitions = parseTypeDefinitions(md, node)
 
@@ -115,15 +158,15 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
 
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi2ModelDescriptionDefaultExperiment()
-            md.defaultExperiment.startTime  = parseNode(node, "startTime", fmi2Real)
-            md.defaultExperiment.stopTime   = parseNode(node, "stopTime", fmi2Real)
-            md.defaultExperiment.tolerance  = parseNode(node, "tolerance", fmi2Real)
-            md.defaultExperiment.stepSize   = parseNode(node, "stepSize", fmi2Real)
+            md.defaultExperiment.startTime = parseNode(node, "startTime", fmi2Real)
+            md.defaultExperiment.stopTime = parseNode(node, "stopTime", fmi2Real)
+            md.defaultExperiment.tolerance = parseNode(node, "tolerance", fmi2Real)
+            md.defaultExperiment.stepSize = parseNode(node, "stepSize", fmi2Real)
         end
     end
 
     # creating an index for value references (fast look-up for dependencies)
-    for i in 1:length(md.valueReferences)
+    for i = 1:length(md.valueReferences)
         md.valueReferenceIndicies[md.valueReferences[i]] = i
     end
 
@@ -137,14 +180,14 @@ end
 #######################################
 
 # helper function to parse variable or simple type attributes
-function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
+function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool = false)
 
     typename = defnode.name
-    typenode = nothing 
+    typenode = nothing
 
     if typename == "Real"
 
-        if ext 
+        if ext
             typenode = fmi2RealAttributesExt()
 
             typenode.start = parseNode(defnode, "start", fmi2Real)
@@ -155,7 +198,7 @@ function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
         else
             typenode = fmi2RealAttributes()
         end
-       
+
         typenode.quantity = parseNode(defnode, "quantity", String)
         typenode.unit = parseNode(defnode, "unit", String)
         typenode.displayUnit = parseNode(defnode, "displayUnit", String)
@@ -164,10 +207,10 @@ function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
         typenode.max = parseNode(defnode, "max", fmi2Real)
         typenode.nominal = parseNode(defnode, "nominal", fmi2Real)
         typenode.unbounded = parseNode(defnode, "unbounded", Bool)
-      
+
     elseif typename == "String"
 
-        if ext 
+        if ext
             typenode = fmi2StringAttributesExt()
 
             typenode.start = parseNode(defnode, "start", String)
@@ -178,7 +221,7 @@ function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
 
     elseif typename == "Boolean"
 
-        if ext 
+        if ext
             typenode = fmi2BooleanAttributesExt()
 
             typenode.start = parseNode(defnode, "start", Bool)
@@ -188,8 +231,8 @@ function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
         end
 
     elseif typename == "Integer"
-        
-        if ext 
+
+        if ext
             typenode = fmi2IntegerAttributesExt()
 
             typenode.start = parseNode(defnode, "start", Int)
@@ -197,14 +240,14 @@ function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool=false)
         else
             typenode = fmi2IntegerAttributes()
         end
-        
+
         typenode.quantity = parseNode(defnode, "quantity", String)
         typenode.min = parseNode(defnode, "min", fmi2Integer)
         typenode.max = parseNode(defnode, "max", fmi2Integer)
 
     elseif typename == "Enumeration"
-        
-        if ext 
+
+        if ext
             typenode = fmi2EnumerationAttributesExt()
 
             typenode.start = parseNode(defnode, "start", fmi2Integer)
@@ -290,7 +333,8 @@ function parseModelVariables(md::fmi2ModelDescription, nodes::EzXML.Node)
             initial = stringToInitial(md, node["initial"])
         end
 
-        scalarVariables[index] = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
+        scalarVariables[index] =
+            fmi2ScalarVariable(name, valueReference, causality, variability, initial)
 
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)
@@ -300,7 +344,7 @@ function parseModelVariables(md::fmi2ModelDescription, nodes::EzXML.Node)
 
         # type node
         defnode = node.firstelement
-        typenode = parseAttribute(md, defnode; ext=true)
+        typenode = parseAttribute(md, defnode; ext = true)
         if isa(typenode, fmi2RealAttributesExt)
             scalarVariables[index].Real = typenode
         elseif isa(typenode, fmi2StringAttributesExt)
@@ -312,7 +356,7 @@ function parseModelVariables(md::fmi2ModelDescription, nodes::EzXML.Node)
         elseif isa(typenode, fmi2EnumerationAttributesExt)
             scalarVariables[index].Enumeration = typenode
         end
-        
+
         # generic attributes
         if !isnothing(typenode)
             typenode.declaredType = parseNode(node.firstelement, "declaredType", String)
@@ -329,7 +373,7 @@ end
 # Parses the model variables of the FMU model description.
 function parseTypeDefinitions(md::fmi2ModelDescription, nodes::EzXML.Node)
 
-    simpleTypes = Array{fmi2SimpleType, 1}()
+    simpleTypes = Array{fmi2SimpleType,1}()
 
     for node in eachelement(nodes)
 
@@ -340,11 +384,11 @@ function parseTypeDefinitions(md::fmi2ModelDescription, nodes::EzXML.Node)
 
         # attribute node (mandatory)
         defnode = node.firstelement
-        simpleType.attribute = parseAttribute(md, defnode; ext=false)
+        simpleType.attribute = parseAttribute(md, defnode; ext = false)
 
         # optional
         simpleType.description = parseNode(node, "description", String)
-        
+
         push!(simpleTypes, simpleType)
     end
 
@@ -371,7 +415,9 @@ function parseUnknown(md::fmi2ModelDescription, node::EzXML.Node)
             if length(dependenciesKind) > 0
                 dependenciesKindSplit = split(dependenciesKind, " ")
                 if length(dependenciesKindSplit) > 0
-                    varDep.dependenciesKind = collect(stringToDependencyKind(md, e) for e in dependenciesKindSplit)
+                    varDep.dependenciesKind = collect(
+                        stringToDependencyKind(md, e) for e in dependenciesKindSplit
+                    )
                 end
             end
         end
@@ -519,13 +565,25 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
         end
     end
 
-    if haskey(typenode, "min") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
+    if haskey(typenode, "min") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
         type.min = parseNode(typenode, "min", type.datatype)
     end
-    if haskey(typenode, "max") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
+    if haskey(typenode, "max") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
         type.max = parseNode(typenode, "max", type.datatype)
     end
-    if haskey(typenode, "quantity") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
+    if haskey(typenode, "quantity") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
         type.quantity = typenode["quantity"]
     end
     if haskey(typenode, "unit") && type.datatype == fmi2Real
@@ -586,7 +644,7 @@ function parseDisplayUnits(::fmi2ModelDescription, node)
     if haskey(node, "offset")
         setfield!(unit, :offset, parseNode(node, "offset", Float64))
     end
-    
+
     return unit
 end
 
@@ -598,7 +656,7 @@ function parseUnitDefinitions(md::fmi2ModelDescription, parentNode)
 
         unit = fmi2Unit(node["name"])
 
-        for subNode = eachelement(node)
+        for subNode in eachelement(node)
             if subNode.name == "BaseUnit"
                 unit.baseUnit = parseBaseUnit(md, subNode)
 
@@ -686,5 +744,6 @@ function isModelStructureDerivativesAvailable(md::fmi2ModelDescription)
 
     return true
 end
-isModelStructureDerivativesAvailable(fmu::FMU) = isModelStructureDerivativesAvailable(fmu.modelDescription)
+isModelStructureDerivativesAvailable(fmu::FMU) =
+    isModelStructureDerivativesAvailable(fmu.modelDescription)
 export isModelStructureDerivativesAvailable

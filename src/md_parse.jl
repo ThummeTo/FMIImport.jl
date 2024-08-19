@@ -3,15 +3,15 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-function parseNode(node, key, type::DataType=String; onfail=nothing)
+function parseNode(node, key, type::DataType = String; onfail = nothing)
     if haskey(node, key)
-        return parseType(node[key], type; onfail=onfail)
+        return parseType(node[key], type; onfail = onfail)
     else
         return onfail
     end
 end
 
-function parseType(s::Union{String, SubString{String}}, type; onfail=nothing)
+function parseType(s::Union{String,SubString{String}}, type; onfail = nothing)
     if onfail == nothing
         return _parse(type, s)
     else
@@ -35,7 +35,7 @@ function _parse(type, s)
     end
 end
 
-parseNodeBoolean(node, key; onfail=nothing) = parseNode(node, key, Bool; onfail=onfail)
+parseNodeBoolean(node, key; onfail = nothing) = parseNode(node, key, Bool; onfail = onfail)
 
 # function parseNodeBoolean(node, key; onfail=nothing)
 #     if haskey(node, key)
@@ -66,24 +66,30 @@ parseNodeBoolean(node, key; onfail=nothing) = parseNode(node, key, Bool; onfail=
 # end
 
 # [Todo]
-function parseArrayValueReferences(md::fmi2ModelDescription, s::Union{String, SubString{String}})
+function parseArrayValueReferences(
+    md::fmi2ModelDescription,
+    s::Union{String,SubString{String}},
+)
     references = Array{fmi2ValueReference}(undef, 0)
     substrings = split(s, " ")
 
     for string in substrings
         push!(references, parse(fmi2ValueReferenceFormat, string))
     end
-    
+
     return references
 end
-function parseArrayValueReferences(md::fmi3ModelDescription, s::Union{String, SubString{String}})
+function parseArrayValueReferences(
+    md::fmi3ModelDescription,
+    s::Union{String,SubString{String}},
+)
     references = Array{fmi3ValueReference}(undef, 0)
     substrings = split(s, " ")
 
     for string in substrings
         push!(references, parse(fmi3ValueReferenceFormat, string))
     end
-    
+
     return references
 end
 function parseArrayValueReferences(md::fmiModelDescription, s::Nothing)

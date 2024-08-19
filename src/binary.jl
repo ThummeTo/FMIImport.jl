@@ -5,13 +5,26 @@
 
 using FMIBase.EzXML
 
-function dlsym_opt(libHandle, symbol)
-    addr = dlsym(libHandle, symbol; throw_error=false)
-    if addr == nothing
-        logWarning(fmu, "This FMU does not support function '$symbol'.")
+"""
+    dlsym_opt(fmu, libHandle, symbol)
+
+The same as `dlsym(libHandle, symbol)`, but returns - `Ptr{Cvoid}(C_NULL)` if the symbol `symbol` is not available.
+
+# Arguments
+- `fmu`: The FMU to log a info message if not available.
+- `libHandle`: The library handle, see `dlsym`.
+- `symbol`: The library symbol, see `dlsym`.
+
+# Returns 
+Library symbol if available, else `Ptr{Cvoid}(C_NULL)`.
+"""
+function dlsym_opt(fmu, libHandle, symbol)
+    addr = dlsym(libHandle, symbol; throw_error = false)
+    if isnothing(addr)
+        logInfo(fmu, "This FMU does not support the optional function '$symbol'.")
         addr = Ptr{Cvoid}(C_NULL)
     end
-    addr
+    return addr
 end
 
 """
@@ -28,9 +41,28 @@ function reload(fmu::FMU)
 end
 export reload
 
-function loadFMU(pathToFMU::String; unpackPath=nothing, cleanup=true, type::Union{Symbol, Nothing}=nothing)
-    
-    unzippedAbsPath, zipAbsPath = unzip(pathToFMU; unpackPath=unpackPath, cleanup=cleanup)
+"""
+    loadFMU(pathToFMU; unpackPath, cleanup, type)
+
+Loads an FMU, independent of the used FMI-version (the version is checked during unpacking the archive).
+
+# Arguments
+- `path::String` the path pointing on the FMU file.
+
+# Keywords 
+- `unpackPath::Union{String, Nothing}=nothing` the optional unpack path, if `nothing` a temporary directory depending on the OS is picked.
+- `cleanup::Bool=true` a boolean indicating whether the temporary directory should be cleaned automatically.
+- `type::Union{Symbol, Nothing}=nothing` the type of FMU (:CS, :ME, :SE), if multiple types are available. If `nothing` one of the available types is chosen automatically with the priority CS > ME > SE.
+"""
+function loadFMU(
+    pathToFMU::String;
+    unpackPath::Union{String,Nothing} = nothing,
+    cleanup::Bool = true,
+    type::Union{Symbol,Nothing} = nothing,
+)
+
+    unzippedAbsPath, zipAbsPath =
+        unzip(pathToFMU; unpackPath = unpackPath, cleanup = cleanup)
 
     # read version tag
 
@@ -42,9 +74,9 @@ function loadFMU(pathToFMU::String; unpackPath=nothing, cleanup=true, type::Unio
     if version == "1.0"
         @assert false "FMI version 1.0 deteted, this is (currently) not supported by FMI.jl."
     elseif version == "2.0"
-        return createFMU2(unzippedAbsPath, zipAbsPath; type=type)
+        return createFMU2(unzippedAbsPath, zipAbsPath; type = type)
     elseif version == "3.0"
-        return createFMU3(unzippedAbsPath, zipAbsPath; type=type)
+        return createFMU3(unzippedAbsPath, zipAbsPath; type = type)
     else
         @assert false, "Unknwon FMI version `$(version)`."
     end
@@ -64,7 +96,7 @@ Free the allocated memory, close the binaries and remove temporary zip and unzip
 # Keywords
 - `secure_pointers=true` whether pointers to C-functions should be overwritten with dummies with Julia assertions, instead of pointing to dead memory (slower, but more user safe)
 """
-function unloadFMU(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
+function unloadFMU(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool = true)
 
     while length(fmu.components) > 0
         c = fmu.components[end]
@@ -82,7 +114,7 @@ function unloadFMU(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
 
     # the components are removed from the component list via call to fmi2FreeInstance!
     @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
-    
+
     if secure_pointers
         unloadPointers(fmu)
     end
@@ -98,7 +130,7 @@ function unloadFMU(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
         end
     end
 end
-function unloadFMU(fmu::FMU3, cleanUp::Bool=true)
+function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
 
     while length(fmu.instances) > 0
         fmi3FreeInstance!(fmu.instances[end])

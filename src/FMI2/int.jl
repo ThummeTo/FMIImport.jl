@@ -46,19 +46,21 @@ Create a new instance of the given fmu, adds a logger if logginOn == true.
 
 See also [`fmi2Instantiate`](#@ref).
 """
-function fmi2Instantiate!(fmu::FMU2;
-                            instanceName::String=fmu.modelName,
-                            type::fmi2Type=fmu.type,
-                            pushComponents::Bool = true,
-                            visible::Bool = false,
-                            loggingOn::Bool = fmu.executionConfig.loggingOn,
-                            externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
-                            logStatusOK::Bool=true,
-                            logStatusWarning::Bool=true,
-                            logStatusDiscard::Bool=true,
-                            logStatusError::Bool=true,
-                            logStatusFatal::Bool=true,
-                            logStatusPending::Bool=true)
+function fmi2Instantiate!(
+    fmu::FMU2;
+    instanceName::String = fmu.modelName,
+    type::fmi2Type = fmu.type,
+    pushComponents::Bool = true,
+    visible::Bool = false,
+    loggingOn::Bool = fmu.executionConfig.loggingOn,
+    externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    logStatusOK::Bool = true,
+    logStatusWarning::Bool = true,
+    logStatusDiscard::Bool = true,
+    logStatusError::Bool = true,
+    logStatusFatal::Bool = true,
+    logStatusPending::Bool = true,
+)
 
     compEnv = FMU2ComponentEnvironment()
     compEnv.logStatusOK = logStatusOK
@@ -68,7 +70,11 @@ function fmi2Instantiate!(fmu::FMU2;
     compEnv.logStatusFatal = logStatusFatal
     compEnv.logStatusPending = logStatusPending
 
-    ptrLogger = @cfunction(fmi2CallbackLogger, Cvoid, (Ptr{FMU2ComponentEnvironment}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar}))
+    ptrLogger = @cfunction(
+        fmi2CallbackLogger,
+        Cvoid,
+        (Ptr{FMU2ComponentEnvironment}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar})
+    )
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
             @assert Sys.WORD_SIZE == 64 || (Sys.iswindows() && Sys.WORD_SIZE == 32) "`externalCallbacks=true` is only supported for 64-bit and 32-Bit Windows"
@@ -91,18 +97,25 @@ function fmi2Instantiate!(fmu::FMU2;
             perm = filemode(cbLibPath)
             permRWX = 16895
             if perm != permRWX
-                chmod(cbLibPath, permRWX; recursive=true)
+                chmod(cbLibPath, permRWX; recursive = true)
             end
 
             fmu.callbackLibHandle = dlopen(cbLibPath)
         end
         ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
     end
-    ptrAllocateMemory = @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
+    ptrAllocateMemory =
+        @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
     ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
     ptrStepFinished = C_NULL # ToDo
     ptrComponentEnvironment = Ptr{FMU2ComponentEnvironment}(pointer_from_objref(compEnv))
-    callbackFunctions = fmi2CallbackFunctions(ptrLogger, ptrAllocateMemory, ptrFreeMemory, ptrStepFinished, ptrComponentEnvironment)
+    callbackFunctions = fmi2CallbackFunctions(
+        ptrLogger,
+        ptrAllocateMemory,
+        ptrFreeMemory,
+        ptrStepFinished,
+        ptrComponentEnvironment,
+    )
 
     guidStr = "$(fmu.modelDescription.guid)"
 
@@ -111,7 +124,16 @@ function fmi2Instantiate!(fmu::FMU2;
     lock(lk_fmi2Instantiate) do
 
         component = nothing
-        addr = fmi2Instantiate(fmu.cInstantiate, pointer(instanceName), type, pointer(guidStr), pointer(fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)), fmi2Boolean(visible), fmi2Boolean(loggingOn))
+        addr = fmi2Instantiate(
+            fmu.cInstantiate,
+            pointer(instanceName),
+            type,
+            pointer(guidStr),
+            pointer(fmu.fmuResourceLocation),
+            Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)),
+            fmi2Boolean(visible),
+            fmi2Boolean(loggingOn),
+        )
 
         if addr == Ptr{Cvoid}(C_NULL)
             @error "fmi2Instantiate!(...): Instantiation failed, see error messages above.\nIf no error messages, enable FMU debug logging.\nIf logging is on and no messages are printed before this, the FMU might not log errors."
@@ -127,7 +149,10 @@ function fmi2Instantiate!(fmu::FMU2;
         end
 
         if !isnothing(component)
-            logWarning(fmu, "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.")
+            logWarning(
+                fmu,
+                "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.",
+            )
         else
             component = FMU2Component(addr, fmu)
 
@@ -196,7 +221,11 @@ Removes the component from the FMUs component list.
 See Also [`fmi2FreeInstance!`](@ref).
 """
 lk_fmi2FreeInstance = ReentrantLock()
-function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::Bool=true)
+function fmi2FreeInstance!(
+    c::FMU2Component;
+    popComponent::Bool = true,
+    doccall::Bool = true,
+)
 
     global lk_fmi2FreeInstance
 
@@ -210,13 +239,14 @@ function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool=true, doccall::B
     @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.addr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
 
     if popComponent
-        lock(lk_fmi2FreeInstance) do 
+        lock(lk_fmi2FreeInstance) do
             ind = findall(x -> x.addr == addr, c.fmu.components)
             @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed. Target address `$(addr)` was found $(length(ind)) times at indicies $(ind)."
             deleteat!(c.fmu.components, ind)
 
             for key in keys(c.fmu.threadInstances)
-                if !isnothing(c.fmu.threadInstances[key]) && c.fmu.threadInstances[key].addr == addr
+                if !isnothing(c.fmu.threadInstances[key]) &&
+                   c.fmu.threadInstances[key].addr == addr
                     c.fmu.threadInstances[key] = nothing
                 end
             end
@@ -298,10 +328,12 @@ More detailed:
 
 See also [`fmi2SetupExperiment`](@ref).
 """
-function fmi2SetupExperiment(c::FMU2Component, 
-                                startTime::Union{Real, Nothing} = nothing, 
-                                stopTime::Union{Real, Nothing} = nothing; 
-                                tolerance::Union{Real, Nothing} = nothing)
+function fmi2SetupExperiment(
+    c::FMU2Component,
+    startTime::Union{Real,Nothing} = nothing,
+    stopTime::Union{Real,Nothing} = nothing;
+    tolerance::Union{Real,Nothing} = nothing,
+)
 
     if startTime == nothing
         startTime = getDefaultStartTime(c.fmu.modelDescription)
@@ -332,7 +364,14 @@ function fmi2SetupExperiment(c::FMU2Component,
         stopTime = 0.0 # dummy value, will be ignored
     end
 
-    fmi2SetupExperiment(c, fmi2Boolean(toleranceDefined), fmi2Real(tolerance), fmi2Real(startTime), fmi2Boolean(stopTimeDefined), fmi2Real(stopTime))
+    fmi2SetupExperiment(
+        c,
+        fmi2Boolean(toleranceDefined),
+        fmi2Real(tolerance),
+        fmi2Real(startTime),
+        fmi2Boolean(stopTimeDefined),
+        fmi2Real(stopTime),
+    )
 end
 
 """
@@ -406,7 +445,11 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
  See also [`fmi2GetReal!`](@ref).
 """
-function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
+function fmi2GetReal!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Real},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -452,12 +495,18 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2SetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractVector{fmi2Real}; kwargs...)
+function fmi2SetReal(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractVector{fmi2Real};
+    kwargs...,
+)
     @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
     nvr = Csize_t(length(vr))
     fmi2SetReal(c, prepareValueReference(c, vr), nvr, prepareValue(values); kwargs...)
 end
-fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real; kwargs...) = fmi2SetReal(c, prepareValueReference(c, vr), prepareValue(values); kwargs...)
+fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real; kwargs...) =
+    fmi2SetReal(c, prepareValueReference(c, vr), prepareValue(values); kwargs...)
 
 """
     fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
@@ -536,7 +585,11 @@ More detailed:
 
 See also [`fmi2GetInteger!`](@ref).
 """
-function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
+function fmi2GetInteger!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Integer},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -575,7 +628,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 See also [`fmi2SetInteger`](@ref).
 """
-function fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
+function fmi2SetInteger(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{<:Integer},<:Integer},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -649,7 +706,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetBoolean!`](@ref).
 """
-function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
+function fmi2GetBoolean!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Boolean},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -692,7 +753,11 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetBoolean!`](@ref).
 """
-function fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
+function fmi2SetBoolean(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{Bool},Bool},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -768,7 +833,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetString!`](@ref).
 """
-function fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
+function fmi2GetString!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2String},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi2GetString!(...): `vr` and `values` need to be the same length."
@@ -817,7 +886,11 @@ More detailed:
 - FMISpec2.0.2[p.108]: 4.2.4 State Machine of Calling Sequence from Master to Slave
 See also [`fmi2SetString`](@ref).
 """
-function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
+function fmi2SetString(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{String},String},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -854,7 +927,7 @@ function fmi2GetFMUstate(c::FMU2Component)
     state
 end
 # [NOTE] needs to be exported, because FMICore only exports `fmi2GetFMUstate!`
-export fmi2GetFMUstate 
+export fmi2GetFMUstate
 
 """
     fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
@@ -1018,12 +1091,14 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function fmi2GetDirectionalDerivative(c::FMU2Component,
-                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                      vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvKnown::AbstractArray{fmi2Real})
+function fmi2GetDirectionalDerivative(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    dvKnown::AbstractArray{fmi2Real},
+)
 
-    nUnknown = Csize_t(length(vUnknown_ref))     
+    nUnknown = Csize_t(length(vUnknown_ref))
 
     dvUnknown = zeros(fmi2Real, nUnknown)
     status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvKnown, dvUnknown)
@@ -1031,7 +1106,12 @@ function fmi2GetDirectionalDerivative(c::FMU2Component,
 
     return dvUnknown
 end
-fmi2GetDirectionalDerivative(c::FMU2Component, vUnknown_ref::fmi2ValueReference, vKnown_ref::fmi2ValueReference, dvKnown::fmi2Real) = fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
+fmi2GetDirectionalDerivative(
+    c::FMU2Component,
+    vUnknown_ref::fmi2ValueReference,
+    vKnown_ref::fmi2ValueReference,
+    dvKnown::fmi2Real,
+) = fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
 # [NOTE] needs to be exported, because FMICore only exports `fmi2GetDirectionalDerivative!`
 export fmi2GetDirectionalDerivative
 
@@ -1085,16 +1165,26 @@ More detailed:
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function fmi2GetDirectionalDerivative!(c::FMU2Component,
-                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                      vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvKnown::AbstractArray{fmi2Real},
-                                      dvUnknown::AbstractArray)
+function fmi2GetDirectionalDerivative!(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    dvKnown::AbstractArray{fmi2Real},
+    dvUnknown::AbstractArray,
+)
 
     nKnown = Csize_t(length(vKnown_ref))
     nUnknown = Csize_t(length(vUnknown_ref))
 
-    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
+    status = fmi2GetDirectionalDerivative!(
+        c,
+        vUnknown_ref,
+        nUnknown,
+        vKnown_ref,
+        nKnown,
+        dvKnown,
+        dvUnknown,
+    )
 
     return status
 end
@@ -1132,7 +1222,12 @@ More detailed:
 
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+function fmi2SetRealInputDerivatives(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    order::AbstractArray{fmi2Integer},
+    values::AbstractArray{fmi2Real},
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2SetRealInputDerivatives` only available for CS-FMUs."
 
@@ -1163,7 +1258,11 @@ Sets the n-th time derivative of real input variables.
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 
 """
-function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
+function fmi2GetRealOutputDerivatives(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    order::AbstractArray{fmi2Integer},
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2GetRealOutputDerivatives` only available for CS-FMUs."
 
@@ -1216,7 +1315,12 @@ More detailed:
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
 See also [`fmi2DoStep`](@ref).
 """
-function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+function fmi2DoStep(
+    c::FMU2Component,
+    communicationStepSize::Union{Real,Nothing} = nothing;
+    currentCommunicationPoint::Union{Real,Nothing} = nothing,
+    noSetFMUStatePriorToCurrentPoint::Bool = true,
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2DoStep` only available for CS-FMUs."
 
@@ -1238,7 +1342,12 @@ function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing
     end
 
     c.t = currentCommunicationPoint
-    status = fmi2DoStep(c, fmi2Real(currentCommunicationPoint), fmi2Real(communicationStepSize), fmi2Boolean(noSetFMUStatePriorToCurrentPoint))
+    status = fmi2DoStep(
+        c,
+        fmi2Real(currentCommunicationPoint),
+        fmi2Real(communicationStepSize),
+        fmi2Boolean(noSetFMUStatePriorToCurrentPoint),
+    )
     c.t += communicationStepSize
 
     return status
@@ -1316,7 +1425,8 @@ function fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{fmi2Real}; k
     end
     return status
 end
-fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{Float32}; kwargs...) = fmi2SetContinuousStates(c, Array{fmi2Real}(x); kwargs...)
+fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{Float32}; kwargs...) =
+    fmi2SetContinuousStates(c, Array{fmi2Real}(x); kwargs...)
 
 """
     fmi2NewDiscreteStates(c::FMU2Component)
@@ -1377,12 +1487,16 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2CompletedIntegratorStep`](@ref).
 """
-function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
-    status = fmi2CompletedIntegratorStep!(c,
-                                          noSetFMUStatePriorToCurrentPoint,
-                                          c._ptr_enterEventMode,
-                                          c._ptr_terminateSimulation)
+function fmi2CompletedIntegratorStep(
+    c::FMU2Component,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+)
+    status = fmi2CompletedIntegratorStep!(
+        c,
+        noSetFMUStatePriorToCurrentPoint,
+        c._ptr_enterEventMode,
+        c._ptr_terminateSimulation,
+    )
 
     return (status, c.enterEventMode, c.terminateSimulation)
 end

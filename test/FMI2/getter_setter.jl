@@ -9,7 +9,7 @@
 
 myFMU = loadFMU("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
-comp = fmi2Instantiate!(myFMU; loggingOn=false)
+comp = fmi2Instantiate!(myFMU; loggingOn = false)
 @test comp != 0
 
 @test fmi2SetupExperiment(comp, fmi2Real(0.0)) == 0
@@ -53,12 +53,25 @@ cacheString = ""
 @test fmi2SetString(comp, stringValueReferences[1], rndString) == 0
 @test fmi2GetString(comp, stringValueReferences[1]) == rndString
 
-setValue(comp, 
-        [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]], 
-        [rndReal,                rndInteger,                rndBoolean,                rndString])
-@test getValue(comp, 
-                [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]]) == 
-                [rndReal,                rndInteger,                rndBoolean,                rndString]
+setValue(
+    comp,
+    [
+        realValueReferences[1],
+        integerValueReferences[1],
+        booleanValueReferences[1],
+        stringValueReferences[1],
+    ],
+    [rndReal, rndInteger, rndBoolean, rndString],
+)
+@test getValue(
+    comp,
+    [
+        realValueReferences[1],
+        integerValueReferences[1],
+        booleanValueReferences[1],
+        stringValueReferences[1],
+    ],
+) == [rndReal, rndInteger, rndBoolean, rndString]
 
 ##################
 # Testing Arrays #
