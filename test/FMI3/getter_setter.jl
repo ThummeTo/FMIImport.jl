@@ -8,7 +8,7 @@
 ###############
 
 myFMU = loadFMU("Feedthrough", "ModelicaReferenceFMUs", "0.0.20", "3.0")
-inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn = false)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
@@ -93,14 +93,27 @@ cacheString = ""
 @test fmi3SetString(inst, stringValueReferences[1], rndString) == 0
 @test fmi3GetString(inst, stringValueReferences[1]) == rndString
 
-@test fmi3SetBinary(inst, binaryValueReferences[1], Csize_t(length(rndString)), pointer(rndString)) == 0
+@test fmi3SetBinary(
+    inst,
+    binaryValueReferences[1],
+    Csize_t(length(rndString)),
+    pointer(rndString),
+) == 0
 binary = fmi3GetBinary(inst, binaryValueReferences[1])
 @test unsafe_string(binary) == rndString
 
 # TODO test after latest PR
-setValue(inst, 
-        [float64ValueReferences[1], int32ValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]], 
-        [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                rndString])
+setValue(
+    inst,
+    [
+        float64ValueReferences[1],
+        int32ValueReferences[1],
+        booleanValueReferences[1],
+        stringValueReferences[1],
+        binaryValueReferences[1],
+    ],
+    [rndReal, Int32(rndInteger), rndBoolean, rndString, rndString],
+)
 # @test getValue(inst, 
 #                 [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) == 
 #                 [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                unsafe_string(rndString)]
@@ -117,7 +130,7 @@ rndString = [tmp, tmp]
 
 cacheFloat32 = [Float32(0.0), Float32(0.0)]
 cacheFloat64 = [0.0, 0.0]
-cacheInteger =  [fmi3Int32(0), fmi3Int32(0)]
+cacheInteger = [fmi3Int32(0), fmi3Int32(0)]
 cacheBoolean = [fmi3Boolean(false), fmi3Boolean(false)]
 cacheString = [pointer(""), pointer("")]
 
