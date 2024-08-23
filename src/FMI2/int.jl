@@ -3,11 +3,262 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-# What is included in the file `FMI2_int.jl` (internal functions)?
-# - optional, more comfortable calls to the C-functions from the FMI-spec (example: `fmiGetReal!(c, v, a)` is bulky, `a = fmiGetReal(c, v)` is more user friendly)
+lk_fmi2Instantiate = ReentrantLock()
+"""
+    fmi2Instantiate!(fmu::FMU2;
+                        instanceName::String=fmu.modelName,
+                        type::fmi2Type=fmu.type,
+                        pushComponents::Bool = true,
+                        visible::Bool = false,
+                        loggingOn::Bool = fmu.executionConfig.loggingOn,
+                        externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+                        logStatusOK::Bool=true,
+                        logStatusWarning::Bool=true,
+                        logStatusDiscard::Bool=true,
+                        logStatusError::Bool=true,
+                        logStatusFatal::Bool=true,
+                        logStatusPending::Bool=true)
 
-# Best practices:
-# - no direct access on C-pointers (`compAddr`), use existing FMICore-functions
+Create a new instance of the given fmu, adds a logger if logginOn == true.
+# Arguments
+- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
+
+# Keywords
+- `instanceName::String=fmu.modelName`: Name of the instance
+- `type::fmi2Type=fmu.type`: Defines whether a Co-Simulation or Model Exchange is present
+- `pushComponents::Bool = true`: Defines if the fmu components should be pushed in the application.
+- `visible::Bool = false` if the FMU should be started with graphic interface, if supported (default=`false`)
+- `loggingOn::Bool = fmu.executionConfig.loggingOn` if the FMU should log and display function calls (default=`false`)
+- `externalCallbacks::Bool = fmu.executionConfig.externalCallbacks` if an external shared library should be used for the fmi2CallbackFunctions, this may improve readability of logging messages (default=`false`)
+- `logStatusOK::Bool=true` whether to log status of kind `fmi2OK` (default=`true`)
+- `logStatusWarning::Bool=true` whether to log status of kind `fmi2Warning` (default=`true`)
+- `logStatusDiscard::Bool=true` whether to log status of kind `fmi2Discard` (default=`true`)
+- `logStatusError::Bool=true` whether to log status of kind `fmi2Error` (default=`true`)
+- `logStatusFatal::Bool=true` whether to log status of kind `fmi2Fatal` (default=`true`)
+- `logStatusPending::Bool=true` whether to log status of kind `fmi2Pending` (default=`true`)
+
+# Returns
+- Returns the instance of a new FMU component.
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2: 2.2.7  Definition of Model Variables (ModelVariables)
+
+See also [`fmi2Instantiate`](#@ref).
+"""
+function fmi2Instantiate!(
+    fmu::FMU2;
+    instanceName::String = fmu.modelName,
+    type::fmi2Type = fmu.type,
+    pushComponents::Bool = true,
+    visible::Bool = false,
+    loggingOn::Bool = fmu.executionConfig.loggingOn,
+    externalCallbacks::Bool = fmu.executionConfig.externalCallbacks,
+    logStatusOK::Bool = true,
+    logStatusWarning::Bool = true,
+    logStatusDiscard::Bool = true,
+    logStatusError::Bool = true,
+    logStatusFatal::Bool = true,
+    logStatusPending::Bool = true,
+)
+
+    compEnv = FMU2ComponentEnvironment()
+    compEnv.logStatusOK = logStatusOK
+    compEnv.logStatusWarning = logStatusWarning
+    compEnv.logStatusDiscard = logStatusDiscard
+    compEnv.logStatusError = logStatusError
+    compEnv.logStatusFatal = logStatusFatal
+    compEnv.logStatusPending = logStatusPending
+
+    ptrLogger = @cfunction(
+        fmi2CallbackLogger,
+        Cvoid,
+        (Ptr{FMU2ComponentEnvironment}, Ptr{Cchar}, Cuint, Ptr{Cchar}, Ptr{Cchar})
+    )
+    if externalCallbacks
+        if fmu.callbackLibHandle == C_NULL
+            @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
+
+            cbLibPath = CB_LIB_PATH
+            if Sys.iswindows()
+                cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+            elseif Sys.islinux()
+                cbLibPath = joinpath(cbLibPath, "linux64", "libcallbackFunctions.so")
+            elseif Sys.isapple()
+                cbLibPath = joinpath(cbLibPath, "darwin64", "libcallbackFunctions.dylib")
+            else
+                @error "Unsupported OS"
+            end
+
+            # check permission to execute the DLL
+            perm = filemode(cbLibPath)
+            permRWX = 16895
+            if perm != permRWX
+                chmod(cbLibPath, permRWX; recursive = true)
+            end
+
+            fmu.callbackLibHandle = dlopen(cbLibPath)
+        end
+        ptrLogger = dlsym(fmu.callbackLibHandle, :logger)
+    end
+    ptrAllocateMemory =
+        @cfunction(fmi2CallbackAllocateMemory, Ptr{Cvoid}, (Csize_t, Csize_t))
+    ptrFreeMemory = @cfunction(fmi2CallbackFreeMemory, Cvoid, (Ptr{Cvoid},))
+    ptrStepFinished = C_NULL # ToDo
+    ptrComponentEnvironment = Ptr{FMU2ComponentEnvironment}(pointer_from_objref(compEnv))
+    callbackFunctions = fmi2CallbackFunctions(
+        ptrLogger,
+        ptrAllocateMemory,
+        ptrFreeMemory,
+        ptrStepFinished,
+        ptrComponentEnvironment,
+    )
+
+    guidStr = "$(fmu.modelDescription.guid)"
+
+    global lk_fmi2Instantiate
+
+    lock(lk_fmi2Instantiate) do
+
+        component = nothing
+        addr = fmi2Instantiate(
+            fmu.cInstantiate,
+            pointer(instanceName),
+            type,
+            pointer(guidStr),
+            pointer(fmu.fmuResourceLocation),
+            Ptr{fmi2CallbackFunctions}(pointer_from_objref(callbackFunctions)),
+            fmi2Boolean(visible),
+            fmi2Boolean(loggingOn),
+        )
+
+        if addr == Ptr{Cvoid}(C_NULL)
+            @error "fmi2Instantiate!(...): Instantiation failed, see error messages above.\nIf no error messages, enable FMU debug logging.\nIf logging is on and no messages are printed before this, the FMU might not log errors."
+            return nothing
+        end
+
+        # check if address is already inside of the components (this may be in FMIExport.jl)
+        for c in fmu.components
+            if c.addr == addr
+                component = c
+                break
+            end
+        end
+
+        if !isnothing(component)
+            logWarning(
+                fmu,
+                "fmi2Instantiate!(...): This component was already registered. This may be because you created the FMU by yourself with FMIExport.jl.",
+            )
+        else
+            component = FMU2Component(addr, fmu)
+
+            component.callbackFunctions = callbackFunctions
+            component.instanceName = instanceName
+            component.type = type
+
+            if pushComponents
+                push!(fmu.components, component)
+            end
+        end
+
+        component.componentEnvironment = compEnv
+        component.loggingOn = loggingOn
+        component.visible = visible
+
+        # Jacobians
+
+        # smpFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2SampleJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # updFct = nothing
+        # if fmi2ProvidesDirectionalDerivative(fmu)
+        #     updFct = (mtx, ∂f_refs, ∂x_refs) -> fmi2GetJacobian!(mtx, component, ∂f_refs, ∂x_refs)
+        # else
+        #     updFct = smpFct
+        # end
+
+        # component.∂ẋ_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂ẋ_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+
+        # component.∂y_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+        # component.∂y_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, updFct)
+
+        # component.∂e_∂x = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂u = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+        # component.∂e_∂p = FMICore.FMU2Jacobian{fmi2Real, fmi2ValueReference}(component, smpFct)
+
+        # register component for current thread
+        fmu.threadInstances[Threads.threadid()] = component
+    end
+
+    return getCurrentInstance(fmu)
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2Instantiate`
+export fmi2Instantiate!
+
+"""
+    fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
+
+Disposes the given instance, unloads the loaded model, and frees all the allocated memory and other resources that have been allocated by the functions of the FMU interface.
+If a null pointer is provided for “c”, the function call is ignored (does not have an effect).
+    
+Removes the component from the FMUs component list.
+
+# Arguments
+- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+
+# Returns
+- nothing
+
+# Source
+- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
+- FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
+- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
+See Also [`fmi2FreeInstance!`](@ref).
+"""
+lk_fmi2FreeInstance = ReentrantLock()
+function fmi2FreeInstance!(
+    c::FMU2Component;
+    popComponent::Bool = true,
+    doccall::Bool = true,
+)
+
+    global lk_fmi2FreeInstance
+
+    addr = c.addr
+
+    # invalidate all active snapshots 
+    while length(c.snapshots) > 0
+        freeSnapshot!(c.snapshots[end])
+    end
+
+    @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.addr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
+
+    if popComponent
+        lock(lk_fmi2FreeInstance) do
+            ind = findall(x -> x.addr == addr, c.fmu.components)
+            @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed. Target address `$(addr)` was found $(length(ind)) times at indicies $(ind)."
+            deleteat!(c.fmu.components, ind)
+
+            for key in keys(c.fmu.threadInstances)
+                if !isnothing(c.fmu.threadInstances[key]) &&
+                   c.fmu.threadInstances[key].addr == addr
+                    c.fmu.threadInstances[key] = nothing
+                end
+            end
+        end
+    end
+
+    if doccall
+        fmi2FreeInstance(c.fmu.cFreeInstance, addr)
+    end
+
+    nothing
+end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2FreeInstance`
+export fmi2FreeInstance!
+
 
 """
     fmi2SetDebugLogging(c::FMU2Component)
@@ -74,13 +325,15 @@ More detailed:
 
 See also [`fmi2SetupExperiment`](@ref).
 """
-function fmi2SetupExperiment(c::FMU2Component, 
-                                startTime::Union{Real, Nothing} = nothing, 
-                                stopTime::Union{Real, Nothing} = nothing; 
-                                tolerance::Union{Real, Nothing} = nothing)
+function fmi2SetupExperiment(
+    c::FMU2Component,
+    startTime::Union{Real,Nothing} = nothing,
+    stopTime::Union{Real,Nothing} = nothing;
+    tolerance::Union{Real,Nothing} = nothing,
+)
 
     if startTime == nothing
-        startTime = fmi2GetDefaultStartTime(c.fmu.modelDescription)
+        startTime = getDefaultStartTime(c.fmu.modelDescription)
         if startTime == nothing
             startTime = 0.0
         end
@@ -88,12 +341,12 @@ function fmi2SetupExperiment(c::FMU2Component,
 
     # default stopTime is set automatically if doing nothing
     # if stopTime == nothing
-    #     stopTime = fmi2GetDefaultStopTime(c.fmu.modelDescription)
+    #     stopTime = getDefaultStopTime(c.fmu.modelDescription)
     # end
 
     # default tolerance is set automatically if doing nothing
     # if tolerance == nothing
-    #     tolerance = fmi2GetDefaultTolerance(c.fmu.modelDescription)
+    #     tolerance = getDefaultTolerance(c.fmu.modelDescription)
     # end
 
     c.t = startTime
@@ -108,7 +361,14 @@ function fmi2SetupExperiment(c::FMU2Component,
         stopTime = 0.0 # dummy value, will be ignored
     end
 
-    fmi2SetupExperiment(c, fmi2Boolean(toleranceDefined), fmi2Real(tolerance), fmi2Real(startTime), fmi2Boolean(stopTimeDefined), fmi2Real(stopTime))
+    fmi2SetupExperiment(
+        c,
+        fmi2Boolean(toleranceDefined),
+        fmi2Real(tolerance),
+        fmi2Real(startTime),
+        fmi2Boolean(stopTimeDefined),
+        fmi2Real(stopTime),
+    )
 end
 
 """
@@ -148,6 +408,8 @@ function fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetReal`
+export fmi2GetReal
 
 """
     fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
@@ -181,7 +443,11 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
  See also [`fmi2GetReal!`](@ref).
 """
-function fmi2GetReal!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Real})
+function fmi2GetReal!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Real},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -227,12 +493,18 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2SetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractVector{fmi2Real}; kwargs...)
+function fmi2SetReal(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractVector{fmi2Real};
+    kwargs...,
+)
     @assert length(vr) == length(values) "fmi2SetReal(...): `vr` ($(length(vr))) and `values` ($(length(values))) need to be the same length."
     nvr = Csize_t(length(vr))
     fmi2SetReal(c, prepareValueReference(c, vr), nvr, prepareValue(values); kwargs...)
 end
-fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real; kwargs...) = fmi2SetReal(c, prepareValueReference(c, vr), prepareValue(values); kwargs...)
+fmi2SetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Real; kwargs...) =
+    fmi2SetReal(c, prepareValueReference(c, vr), prepareValue(values); kwargs...)
 
 """
     fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
@@ -272,6 +544,8 @@ function fmi2GetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetInteger`
+export fmi2GetInteger
 
 """
     fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
@@ -309,7 +583,11 @@ More detailed:
 
 See also [`fmi2GetInteger!`](@ref).
 """
-function fmi2GetInteger!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Integer})
+function fmi2GetInteger!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Integer},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -348,7 +626,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 
 See also [`fmi2SetInteger`](@ref).
 """
-function fmi2SetInteger(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{<:Integer}, <:Integer})
+function fmi2SetInteger(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{<:Integer},<:Integer},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -390,6 +672,8 @@ function fmi2GetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetBoolean`
+export fmi2GetBoolean
 
 """
     fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
@@ -420,7 +704,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetBoolean!`](@ref).
 """
-function fmi2GetBoolean!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2Boolean})
+function fmi2GetBoolean!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2Boolean},
+)
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
@@ -463,7 +751,11 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetBoolean!`](@ref).
 """
-function fmi2SetBoolean(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{Bool}, Bool})
+function fmi2SetBoolean(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{Bool},Bool},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -509,6 +801,8 @@ function fmi2GetString(c::FMU2Component, vr::fmi2ValueReferenceFormat)
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetString!`
+export fmi2GetString
 
 """
     fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
@@ -537,7 +831,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetString!`](@ref).
 """
-function fmi2GetString!(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::AbstractArray{fmi2String})
+function fmi2GetString!(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::AbstractArray{fmi2String},
+)
 
     vr = prepareValueReference(c, vr)
     @assert length(vr) == length(values) "fmi2GetString!(...): `vr` and `values` need to be the same length."
@@ -586,7 +884,11 @@ More detailed:
 - FMISpec2.0.2[p.108]: 4.2.4 State Machine of Calling Sequence from Master to Slave
 See also [`fmi2SetString`](@ref).
 """
-function fmi2SetString(c::FMU2Component, vr::fmi2ValueReferenceFormat, values::Union{AbstractArray{String}, String})
+function fmi2SetString(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    values::Union{AbstractArray{String},String},
+)
 
     vr = prepareValueReference(c, vr)
     values = prepareValue(values)
@@ -622,6 +924,8 @@ function fmi2GetFMUstate(c::FMU2Component)
     state = stateRef[]
     state
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetFMUstate!`
+export fmi2GetFMUstate
 
 """
     fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
@@ -643,9 +947,9 @@ Free the memory for the allocated FMU state
 
 See also [`fmi2FreeFMUstate`](@ref).
 """
-function fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
+function fmi2FreeFMUstate(c::FMU2Component, state::fmi2FMUstate)
     stateRef = Ref(state)
-    fmi2FreeFMUstate!(c, stateRef)
+    fmi2FreeFMUstate(c, stateRef)
     state = stateRef[]
     return nothing
 end
@@ -676,6 +980,8 @@ function fmi2SerializedFMUstateSize(c::FMU2Component, state::fmi2FMUstate)
     fmi2SerializedFMUstateSize!(c, state, sizeRef)
     size = sizeRef[]
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2SerializedFMUstateSize!`
+export fmi2SerializedFMUstateSize
 
 """
     fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
@@ -707,6 +1013,8 @@ function fmi2SerializeFMUstate(c::FMU2Component, state::fmi2FMUstate)
     @assert status == Int(fmi2StatusOK) ["Failed with status `$status`."]
     serializedState
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2SerializeFMUstate!`
+export fmi2SerializeFMUstate
 
 """
     fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArray{fmi2Byte})
@@ -738,6 +1046,8 @@ function fmi2DeSerializeFMUstate(c::FMU2Component, serializedState::AbstractArra
 
     state = stateRef[]
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2DeSerializeFMUstate!`
+export fmi2DeSerializeFMUstate
 
 """
     fmi2GetDirectionalDerivative(c::FMU2Component,
@@ -779,26 +1089,36 @@ Computes a linear combination of the partial derivatives of h with respect to th
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function fmi2GetDirectionalDerivative(c::FMU2Component,
-                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                      vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function fmi2GetDirectionalDerivative(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    dvKnown::AbstractArray{fmi2Real},
+)
 
-    nUnknown = Csize_t(length(vUnknown_ref))     
+    nUnknown = Csize_t(length(vUnknown_ref))
 
     dvUnknown = zeros(fmi2Real, nUnknown)
-    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvUnknown, dvKnown)
+    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, vKnown_ref, dvKnown, dvUnknown)
     @assert status == fmi2StatusOK ["Failed with status `$status`."]
 
     return dvUnknown
 end
+fmi2GetDirectionalDerivative(
+    c::FMU2Component,
+    vUnknown_ref::fmi2ValueReference,
+    vKnown_ref::fmi2ValueReference,
+    dvKnown::fmi2Real,
+) = fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetDirectionalDerivative!`
+export fmi2GetDirectionalDerivative
 
 """
     fmiGetDirectionalDerivative!(c::FMU2Component,
                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray,
-                                      dvKnown::Union{Array{fmi2Real}, Nothing} = nothing)
+                                      dvKnown::Array{fmi2Real},
+                                      dvUnknown::AbstractArray)
 
 Wrapper Function call to compute the partial derivative with respect to the variables `vKnown_ref`.
 
@@ -843,69 +1163,28 @@ More detailed:
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function fmi2GetDirectionalDerivative!(c::FMU2Component,
-                                      vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                      vKnown_ref::AbstractArray{fmi2ValueReference},
-                                      dvUnknown::AbstractArray, # ToDo: Data-type
-                                      dvKnown::Union{AbstractArray{fmi2Real}, Nothing} = nothing)
+function fmi2GetDirectionalDerivative!(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    dvKnown::AbstractArray{fmi2Real},
+    dvUnknown::AbstractArray,
+)
 
     nKnown = Csize_t(length(vKnown_ref))
     nUnknown = Csize_t(length(vUnknown_ref))
 
-    if dvKnown == nothing
-        dvKnown = ones(fmi2Real, nKnown)
-    end
-
-    status = fmi2GetDirectionalDerivative!(c, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
+    status = fmi2GetDirectionalDerivative!(
+        c,
+        vUnknown_ref,
+        nUnknown,
+        vKnown_ref,
+        nKnown,
+        dvKnown,
+        dvUnknown,
+    )
 
     return status
-end
-
-"""
-    fmi2GetDirectionalDerivative(c::FMU2Component,
-                                      vUnknown_ref::fmi2ValueReference,
-                                      vKnown_ref::fmi2ValueReference,
-                                      dvKnown::fmi2Real = 1.0)
-
-Direct function call to compute the partial derivative with respect to `vKnown_ref`.                           
-
-Computes the directional derivatives of an FMU. An FMU has different Modes and in every Mode an FMU might be described by different equations and different unknowns.The
-precise definitions are given in the mathematical descriptions of Model Exchange (section 3.1) and Co-Simulation (section 4.1). In every Mode, the general form of the FMU equations are:
-𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
-
-- `v_unknown`: vector of unknown Real variables computed in the actual Mode:
-    - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknowns>` that have type Real.
-    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><Derivatives>)`.
-    - Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Outputs>` with type Real and variability = `discrete`.
-    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><Derivatives>` is present, also the variables listed here as state derivatives.
-- `v_known`: Real input variables of function h that changes its value in the actual Mode.
-- `v_rest`:Set of input variables of function h that either changes its value in the actual Mode but are non-Real variables, or do not change their values in this Mode, but change their values in other Modes
-
-Computes a linear combination of the partial derivatives of h with respect to the selected input variables 𝐯_known:
-
-    Δv_unknown = (δh / δv_known) Δv_known
-
-# Arguments
- - `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
- - `vUnknown_ref::fmi2ValueReference`: Argument `vUnknown_ref` contains a value of type`fmi2ValueReference` which is an identifier of a variable value of the model. `vUnknown_ref` can be equated with `v_unknown`(variable described above).
- - `vKnown_ref::fmi2ValueReference`: Argument `vKnown_ref` contains a value of type`fmi2ValueReference` which is an identifier of a variable value of the model. `vKnown_ref` can be equated with `v_known`(variable described above).
- - `dvKnown::fmi2Real = 1.0`: If no seed value is passed the value `dvKnown = 1.0` is used. Compute the partial derivative with respect to `vKnown_ref` with the value `dvKnown = 1.0`.  # gehört das zu den v_rest values
-# Returns
-- `dvUnknown::Array{fmi2Real}`: Return `dvUnknown` contains the directional derivative vector values.
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
-- FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
-- FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
-See also [`fmi2GetDirectionalDerivative!`](@ref).
-"""
-function fmi2GetDirectionalDerivative(c::FMU2Component,
-                                      vUnknown_ref::fmi2ValueReference,
-                                      vKnown_ref::fmi2ValueReference,
-                                      dvKnown::fmi2Real = 1.0)
-
-    fmi2GetDirectionalDerivative(c, [vUnknown_ref], [vKnown_ref], [dvKnown])[1]
 end
 
 # CoSimulation specific functions
@@ -941,7 +1220,12 @@ More detailed:
 
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer}, values::AbstractArray{fmi2Real})
+function fmi2SetRealInputDerivatives(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    order::AbstractArray{fmi2Integer},
+    values::AbstractArray{fmi2Real},
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2SetRealInputDerivatives` only available for CS-FMUs."
 
@@ -972,7 +1256,11 @@ Sets the n-th time derivative of real input variables.
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 
 """
-function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFormat, order::AbstractArray{fmi2Integer})
+function fmi2GetRealOutputDerivatives(
+    c::FMU2Component,
+    vr::fmi2ValueReferenceFormat,
+    order::AbstractArray{fmi2Integer},
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2GetRealOutputDerivatives` only available for CS-FMUs."
 
@@ -988,6 +1276,8 @@ function fmi2GetRealOutputDerivatives(c::FMU2Component, vr::fmi2ValueReferenceFo
         return values
     end
 end
+# [NOTE] needs to be exported, because FMICore only exports `fmi2GetRealOutputDerivatives!`
+export fmi2GetRealOutputDerivatives
 
 """
     fmi2DoStep(c::FMU2Component, 
@@ -1023,15 +1313,20 @@ More detailed:
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
 See also [`fmi2DoStep`](@ref).
 """
-function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing} = nothing; currentCommunicationPoint::Union{Real, Nothing} = nothing, noSetFMUStatePriorToCurrentPoint::Bool = true)
+function fmi2DoStep(
+    c::FMU2Component,
+    communicationStepSize::Union{Real,Nothing} = nothing;
+    currentCommunicationPoint::Union{Real,Nothing} = nothing,
+    noSetFMUStatePriorToCurrentPoint::Bool = true,
+)
 
     @assert c.type == fmi2TypeCoSimulation "`fmi2DoStep` only available for CS-FMUs."
 
     # skip `fmi2DoStep` if this is set (allows evaluation of a CS_NeuralFMUs at t_0)
-    if c.skipNextDoStep
-        c.skipNextDoStep = false
-        return fmi2StatusOK
-    end
+    # if c.skipNextDoStep
+    #     c.skipNextDoStep = false
+    #     return fmi2StatusOK
+    # end
 
     if currentCommunicationPoint == nothing
         currentCommunicationPoint = c.t
@@ -1045,7 +1340,12 @@ function fmi2DoStep(c::FMU2Component, communicationStepSize::Union{Real, Nothing
     end
 
     c.t = currentCommunicationPoint
-    status = fmi2DoStep(c, fmi2Real(currentCommunicationPoint), fmi2Real(communicationStepSize), fmi2Boolean(noSetFMUStatePriorToCurrentPoint))
+    status = fmi2DoStep(
+        c,
+        fmi2Real(currentCommunicationPoint),
+        fmi2Real(communicationStepSize),
+        fmi2Boolean(noSetFMUStatePriorToCurrentPoint),
+    )
     c.t += communicationStepSize
 
     return status
@@ -1123,7 +1423,8 @@ function fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{fmi2Real}; k
     end
     return status
 end
-fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{Float32}; kwargs...) = fmi2SetContinuousStates(c, Array{fmi2Real}(x); kwargs...)
+fmi2SetContinuousStates(c::FMU2Component, x::AbstractArray{Float32}; kwargs...) =
+    fmi2SetContinuousStates(c, Array{fmi2Real}(x); kwargs...)
 
 """
     fmi2NewDiscreteStates(c::FMU2Component)
@@ -1155,6 +1456,7 @@ function fmi2NewDiscreteStates(c::FMU2Component)
     fmi2NewDiscreteStates!(c, eventInfo)
     eventInfo
 end
+export fmi2NewDiscreteStates
 
 """
     fmiCompletedIntegratorStep(c::FMU2Component, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
@@ -1183,15 +1485,20 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2CompletedIntegratorStep`](@ref).
 """
-function fmi2CompletedIntegratorStep(c::FMU2Component,
-                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
-    status = fmi2CompletedIntegratorStep!(c,
-                                          noSetFMUStatePriorToCurrentPoint,
-                                          c._ptr_enterEventMode,
-                                          c._ptr_terminateSimulation)
+function fmi2CompletedIntegratorStep(
+    c::FMU2Component,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+)
+    status = fmi2CompletedIntegratorStep!(
+        c,
+        noSetFMUStatePriorToCurrentPoint,
+        c._ptr_enterEventMode,
+        c._ptr_terminateSimulation,
+    )
 
-    return (status, c._enterEventMode, c._terminateSimulation)
+    return (status, c.enterEventMode, c.terminateSimulation)
 end
+export fmi2CompletedIntegratorStep
 
 """
     fmi2GetDerivatives(c::FMU2Component)
@@ -1217,6 +1524,7 @@ function fmi2GetDerivatives(c::FMU2Component)
     fmi2GetDerivatives!(c, derivatives)
     return derivatives
 end
+export fmi2GetDerivatives
 
 """
     fmi2GetDerivatives!(c::FMU2Component, derivatives::AbstractArray{fmi2Real})
@@ -1273,6 +1581,7 @@ function fmi2GetEventIndicators(c::FMU2Component)
     fmi2GetEventIndicators!(c, eventIndicators, ni)
     return eventIndicators
 end
+export fmi2GetEventIndicators
 
 """
     fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real})
@@ -1315,6 +1624,7 @@ function fmi2GetContinuousStates(c::FMU2Component)
     fmi2GetContinuousStates!(c, x, nx)
     x
 end
+export fmi2GetContinuousStates
 
 """
     fmi2GetNominalsOfContinuousStates(c::FMU2Component)
@@ -1338,6 +1648,7 @@ function fmi2GetNominalsOfContinuousStates(c::FMU2Component)
     fmi2GetNominalsOfContinuousStates!(c, x, nx)
     x
 end
+export fmi2GetNominalsOfContinuousStates
 
 """
 ToDo
@@ -1358,3 +1669,4 @@ function fmi2GetStatus(c::FMU2Component, s::fmi2StatusKind)
 
     status, value[1]
 end
+export fmi2GetStatus

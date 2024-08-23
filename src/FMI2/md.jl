@@ -9,12 +9,25 @@
 # - [Sec. 2]  functions to get values from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 # - [Sec. 3]  additional functions to get useful information from the model description in the format `fmi2Get[value](md::fmi2ModelDescription)` [exported]
 
-using FMICore: fmi2ModelDescriptionModelExchange, fmi2ModelDescriptionCoSimulation, fmi2ModelDescriptionDefaultExperiment, fmi2ModelDescriptionEnumerationItem
-using FMICore: fmi2RealAttributesExt, fmi2BooleanAttributesExt, fmi2IntegerAttributesExt, fmi2StringAttributesExt, fmi2EnumerationAttributesExt
-using FMICore: fmi2RealAttributes, fmi2BooleanAttributes, fmi2IntegerAttributes, fmi2StringAttributes, fmi2EnumerationAttributes
-using FMICore: fmi2ModelDescriptionModelStructure
-using FMICore: fmi2DependencyKind
-using FMICore: FMU2
+using FMIBase.FMICore:
+    fmi2ModelDescriptionModelExchange,
+    fmi2ModelDescriptionCoSimulation,
+    fmi2ModelDescriptionDefaultExperiment,
+    fmi2ModelDescriptionEnumerationItem
+using FMIBase.FMICore:
+    fmi2RealAttributesExt,
+    fmi2BooleanAttributesExt,
+    fmi2IntegerAttributesExt,
+    fmi2StringAttributesExt,
+    fmi2EnumerationAttributesExt
+using FMIBase.FMICore:
+    fmi2RealAttributes,
+    fmi2BooleanAttributes,
+    fmi2IntegerAttributes,
+    fmi2StringAttributes,
+    fmi2EnumerationAttributes
+using FMIBase.FMICore: fmi2ModelDescriptionModelStructure
+using FMIBase.FMICore: fmi2DependencyKind
 
 ######################################
 # [Sec. 1a] fmi2LoadModelDescription #
@@ -31,14 +44,11 @@ Extract the FMU variables and meta data from the ModelDescription
 
 # Returns
 - `md::fmi2ModelDescription`: Retuns a struct which provides the static information of ModelVariables.
-
-# Source
-- [EzXML.jl](https://juliaio.github.io/EzXML.jl/stable/)
 """
 function fmi2LoadModelDescription(pathToModelDescription::String)
     md = fmi2ModelDescription()
 
-    md.stringValueReferences = Dict{String, fmi2ValueReference}()
+    md.stringValueReferences = Dict{String,fmi2ValueReference}()
     md.outputValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.inputValueReferences = Array{fmi2ValueReference}(undef, 0)
     md.stateValueReferences = Array{fmi2ValueReference}(undef, 0)
@@ -54,13 +64,29 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
     md.guid = root["guid"]
 
     # optional
-    md.generationTool           = parseNodeString(root, "generationTool"; onfail="[Unknown generation tool]")
-    md.generationDateAndTime    = parseNodeString(root, "generationDateAndTime"; onfail="[Unknown generation date and time]")
-    variableNamingConventionStr = parseNodeString(root, "variableNamingConvention"; onfail="flat")
-    @assert (variableNamingConventionStr == "flat" || variableNamingConventionStr == "structured") ["fmi2ReadModelDescription(...): Unknown entry for `variableNamingConvention=$(variableNamingConventionStr)`."]
-    md.variableNamingConvention = (variableNamingConventionStr == "flat" ? fmi2VariableNamingConventionFlat : fmi2VariableNamingConventionStructured)
-    md.numberOfEventIndicators  = parseNodeInteger(root, "numberOfEventIndicators"; onfail=0)
-    md.description              = parseNodeString(root, "description"; onfail="[Unknown Description]")
+    md.generationTool =
+        parseNode(root, "generationTool", String; onfail = "[Unknown generation tool]")
+    md.generationDateAndTime = parseNode(
+        root,
+        "generationDateAndTime",
+        String;
+        onfail = "[Unknown generation date and time]",
+    )
+    variableNamingConventionStr =
+        parseNode(root, "variableNamingConvention", String; onfail = "flat")
+    @assert (
+        variableNamingConventionStr == "flat" ||
+        variableNamingConventionStr == "structured"
+    ) [
+        "fmi2ReadModelDescription(...): Unknown entry for `variableNamingConvention=$(variableNamingConventionStr)`.",
+    ]
+    md.variableNamingConvention = (
+        variableNamingConventionStr == "flat" ? fmi2VariableNamingConventionFlat :
+        fmi2VariableNamingConventionStructured
+    )
+    md.numberOfEventIndicators = parseNode(root, "numberOfEventIndicators", Int; onfail = 0)
+    md.description =
+        parseNode(root, "description", String; onfail = "[Unknown Description]")
 
     # defaults
     md.modelExchange = nothing
@@ -69,49 +95,62 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
 
     # additionals
     md.valueReferences = []
-    md.valueReferenceIndicies = Dict{UInt, UInt}()
+    md.valueReferenceIndicies = Dict{UInt,UInt}()
 
     for node in eachelement(root)
 
         if node.name == "CoSimulation" || node.name == "ModelExchange"
             if node.name == "CoSimulation"
                 md.coSimulation = fmi2ModelDescriptionCoSimulation()
-                md.coSimulation.modelIdentifier                        = node["modelIdentifier"]
-                md.coSimulation.canHandleVariableCommunicationStepSize = parseNodeBoolean(node, "canHandleVariableCommunicationStepSize"   ; onfail=false)
-                md.coSimulation.canInterpolateInputs                   = parseNodeBoolean(node, "canInterpolateInputs"                     ; onfail=false)
-                md.coSimulation.maxOutputDerivativeOrder               = parseNodeInteger(node, "maxOutputDerivativeOrder"                 ; onfail=nothing)
-                md.coSimulation.canGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
-                md.coSimulation.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
-                md.coSimulation.providesDirectionalDerivative          = parseNodeBoolean(node, "providesDirectionalDerivative"            ; onfail=false)
+                md.coSimulation.modelIdentifier = parseNode(node, "modelIdentifier")
+                md.coSimulation.canHandleVariableCommunicationStepSize = parseNode(
+                    node,
+                    "canHandleVariableCommunicationStepSize",
+                    Bool;
+                    onfail = false,
+                )
+                md.coSimulation.canInterpolateInputs =
+                    parseNode(node, "canInterpolateInputs", Bool; onfail = false)
+                md.coSimulation.maxOutputDerivativeOrder =
+                    parseNode(node, "maxOutputDerivativeOrder", Int; onfail = nothing)
+                md.coSimulation.canGetAndSetFMUstate =
+                    parseNode(node, "canGetAndSetFMUstate", Bool; onfail = false)
+                md.coSimulation.canSerializeFMUstate =
+                    parseNode(node, "canSerializeFMUstate", Bool; onfail = false)
+                md.coSimulation.providesDirectionalDerivative =
+                    parseNode(node, "providesDirectionalDerivative", Bool; onfail = false)
             end
 
             if node.name == "ModelExchange"
                 md.modelExchange = fmi2ModelDescriptionModelExchange()
-                md.modelExchange.modelIdentifier                        = node["modelIdentifier"]
-                md.modelExchange.canGetAndSetFMUstate                   = parseNodeBoolean(node, "canGetAndSetFMUstate"                     ; onfail=false)
-                md.modelExchange.canSerializeFMUstate                   = parseNodeBoolean(node, "canSerializeFMUstate"                     ; onfail=false)
-                md.modelExchange.providesDirectionalDerivative          = parseNodeBoolean(node, "providesDirectionalDerivative"            ; onfail=false)
+                md.modelExchange.modelIdentifier = parseNode(node, "modelIdentifier")
+                md.modelExchange.canGetAndSetFMUstate =
+                    parseNode(node, "canGetAndSetFMUstate", Bool; onfail = false)
+                md.modelExchange.canSerializeFMUstate =
+                    parseNode(node, "canSerializeFMUstate", Bool; onfail = false)
+                md.modelExchange.providesDirectionalDerivative =
+                    parseNode(node, "providesDirectionalDerivative", Bool; onfail = false)
             end
-            
+
         elseif node.name == "TypeDefinitions"
-            md.typeDefinitions = parseTypeDefinitions(node, md)
+            md.typeDefinitions = parseTypeDefinitions(md, node)
 
         elseif node.name == "UnitDefinitions"
-            md.unitDefinitions = parseUnitDefinitions(node)
+            md.unitDefinitions = parseUnitDefinitions(md, node)
 
         elseif node.name == "ModelVariables"
-            md.modelVariables = parseModelVariables(node, md)
+            md.modelVariables = parseModelVariables(md, node)
 
         elseif node.name == "ModelStructure"
             md.modelStructure = fmi2ModelDescriptionModelStructure()
 
             for element in eachelement(node)
                 if element.name == "Derivatives"
-                    parseDerivatives(element, md)
+                    parseDerivatives(md, element)
                 elseif element.name == "InitialUnknowns"
-                    parseInitialUnknowns(element, md)
+                    parseInitialUnknowns(md, element)
                 elseif element.name == "Outputs"
-                    parseOutputs(element, md)
+                    parseOutputs(md, element)
                 else
                     @warn "Unknown tag `$(element.name)` for node `ModelStructure`."
                 end
@@ -119,15 +158,15 @@ function fmi2LoadModelDescription(pathToModelDescription::String)
 
         elseif node.name == "DefaultExperiment"
             md.defaultExperiment = fmi2ModelDescriptionDefaultExperiment()
-            md.defaultExperiment.startTime  = parseNodeReal(node, "startTime")
-            md.defaultExperiment.stopTime   = parseNodeReal(node, "stopTime")
-            md.defaultExperiment.tolerance  = parseNodeReal(node, "tolerance")
-            md.defaultExperiment.stepSize   = parseNodeReal(node, "stepSize")
+            md.defaultExperiment.startTime = parseNode(node, "startTime", fmi2Real)
+            md.defaultExperiment.stopTime = parseNode(node, "stopTime", fmi2Real)
+            md.defaultExperiment.tolerance = parseNode(node, "tolerance", fmi2Real)
+            md.defaultExperiment.stepSize = parseNode(node, "stepSize", fmi2Real)
         end
     end
 
     # creating an index for value references (fast look-up for dependencies)
-    for i in 1:length(md.valueReferences)
+    for i = 1:length(md.valueReferences)
         md.valueReferenceIndicies[md.valueReferences[i]] = i
     end
 
@@ -140,112 +179,81 @@ end
 # [Sec. 1b] helpers for load function #
 #######################################
 
-# Returns the indices of the state derivatives.
-function getDerivativeIndices(node::EzXML.Node)
-    indices = []
-    for element in eachelement(node)
-        if element.name == "Derivatives"
-            for derivative in eachelement(element)
-                ind = parse(Int, derivative["index"])
-                der = nothing
-                derKind = nothing
-
-                if haskey(derivative, "dependencies")
-                    der = split(derivative["dependencies"], " ")
-
-                    if der[1] == ""
-                        der = fmi2Integer[]
-                    else
-                        der = collect(parse(fmi2Integer, e) for e in der)
-                    end
-                end
-
-                if haskey(derivative, "dependenciesKind")
-                    derKind = split(derivative["dependenciesKind"], " ")
-                end
-
-                push!(indices, (ind, der, derKind))
-            end
-        end
-    end
-    sort!(indices, rev=true)
-end
-
 # helper function to parse variable or simple type attributes
-function parseAttribute(defnode; ext::Bool=false)
+function parseAttribute(md::fmi2ModelDescription, defnode; ext::Bool = false)
 
     typename = defnode.name
-    typenode = nothing 
+    typenode = nothing
 
     if typename == "Real"
 
-        if ext 
+        if ext
             typenode = fmi2RealAttributesExt()
 
-            typenode.start = parseNodeReal(defnode, "start")
-            typenode.derivative = parseNodeUInt(defnode, "derivative")
-            typenode.reinit = parseNodeBoolean(defnode, "reinit")
-            typenode.declaredType = parseNodeString(defnode, "declaredType")
+            typenode.start = parseNode(defnode, "start", fmi2Real)
+            typenode.derivative = parseNode(defnode, "derivative", UInt)
+            typenode.reinit = parseNode(defnode, "reinit", Bool)
+            typenode.declaredType = parseNode(defnode, "declaredType", String)
 
         else
             typenode = fmi2RealAttributes()
         end
-       
-        typenode.quantity = parseNodeString(defnode, "quantity")
-        typenode.unit = parseNodeString(defnode, "unit")
-        typenode.displayUnit = parseNodeString(defnode, "displayUnit")
-        typenode.relativeQuantity = parseNodeBoolean(defnode, "relativeQuantity")
-        typenode.min = parseNodeReal(defnode, "min")
-        typenode.max = parseNodeReal(defnode, "max")
-        typenode.nominal = parseNodeReal(defnode, "nominal")
-        typenode.unbounded = parseNodeBoolean(defnode, "unbounded")
-      
+
+        typenode.quantity = parseNode(defnode, "quantity", String)
+        typenode.unit = parseNode(defnode, "unit", String)
+        typenode.displayUnit = parseNode(defnode, "displayUnit", String)
+        typenode.relativeQuantity = parseNode(defnode, "relativeQuantity", Bool)
+        typenode.min = parseNode(defnode, "min", fmi2Real)
+        typenode.max = parseNode(defnode, "max", fmi2Real)
+        typenode.nominal = parseNode(defnode, "nominal", fmi2Real)
+        typenode.unbounded = parseNode(defnode, "unbounded", Bool)
+
     elseif typename == "String"
 
-        if ext 
+        if ext
             typenode = fmi2StringAttributesExt()
 
-            typenode.start = parseNodeString(defnode, "start")
-            typenode.declaredType = parseNodeString(defnode, "declaredType")
+            typenode.start = parseNode(defnode, "start", String)
+            typenode.declaredType = parseNode(defnode, "declaredType", String)
         else
             typenode = fmi2StringAttributes()
         end
 
     elseif typename == "Boolean"
 
-        if ext 
+        if ext
             typenode = fmi2BooleanAttributesExt()
 
-            typenode.start = parseNodeBoolean(defnode, "start")
-            typenode.declaredType = parseNodeString(defnode, "declaredType")
+            typenode.start = parseNode(defnode, "start", Bool)
+            typenode.declaredType = parseNode(defnode, "declaredType", String)
         else
             typenode = fmi2BooleanAttributes()
         end
 
     elseif typename == "Integer"
-        
-        if ext 
+
+        if ext
             typenode = fmi2IntegerAttributesExt()
 
-            typenode.start = parseNodeInteger(defnode, "start")
-            typenode.declaredType = parseNodeString(defnode, "declaredType")
+            typenode.start = parseNode(defnode, "start", Int)
+            typenode.declaredType = parseNode(defnode, "declaredType", String)
         else
             typenode = fmi2IntegerAttributes()
         end
-        
-        typenode.quantity = parseNodeString(defnode, "quantity")
-        typenode.min = parseNodeInteger(defnode, "min")
-        typenode.max = parseNodeInteger(defnode, "max")
+
+        typenode.quantity = parseNode(defnode, "quantity", String)
+        typenode.min = parseNode(defnode, "min", fmi2Integer)
+        typenode.max = parseNode(defnode, "max", fmi2Integer)
 
     elseif typename == "Enumeration"
-        
-        if ext 
+
+        if ext
             typenode = fmi2EnumerationAttributesExt()
 
-            typenode.start = parseNodeInteger(defnode, "start")
-            typenode.min = parseNodeInteger(defnode, "min")
-            typenode.max = parseNodeInteger(defnode, "max")
-            typenode.declaredType = parseNodeString(defnode, "declaredType")
+            typenode.start = parseNode(defnode, "start", fmi2Integer)
+            typenode.min = parseNode(defnode, "min", fmi2Integer)
+            typenode.max = parseNode(defnode, "max", fmi2Integer)
+            typenode.declaredType = parseNode(defnode, "declaredType", String)
         else
             typenode = fmi2EnumerationAttributes()
 
@@ -260,28 +268,28 @@ function parseAttribute(defnode; ext::Bool=false)
 
                 # mandatory
                 if haskey(itemNode, "name")
-                    it.name = parseNodeString(itemNode, "name")
+                    it.name = parseNode(itemNode, "name", String)
                 else
                     @warn "Enumeration item `$(itemNode.name)` is missing the `name` key. This is not allowed."
                 end
 
                 # mandatory
                 if haskey(itemNode, "value")
-                    it.value = parseNodeInteger(itemNode, "value")
+                    it.value = parseNode(itemNode, "value", Int)
                 else
                     @warn "Enumeration item `$(itemNode.name)` is missing the `value` key. This is not allowed."
                 end
 
                 # optional
                 if haskey(itemNode, "description")
-                    it.description = parseNodeString(itemNode, "description")
+                    it.description = parseNode(itemNode, "description", String)
                 end
 
                 push!(typenode, it)
             end
         end
 
-        typenode.quantity = parseNodeString(defnode, "quantity")
+        typenode.quantity = parseNode(defnode, "quantity", String)
     else
         @warn "Unknown data type `$(typename)`."
         typenode = nothing
@@ -290,7 +298,7 @@ function parseAttribute(defnode; ext::Bool=false)
 end
 
 # Parses the model variables of the FMU model description.
-function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseModelVariables(md::fmi2ModelDescription, nodes::EzXML.Node)
     numberOfVariables = 0
     for node in eachelement(nodes)
         numberOfVariables += 1
@@ -300,11 +308,11 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
     index = 1
     for node in eachelement(nodes)
         name = node["name"]
-        valueReference = parse(fmi2ValueReference, node["valueReference"])
+        valueReference = parseNode(node, "valueReference", fmi2ValueReference)
 
         causality = nothing
         if haskey(node, "causality")
-            causality = fmi2StringToCausality(node["causality"])
+            causality = stringToCausality(md, node["causality"])
 
             if causality == fmi2CausalityOutput
                 push!(md.outputValueReferences, valueReference)
@@ -317,25 +325,26 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
 
         variability = nothing
         if haskey(node, "variability")
-            variability = fmi2StringToVariability(node["variability"])
+            variability = stringToVariability(md, node["variability"])
         end
 
         initial = nothing
         if haskey(node, "initial")
-            initial = fmi2StringToInitial(node["initial"])
+            initial = stringToInitial(md, node["initial"])
         end
 
-        scalarVariables[index] = fmi2ScalarVariable(name, valueReference, causality, variability, initial)
+        scalarVariables[index] =
+            fmi2ScalarVariable(name, valueReference, causality, variability, initial)
 
         if !(valueReference in md.valueReferences)
             push!(md.valueReferences, valueReference)
         end
 
-        scalarVariables[index].description = parseNodeString(node, "description")
+        scalarVariables[index].description = parseNode(node, "description", String)
 
         # type node
         defnode = node.firstelement
-        typenode = parseAttribute(defnode; ext=true)
+        typenode = parseAttribute(md, defnode; ext = true)
         if isa(typenode, fmi2RealAttributesExt)
             scalarVariables[index].Real = typenode
         elseif isa(typenode, fmi2StringAttributesExt)
@@ -347,10 +356,10 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
         elseif isa(typenode, fmi2EnumerationAttributesExt)
             scalarVariables[index].Enumeration = typenode
         end
-        
+
         # generic attributes
         if !isnothing(typenode)
-            typenode.declaredType = parseNodeString(node.firstelement, "declaredType")
+            typenode.declaredType = parseNode(node.firstelement, "declaredType", String)
         end
 
         md.stringValueReferences[name] = valueReference
@@ -362,9 +371,9 @@ function parseModelVariables(nodes::EzXML.Node, md::fmi2ModelDescription)
 end
 
 # Parses the model variables of the FMU model description.
-function parseTypeDefinitions(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseTypeDefinitions(md::fmi2ModelDescription, nodes::EzXML.Node)
 
-    simpleTypes = Array{fmi2SimpleType, 1}()
+    simpleTypes = Array{fmi2SimpleType,1}()
 
     for node in eachelement(nodes)
 
@@ -375,11 +384,11 @@ function parseTypeDefinitions(nodes::EzXML.Node, md::fmi2ModelDescription)
 
         # attribute node (mandatory)
         defnode = node.firstelement
-        simpleType.attribute = parseAttribute(defnode; ext=false)
+        simpleType.attribute = parseAttribute(md, defnode; ext = false)
 
         # optional
-        simpleType.description = parseNodeString(node, "description")
-        
+        simpleType.description = parseNode(node, "description", String)
+
         push!(simpleTypes, simpleType)
     end
 
@@ -387,9 +396,9 @@ function parseTypeDefinitions(nodes::EzXML.Node, md::fmi2ModelDescription)
 end
 
 # Parses the `ModelStructure.Derivatives` of the FMU model description.
-function parseUnknown(node::EzXML.Node)
+function parseUnknown(md::fmi2ModelDescription, node::EzXML.Node)
     if haskey(node, "index")
-        varDep = fmi2VariableDependency(parseInteger(node["index"]))
+        varDep = fmi2VariableDependency(parseNode(node, "index", Int))
 
         if haskey(node, "dependencies")
             dependencies = node["dependencies"]
@@ -406,7 +415,9 @@ function parseUnknown(node::EzXML.Node)
             if length(dependenciesKind) > 0
                 dependenciesKindSplit = split(dependenciesKind, " ")
                 if length(dependenciesKindSplit) > 0
-                    varDep.dependenciesKind = collect(fmi2StringToDependencyKind(e) for e in dependenciesKindSplit)
+                    varDep.dependenciesKind = collect(
+                        stringToDependencyKind(md, e) for e in dependenciesKindSplit
+                    )
                 end
             end
         end
@@ -424,13 +435,13 @@ function parseUnknown(node::EzXML.Node)
 end
 
 # ToDo: Comment
-function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseDerivatives(md::fmi2ModelDescription, nodes::EzXML.Node)
     @assert (nodes.name == "Derivatives") "Wrong element name."
     md.modelStructure.derivatives = []
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknown(node)
+                varDep = parseUnknown(md, node)
 
                 # find states and derivatives
                 derSV = md.modelVariables[varDep.index]
@@ -455,13 +466,13 @@ function parseDerivatives(nodes::EzXML.Node, md::fmi2ModelDescription)
 end
 
 # ToDo: Comment
-function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseInitialUnknowns(md::fmi2ModelDescription, nodes::EzXML.Node)
     @assert (nodes.name == "InitialUnknowns") "Wrong element name."
     md.modelStructure.initialUnknowns = []
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknown(node)
+                varDep = parseUnknown(md, node)
 
                 push!(md.modelStructure.initialUnknowns, varDep)
             else
@@ -474,13 +485,13 @@ function parseInitialUnknowns(nodes::EzXML.Node, md::fmi2ModelDescription)
 end
 
 # ToDo: Comment
-function parseOutputs(nodes::EzXML.Node, md::fmi2ModelDescription)
+function parseOutputs(md::fmi2ModelDescription, nodes::EzXML.Node)
     @assert (nodes.name == "Outputs") "Wrong element name."
     md.modelStructure.outputs = []
     for node in eachelement(nodes)
         if node.name == "Unknown"
             if haskey(node, "index")
-                varDep = parseUnknown(node)
+                varDep = parseUnknown(md, node)
 
                 # find outputs
                 outVR = md.modelVariables[varDep.index].valueReference
@@ -538,37 +549,41 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
 
     if haskey(typenode, "start")
         if typename == "Real"
-            type.start = parse(fmi2Real, typenode["start"])
+            type.start = parseNode(typenode, "start", fmi2Real)
             sv.Real.start = type.start
         elseif typename == "Integer"
-            type.start = parse(fmi2Integer, typenode["start"])
+            type.start = parseNode(typenode, "start", fmi2Integer)
         elseif typename == "Boolean"
-            type.start = parseFMI2Boolean(typenode["start"])
+            type.start = parseNodeBoolean(typenode, "start")
         elseif typename == "Enumeration"
-            type.start = parse(fmi2Integer, typenode["start"])
+            type.start = parseNode(typenode, "start", fmi2Integer)
         elseif typename == "String"
-            type.start = typenode["start"]
+            type.start = parseNode(typenode, "start")
         else
             @warn "setDatatypeVariables(...) unimplemented start value type $typename"
-            type.start = typenode["start"]
+            type.start = parseNode(typenode, "start")
         end
     end
 
-    if haskey(typenode, "min") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
-        if type.datatype == fmi2Real
-            type.min = parse(fmi2Real, typenode["min"])
-        else
-            type.min = parse(fmi2Integer, typenode["min"])
-        end
+    if haskey(typenode, "min") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
+        type.min = parseNode(typenode, "min", type.datatype)
     end
-    if haskey(typenode, "max") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
-        if type.datatype == fmi2Real
-            type.max = parse(fmi2Real, typenode["max"])
-        elseif type.datatype == fmi2Integer
-            type.max = parse(fmi2Integer, typenode["max"])
-        end
+    if haskey(typenode, "max") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
+        type.max = parseNode(typenode, "max", type.datatype)
     end
-    if haskey(typenode, "quantity") && (type.datatype == fmi2Real || type.datatype == fmi2Integer || type.datatype == fmi2Enum)
+    if haskey(typenode, "quantity") && (
+        type.datatype == fmi2Real ||
+        type.datatype == fmi2Integer ||
+        type.datatype == fmi2Enum
+    )
         type.quantity = typenode["quantity"]
     end
     if haskey(typenode, "unit") && type.datatype == fmi2Real
@@ -578,16 +593,16 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
         type.displayUnit = typenode["displayUnit"]
     end
     if haskey(typenode, "relativeQuantity") && type.datatype == fmi2Real
-        type.relativeQuantity = convert(fmi2Boolean, parse(Bool, typenode["relativeQuantity"]))
+        type.relativeQuantity = parseNode(typenode, "relativeQuantity", fmi2Boolean)
     end
     if haskey(typenode, "nominal") && type.datatype == fmi2Real
-        type.nominal = parse(fmi2Real, typenode["nominal"])
+        type.nominal = parseNode(typenode, "nominal", fmi2Real)
     end
     if haskey(typenode, "unbounded") && type.datatype == fmi2Real
-        type.unbounded = parse(fmi2Boolean, typenode["unbounded"])
+        type.unbounded = parseNode(typenode, "unbounded", fmi2Boolean)
     end
     if haskey(typenode, "derivative") && type.datatype == fmi2Real
-        type.derivative = parse(fmi2Integer, typenode["derivative"])
+        type.derivative = parseNode(typenode, "derivative", fmi2Integer)
         if typename == "Real"
             sv.Real.derivative = type.derivative
         end
@@ -599,56 +614,56 @@ function fmi2SetDatatypeVariables(node::EzXML.Node, md::fmi2ModelDescription, sv
 end
 
 # helper to create a `FMICore.BaseUnit` from a XML-Tag like `<BaseUnit m="1" s="-1"/>`
-function parseBaseUnit(node)
+function parseBaseUnit(md::fmi2ModelDescription, node)
     @assert node.name == "BaseUnit"
-    unit = FMICore.BaseUnit()
+    unit = fmi2BaseUnit()
     for siUnit in FMICore.SI_UNITS
         siStr = String(siUnit)
         if haskey(node, siStr)
-            setfield!(unit, Symbol(siStr), parse(Int32, node[siStr]))
+            setfield!(unit, Symbol(siStr), parseNode(node, siStr, Int32))
         end
     end
     if haskey(node, "factor")
-        setfield!(unit, :factor, parse(Float64, node["factor"]))
+        setfield!(unit, :factor, parseNode(node, "factor", Float64))
     end
     if haskey(node, "offset")
-        setfield!(unit, :offset, parse(Float64, node["offset"]))
+        setfield!(unit, :offset, parseNode(node, "offset", Float64))
     end
     return unit
 end
 
 # helper to create a `FMICore.DisplayUnit` from a XML-Tag like 
 # `<DisplayUnit name="TempFahrenheit" factor="1.8" offset="-459.67"/>`
-function parseDisplayUnits(node)
+function parseDisplayUnits(::fmi2ModelDescription, node)
     @assert node.name == "DisplayUnit"
 
-    unit = FMICore.DisplayUnit(node["name"])
+    unit = fmi2DisplayUnit(node["name"])
     if haskey(node, "factor")
-        setfield!(unit, :factor, parse(Float64, node["factor"]))
+        setfield!(unit, :factor, parseNode(node, "factor", Float64))
     end
     if haskey(node, "offset")
-        setfield!(unit, :offset, parse(Float64, node["offset"]))
+        setfield!(unit, :offset, parseNode(node, "offset", Float64))
     end
-    
+
     return unit
 end
 
-function parseUnitDefinitions(parentNode)
+function parseUnitDefinitions(md::fmi2ModelDescription, parentNode)
 
-    units = Array{fmi2Unit,1}()
+    units = Vector{fmi2Unit}()
 
     for node in eachelement(parentNode)
 
         unit = fmi2Unit(node["name"])
 
-        for subNode = eachelement(node)
+        for subNode in eachelement(node)
             if subNode.name == "BaseUnit"
-                unit.baseUnit = parseBaseUnit(subNode)
+                unit.baseUnit = parseBaseUnit(md, subNode)
 
             elseif subNode.name == "DisplayUnit"
-                displayUnits = parseDisplayUnits(subNode)
+                displayUnits = parseDisplayUnits(md, subNode)
                 if isnothing(unit.displayUnits)
-                    unit.displayUnits = Array{FMICore.DisplayUnit,1}()
+                    unit.displayUnits = Vector{fmi2DisplayUnit}()
                 else
                     push!(unit.displayUnits, displayUnits)
                 end
@@ -661,129 +676,12 @@ function parseUnitDefinitions(parentNode)
     return units
 end
 
-#=
-Read all enumerations from the modeldescription and store them in a matrix. First entries are the enum names
--------------------------------------------
-Example:
-"enum1name" "value1"    "value2"
-"enum2name" "value1"    "value2"
-=#
-function createEnum(node::EzXML.Node)
-    enum = 1
-    idx = 1
-    enumerations = []
-    for simpleType in eachelement(node)
-        name = simpleType["name"]
-        for type in eachelement(simpleType)
-            if type.name == "Enumeration"
-                enum = []
-                push!(enum, name)
-                for item in eachelement(type)
-                    push!(enum, item["name"])
-                end
-                push!(enumerations, enum)
-            end
-        end
-    end
-    enumerations
-end
-
 ################################
 # [Sec. 2] get value functions #
 ################################
 
 """
-    fmi2GetDefaultStartTime(md::fmi2ModelDescription)
-
-Returns startTime from DefaultExperiment if defined else defaults to nothing.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.defaultExperiment.startTime::Union{Real,Nothing}`: Returns a real value `startTime` from the DefaultExperiment if defined else defaults to `nothing`.
-"""
-function fmi2GetDefaultStartTime(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing
-        return nothing
-    end
-    return md.defaultExperiment.startTime
-end
-
-"""
-    fmi2GetDefaultStopTime(md::fmi2ModelDescription)
-
-Returns stopTime from DefaultExperiment if defined else defaults to nothing.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.defaultExperiment.stopTime::Union{Real,Nothing}`: Returns a real value `stopTime` from the DefaultExperiment if defined else defaults to `nothing`.
-
-"""
-function fmi2GetDefaultStopTime(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing
-        return nothing
-    end
-    return md.defaultExperiment.stopTime
-end
-
-"""
-    fmi2GetDefaultTolerance(md::fmi2ModelDescription)
-
-Returns tolerance from DefaultExperiment if defined else defaults to nothing.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.defaultExperiment.tolerance::Union{Real,Nothing}`: Returns a real value `tolerance` from the DefaultExperiment if defined else defaults to `nothing`.
-
-"""
-function fmi2GetDefaultTolerance(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing
-        return nothing
-    end
-    return md.defaultExperiment.tolerance
-end
-
-"""
-    fmi2GetDefaultStepSize(md::fmi2ModelDescription)
-
-Returns stepSize from DefaultExperiment if defined else defaults to nothing.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.defaultExperiment.stepSize::Union{Real,Nothing}`: Returns a real value `setpSize` from the DefaultExperiment if defined else defaults to `nothing`.
-
-"""
-function fmi2GetDefaultStepSize(md::fmi2ModelDescription)
-    if md.defaultExperiment == nothing
-        return nothing
-    end
-    return md.defaultExperiment.stepSize
-end
-
-"""
-    fmi2GetModelName(md::fmi2ModelDescription)
-Returns the tag 'modelName' from the model description.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.modelName::String`: Returns the tag 'modelName' from the model description.
-
-"""
-function fmi2GetModelName(md::fmi2ModelDescription)#, escape::Bool = true)
-    md.modelName
-end
-
-"""
-    fmi2GetGUID(md::fmi2ModelDescription)
+    getGUID(md::fmi2ModelDescription)
 
 Returns the tag 'guid' from the model description.
 
@@ -791,131 +689,21 @@ Returns the tag 'guid' from the model description.
 - `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
 
 # Returns
-- `md.guid::String`: Returns the tag 'guid' from the model description.
+- `guid::String`: Returns the tag 'guid' from the model description.
 
 """
-function fmi2GetGUID(md::fmi2ModelDescription)
+function getGUID(md::fmi2ModelDescription)
     md.guid
 end
-
-"""
-    fmi2GetGenerationTool(md::fmi2ModelDescription)
-
-Returns the tag 'generationtool' from the model description.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.generationTool::Union{String, Nothing}`: Returns the tag 'generationtool' from the model description.
-
-"""
-function fmi2GetGenerationTool(md::fmi2ModelDescription)
-    md.generationTool
-end
-
-"""
-    fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
-
-Returns the tag 'generationdateandtime' from the model description.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.generationDateAndTime::DateTime`: Returns the tag 'generationdateandtime' from the model description.
-
-"""
-function fmi2GetGenerationDateAndTime(md::fmi2ModelDescription)
-    md.generationDateAndTime
-end
-
-"""
-    fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
-
-Returns the tag 'varaiblenamingconvention' from the model description.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.variableNamingConvention::Union{fmi2VariableNamingConvention, Nothing}`: Returns the tag 'variableNamingConvention' from the model description.
-
-"""
-function fmi2GetVariableNamingConvention(md::fmi2ModelDescription)
-    md.variableNamingConvention
-end
-
-"""
-    fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
-
-Returns the tag 'numberOfEventIndicators' from the model description.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `md.numberOfEventIndicators::Union{UInt, Nothing}`: Returns the tag 'numberOfEventIndicators' from the model description.
-
-"""
-function fmi2GetNumberOfEventIndicators(md::fmi2ModelDescription)
-    md.numberOfEventIndicators
-end
-
-"""
-    fmi2GetNumberOfStates(md::fmi2ModelDescription)
-
-Returns the number of states of the FMU.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- Returns the length of the `md.valueReferences::Array{fmi2ValueReference}` corresponding to the number of states of the FMU.
-
-"""
-function fmi2GetNumberOfStates(md::fmi2ModelDescription)
-    length(md.stateValueReferences)
-end
-
-"""
-    fmi2IsCoSimulation(md::fmi2ModelDescription)
-
-Returns true, if the FMU supports co simulation
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `::Bool`: Returns true, if the FMU supports co simulation
-
-"""
-function fmi2IsCoSimulation(md::fmi2ModelDescription)
-    return (md.coSimulation != nothing)
-end
-
-"""
-    fmi2IsModelExchange(md::fmi2ModelDescription)
-
-Returns true, if the FMU supports model exchange
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `::Bool`: Returns true, if the FMU supports model exchange
-
-"""
-function fmi2IsModelExchange(md::fmi2ModelDescription)
-    return (md.modelExchange != nothing)
-end
+getGUID(fmu::FMU) = getGUID(fmu.modelDescription)
+export getGUID
 
 ##################################
 # [Sec. 3] information functions #
 ##################################
 
 """
-    fmi2DependenciesSupported(md::fmi2ModelDescription)
+    isModelStructureAvailable(md::fmi2ModelDescription)
 
 Returns true if the FMU model description contains `dependency` information.
 
@@ -926,16 +714,14 @@ Returns true if the FMU model description contains `dependency` information.
 - `::Bool`: Returns true, if the FMU model description contains `dependency` information.
 
 """
-function fmi2DependenciesSupported(md::fmi2ModelDescription)
-    if md.modelStructure === nothing
-        return false
-    end
-
-    return true
+function isModelStructureAvailable(md::fmi2ModelDescription)
+    return !isnothing(md.modelStructure)
 end
+isModelStructureAvailable(fmu::FMU) = isModelStructureAvailable(fmu.modelDescription)
+export isModelStructureAvailable
 
 """
-    fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
+    isModelStructureDerivativesAvailable(md::fmi2ModelDescription)
 
 Returns if the FMU model description contains `dependency` information for `derivatives`.
 
@@ -946,717 +732,18 @@ Returns if the FMU model description contains `dependency` information for `deri
 - `::Bool`: Returns true, if the FMU model description contains `dependency` information for `derivatives`.
 
 """
-function fmi2DerivativeDependenciesSupported(md::fmi2ModelDescription)
-    if !fmi2DependenciesSupported(md)
+function isModelStructureDerivativesAvailable(md::fmi2ModelDescription)
+    if !isModelStructureAvailable(md)
         return false
     end
 
     der = md.modelStructure.derivatives
-    if der === nothing || length(der) <= 0
+    if isnothing(der) || length(der) <= 0
         return false
     end
 
     return true
 end
-
-"""
-    fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
-
-Returns the tag 'modelIdentifier' from CS or ME section.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `type=nothing`: Defines whether a Co-Simulation or Model Exchange is present. (default = nothing)
-
-# Returns
-- `md.modelExchange.modelIdentifier::String`: Returns the tag `modelIdentifier` from ModelExchange section.
-- `md.coSimulation.modelIdentifier::String`: Returns the tag `modelIdentifier` from CoSimulation section.
-"""
-function fmi2GetModelIdentifier(md::fmi2ModelDescription; type=nothing)
-
-    if type === nothing
-        if fmi2IsCoSimulation(md)
-            return md.coSimulation.modelIdentifier
-        elseif fmi2IsModelExchange(md)
-            return md.modelExchange.modelIdentifier
-        else
-            @assert false "fmi2GetModelName(...): FMU does not support ME or CS!"
-        end
-    elseif type == fmi2TypeCoSimulation
-        return md.coSimulation.modelIdentifier
-    elseif type == fmi2TypeModelExchange
-        return md.modelExchange.modelIdentifier
-    end
-end
-
-"""
-    fmi2CanGetSetState(md::fmi2ModelDescription)
-
-Returns true, if the FMU supports the getting/setting of states
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `::Bool`: Returns true, if the FMU supports the getting/setting of states.
-
-"""
-function fmi2CanGetSetState(md::fmi2ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.canGetAndSetFMUstate) || (md.modelExchange != nothing && md.modelExchange.canGetAndSetFMUstate)
-end
-
-"""
-    fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
-
-Returns true, if the FMU state can be serialized
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `::Bool`: Returns true, if the FMU state can be serialized
-
-"""
-function fmi2CanSerializeFMUstate(md::fmi2ModelDescription)
-    return (md.coSimulation != nothing && md.coSimulation.canSerializeFMUstate) || (md.modelExchange != nothing && md.modelExchange.canSerializeFMUstate)
-end
-
-"""
-    fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
-
-Returns true, if the FMU provides directional derivatives
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `::Bool`: Returns true, if the FMU provides directional derivatives
-
-"""
-function fmi2ProvidesDirectionalDerivative(md::fmi2ModelDescription)
-    if md.coSimulation != nothing 
-        return (md.coSimulation.providesDirectionalDerivative == true)
-    elseif md.modelExchange != nothing 
-        return (md.modelExchange.providesDirectionalDerivative == true)
-    end
-
-    return false
-end
-
-"""
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.
-
-"""
-function fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
-    dict = Dict{fmi2ValueReference, Array{String}}()
-    for vr in vrs
-        dict[vr] = fmi2ValueReferenceToString(md, vr)
-    end
-    return dict
-end
-
-"""
-    fmi2GetValueReferencesAndNames(fmu::FMU2)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.
-
-"""
-function fmi2GetValueReferencesAndNames(fmu::FMU2)
-    fmi2GetValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-
-Returns a array of names corresponding to value references `vrs`.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
-    names = []
-    for vr in vrs
-        ns = fmi2ValueReferenceToString(md, vr)
-
-        if mode == :first
-            push!(names, ns[1])
-        elseif mode == :group
-            push!(names, ns)
-        elseif mode == :flat
-            for n in ns
-                push!(names, n)
-            end
-        else
-            @assert false "fmi2GetNames(...) unknown mode `mode`, please choose between `:first`, `:group` and `:flat`."
-        end
-    end
-    return mode == :group ? [string.(name) for name in names] : string.(names)
-end
-
-"""
-    fmi2GetNames(fmu::FMU2; vrs=md.valueReferences, mode=:first)
-
-Returns a array of names corresponding to value references `vrs`.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetNames(fmu::FMU2; kwargs...)
-    fmi2GetNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
-
-Returns a array of indices corresponding to value references `vrs`
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.valueReferences`: Additional attribute `valueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-
-# Returns
-- `names::Array{Integer}`: Returns a array of indices corresponding to value references `vrs`
-
-"""
-function fmi2GetModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
-    indices = []
-
-    for i = 1:length(md.modelVariables)
-        if md.modelVariables[i].valueReference in vrs
-            push!(indices, i)
-        end
-    end
-
-    return indices
-end
-
-"""
-    fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dict with (vrs, names of inputs).
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of inputs)
-
-"""
-function fmi2GetInputValueReferencesAndNames(md::fmi2ModelDescription)
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.inputValueReferences)
-end
-
-"""
-    fmi2GetInputValueReferencesAndNames(fmu::FMU2)
-
-Returns a dict with (vrs, names of inputs).
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of inputs)
-
-"""
-function fmi2GetInputValueReferencesAndNames(fmu::FMU2)
-    fmi2GetInputValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetInputNames(md::fmi2ModelDescription; vrs=md.inputvalueReferences, mode=:first)
-
-Returns names of inputs.
-
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.inputvalueReferences`: Additional attribute `inputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetInputNames(md::fmi2ModelDescription; kwargs...)
-    fmi2GetNames(md; vrs=md.inputValueReferences, kwargs...)
-end
-
-"""
-    fmi2GetInputNames(fmu::FMU2; vrs=md.inputValueReferences, mode=:first)
-
-Returns names of inputs.
-
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.inputvalueReferences`: Additional attribute `inputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.valueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetInputNames(fmu::FMU2; kwargs...)
-    fmi2GetInputNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
-
-"""
-function fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.outputValueReferences)
-end
-
-"""
-    fmi2GetOutputValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value references and their corresponding names.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.So returns a dict with (vrs, names of outputs)
-
-"""
-function fmi2GetOutputValueReferencesAndNames(fmu::FMU2)
-    fmi2GetOutputValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetOutputNames(md::fmi2ModelDescription; vrs=md.outputvalueReferences, mode=:first)
-
-Returns names of outputs.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetOutputNames(md::fmi2ModelDescription; kwargs...)
-    fmi2GetNames(md; vrs=md.outputValueReferences, kwargs...)
-end
-
-"""
-    fmi2GetOutputNames(fmu::FMU2; vrs=md.outputvalueReferences, mode=:first)
-
-Returns names of outputs.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.outputvalueReferences`: Additional attribute `outputvalueReferences::Array{fmi2ValueReference}` of the Model Description that is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.outputvalueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
-
-"""
-function fmi2GetOutputNames(fmu::FMU2; kwargs...)
-    fmi2GetOutputNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
-
-See also [`fmi2GetValueReferencesAndNames`](@ref).
-"""
-function fmi2GetParameterValueReferencesAndNames(md::fmi2ModelDescription)
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences)
-end
-
-"""
-    fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValueReferences and their corresponding names.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
-
-See also [`fmi2GetValueReferencesAndNames`](@ref).
-"""
-function fmi2GetParameterValueReferencesAndNames(fmu::FMU2)
-    fmi2GetParameterValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetParameterNames(md::fmi2ModelDescription; vrs=md.parameterValueReferences, mode=:first)
-
-Returns names of parameters.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.parameterValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.parameterValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetParameterNames(md::fmi2ModelDescription; kwargs...)
-    fmi2GetNames(md; vrs=md.parameterValueReferences, kwargs...)
-end
-
-"""
-    fmi2GetParameterNames(fmu::FMU2; vrs=md.parameterValueReferences, mode=:first)
-
-Returns names of parameters.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.parameterValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.parameterValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetParameterNames(fmu::FMU2; kwargs...)
-    fmi2GetParameterNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of state value references and their corresponding names.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of states)
-
-"""
-function fmi2GetStateValueReferencesAndNames(md::fmi2ModelDescription)
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.stateValueReferences)
-end
-
-"""
-    fmi2GetStateValueReferencesAndNames(fmu::FMU2)
-
-Returns dict(vrs, names of states).
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of state value references and their corresponding names.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of states)
-
-"""
-function fmi2GetStateValueReferencesAndNames(fmu::FMU2)
-    fmi2GetStateValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetStateNames(fmu::FMU2; vrs=md.stateValueReferences, mode=:first)
-
-Returns names of states.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.stateValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.stateValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetStateNames(md::fmi2ModelDescription; kwargs...)
-    fmi2GetNames(md; vrs=md.stateValueReferences, kwargs...)
-end
-
-"""
-    fmi2GetStateNames(fmu::FMU2; vrs=md.stateValueReferences, mode=:first)
-
-Returns names of states.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.stateValueReferences`: Additional attribute `parameterValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.stateValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetStateNames(fmu::FMU2; kwargs...)
-    fmi2GetStateNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative value references and their corresponding names.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
-See also [`fmi2GetValueReferencesAndNames`](@ref)
-"""
-function fmi2GetDerivateValueReferencesAndNames(md::fmi2ModelDescription)
-    fmi2GetValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences)
-end
-
-"""
-    fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
-
-Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative value references and their corresponding names.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
-See also [`fmi2GetValueReferencesAndNames`](@ref)
-"""
-function fmi2GetDerivateValueReferencesAndNames(fmu::FMU2)
-    fmi2GetDerivateValueReferencesAndNames(fmu.modelDescription)
-end
-
-"""
-    fmi2GetDerivativeNames(md::fmi2ModelDescription; vrs=md.derivativeValueReferences, mode=:first)
-
-Returns names of derivatives.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Keywords
-- `vrs=md.derivativeValueReferences`: Additional attribute `derivativeValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.derivativeValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetDerivativeNames(md::fmi2ModelDescription; kwargs...)
-    fmi2GetNames(md; vrs=md.derivativeValueReferences, kwargs...)
-end
-
-"""
-    fmi2GetDerivativeNames(fmu::FMU2; vrs=md.derivativeValueReferences, mode=:first)
-
-Returns names of derivatives.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Keywords
-- `vrs=md.derivativeValueReferences`: Additional attribute `derivativeValueReferences::Array{fmi2ValueReference}` of the Model Description that  is a handle to a (base type) variable value. Handle and base type uniquely identify the value of a variable. (default = `md.derivativeValueReferences::Array{fmi2ValueReference}`)
-- `mode=:first`: If there are multiple names per value reference, availabel modes are `:first` (default, pick only the first one), `:group` (pick all and group them into an array) and `:flat` (pick all, but flat them out into a 1D-array together with all other names)
-# Returns
-- `names::Array{String}`: Returns a array of names corresponding to parameter value references `vrs`
-
-
-"""
-function fmi2GetDerivativeNames(fmu::FMU2; kwargs...)
-    fmi2GetDerivativeNames(fmu.modelDescription; kwargs...)
-end
-
-"""
-    fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
-
-Returns a dictionary of variables with their descriptions.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].description::Union{String, Nothing}`). (Creates a tuple (name, description) for each i in 1:length(md.modelVariables))
-"""
-function fmi2GetNamesAndDescriptions(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => md.modelVariables[i].description for i = 1:length(md.modelVariables))
-end
-
-"""
-    fmi2GetNamesAndDescriptions(fmu::FMU2)
-
-Returns a dictionary of variables with their descriptions.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].description::Union{String, Nothing}`). (Creates a tuple (name, description) for each i in 1:length(md.modelVariables))
-"""
-function fmi2GetNamesAndDescriptions(fmu::FMU2)
-    fmi2GetNamesAndDescriptions(fmu.modelDescription)
-end
-
-"""
-    fmi2GetNamesAndUnits(md::fmi2ModelDescription)
-
-Returns a dictionary of variables with their units.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
-See also [`fmi2GetUnit`](@ref).
-"""
-function fmi2GetNamesAndUnits(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => fmi2GetUnit(md.modelVariables[i]) for i = 1:length(md.modelVariables))
-end
-
-"""
-    fmi2GetNamesAndUnits(fmu::FMU2)
-
-Returns a dictionary of variables with their units.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{String, String}`: Returns a dictionary that constructs a hash table with keys of type String and values of type String. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i]._Real.unit::Union{String, Nothing}`). (Creates a tuple (name, unit) for each i in 1:length(md.modelVariables))
-See also [`fmi2GetUnit`](@ref).
-"""
-function fmi2GetNamesAndUnits(fmu::FMU2)
-    fmi2GetNamesAndUnits(fmu.modelDescription)
-end
-
-"""
-    fmi2GetNamesAndInitials(md::fmi2ModelDescription)
-
-Returns a dictionary of variables with their initials.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type Cuint. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi2Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
-See also [`fmi2GetInitial`](@ref).
-"""
-function fmi2GetNamesAndInitials(md::fmi2ModelDescription)
-    Dict(md.modelVariables[i].name => fmi2GetInitial(md.modelVariables[i]) for i = 1:length(md.modelVariables))
-end
-
-"""
-    fmi2GetNamesAndInitials(fmu::FMU2)
-
-Returns a dictionary of variables with their initials.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{String, Cuint}`: Returns a dictionary that constructs a hash table with keys of type String and values of type Cuint. So returns a dict with ( `md.modelVariables[i].name::String`, `md.modelVariables[i].inital::Union{fmi2Initial, Nothing}`). (Creates a tuple (name,initial) for each i in 1:length(md.modelVariables))
-See also [`fmi2GetInitial`](@ref).
-"""
-function fmi2GetNamesAndInitials(fmu::FMU2)
-    fmi2GetNamesAndInitials(fmu.modelDescription)
-end
-
-"""
-    fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
-
-Returns a dictionary of input variables with their starting values.
-
-# Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
-
-# Returns
-- `dict::Dict{String, Array{fmi2ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi2ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
-See also [`fmi2GetStartValue`](@ref).
-"""
-function fmi2GetInputNamesAndStarts(md::fmi2ModelDescription)
-
-    inputIndices = fmi2GetModelVariableIndices(md; vrs=md.inputValueReferences)
-    Dict(md.modelVariables[i].name => fmi2GetStartValue(md.modelVariables[i]) for i in inputIndices)
-end
-
-"""
-    fmi2GetInputNamesAndStarts(fmu::FMU2)
-
-Returns a dictionary of input variables with their starting values.
-
-# Arguments
-- `fmu::FMU2`: Mutable struct representing a FMU and all it instantiated instances in the FMI 2.0.2 Standard.
-
-# Returns
-- `dict::Dict{String, Array{fmi2ValueReferenceFormat}}`: Returns a dictionary that constructs a hash table with keys of type String and values of type fmi2ValueReferenceFormat. So returns a dict with ( `md.modelVariables[i].name::String`, `starts:: Array{fmi2ValueReferenceFormat}` ). (Creates a tuple (name, starts) for each i in inputIndices)
-See also [`fmi2GetStartValue`](@ref).
-"""
-function fmi2GetInputNamesAndStarts(fmu::FMU2)
-    fmi2GetInputNamesAndStarts(fmu.modelDescription)
-end
+isModelStructureDerivativesAvailable(fmu::FMU) =
+    isModelStructureDerivativesAvailable(fmu.modelDescription)
+export isModelStructureDerivativesAvailable

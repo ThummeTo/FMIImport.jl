@@ -9,10 +9,9 @@
 
 using FMIImport.FMICore: fmi2FMUstate
 
-myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU.executionConfig.assertOnWarning = true
+myFMU = loadFMU("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
-comp = fmi2Instantiate!(myFMU; loggingOn=true)
+comp = fmi2Instantiate!(myFMU; loggingOn = true)
 @test comp != 0
 
 @test fmi2EnterInitializationMode(comp) == 0
@@ -24,7 +23,7 @@ comp = fmi2Instantiate!(myFMU; loggingOn=true)
 # Testing state functions #
 ###########################
 
-if fmi2CanGetSetState(myFMU) && fmi2CanSerializeFMUstate(myFMU)
+if canGetSetFMUState(myFMU) && canSerializeFMUState(myFMU)
     @test fmi2GetReal(comp, "mass.s") == 0.5
     FMUstate = fmi2GetFMUstate(comp)
     @test typeof(FMUstate) == fmi2FMUstate
@@ -44,8 +43,8 @@ if fmi2CanGetSetState(myFMU) && fmi2CanSerializeFMUstate(myFMU)
     @test fmi2GetReal(comp, "mass.s") == 0.5
     fmi2SetFMUstate(comp, FMUstate)
     @test fmi2GetReal(comp, "mass.s") == 10.0
-    fmi2FreeFMUstate!(comp, FMUstate)
-    fmi2FreeFMUstate!(comp, FMUstate2)
+    fmi2FreeFMUstate(comp, FMUstate)
+    fmi2FreeFMUstate(comp, FMUstate2)
 else
     @info "The FMU provided from the tool `$(ENV["EXPORTINGTOOL"])` does not support state get, set, serialization and deserialization. Skipping related tests."
 end
@@ -55,4 +54,4 @@ end
 ############
 
 @test fmi2Terminate(comp) == 0
-fmi2Unload(myFMU)
+unloadFMU(myFMU)

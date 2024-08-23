@@ -7,32 +7,20 @@
 # - default implementations for the `fmi2CallbackFunctions`
 # - julia-implementaions of the functions inside the FMI-specification
 # Any c-function `f(c::fmi2Component, args...)` in the spec is implemented as `f(c::FMU2Component, args...)`.
-# Any c-function `f(args...)` without a leading `fmi2Component`-arguemnt is already implented as `f(c_ptr, args...)` in FMICore, where `c_ptr` is a pointer to the c-function (inside the DLL).
-
-# already defined in FMICore.jl:
-# - fmi2Instantiate
-
-import FMICore: fmi2Instantiate, fmi2FreeInstance!, fmi2GetTypesPlatform, fmi2GetVersion
-import FMICore: fmi2SetDebugLogging, fmi2SetupExperiment, fmi2EnterInitializationMode, fmi2ExitInitializationMode, fmi2Terminate, fmi2Reset
-import FMICore: fmi2GetReal!, fmi2SetReal, fmi2GetInteger!, fmi2SetInteger, fmi2GetBoolean!, fmi2SetBoolean, fmi2GetString!, fmi2SetString
-import FMICore: fmi2GetFMUstate!, fmi2SetFMUstate, fmi2FreeFMUstate!, fmi2SerializedFMUstateSize!, fmi2SerializeFMUstate!, fmi2DeSerializeFMUstate!
-import FMICore: fmi2GetDirectionalDerivative!, fmi2SetRealInputDerivatives, fmi2GetRealOutputDerivatives!
-import FMICore: fmi2DoStep, fmi2CancelStep, fmi2GetStatus!, fmi2GetRealStatus!, fmi2GetIntegerStatus!, fmi2GetBooleanStatus!, fmi2GetStringStatus!
-import FMICore: fmi2SetTime, fmi2SetContinuousStates, fmi2EnterEventMode, fmi2NewDiscreteStates!, fmi2EnterContinuousTimeMode, fmi2CompletedIntegratorStep!
-import FMICore: fmi2GetDerivatives!, fmi2GetEventIndicators!, fmi2GetContinuousStates!, fmi2GetNominalsOfContinuousStates!
-
-using FMICore: invalidate!, check_invalidate!
+# Any c-function `f(args...)` without a leading `fmi2Component`-argument is already implented as `f(c_ptr, args...)` in FMICore, where `c_ptr` is a pointer to the c-function (inside the DLL).
 
 """
 Source: FMISpec2.0.2[p.21]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 
 Function that is called in the FMU, usually if an fmi2XXX function, does not behave as desired. If “logger” is called with “status = fmi2OK”, then the message is a pure information message. “instanceName” is the instance name of the model that calls this function. “category” is the category of the message. The meaning of “category” is defined by the modeling environment that generated the FMU. Depending on this modeling environment, none, some or all allowed values of “category” for this FMU are defined in the modelDescription.xml file via element “<fmiModelDescription><LogCategories>”, see section 2.2.4. Only messages are provided by function logger that have a category according to a call to fmi2SetDebugLogging (see below). Argument “message” is provided in the same way and with the same format control as in function “printf” from the C standard library. [Typically, this function prints the message and stores it optionally in a log file.]
 """
-function fmi2CallbackLogger(_componentEnvironment::Ptr{FMU2ComponentEnvironment},
-            _instanceName::Ptr{Cchar},
-            _status::Cuint,
-            _category::Ptr{Cchar},
-            _message::Ptr{Cchar})
+function fmi2CallbackLogger(
+    _componentEnvironment::Ptr{FMU2ComponentEnvironment},
+    _instanceName::Ptr{Cchar},
+    _status::Cuint,
+    _category::Ptr{Cchar},
+    _message::Ptr{Cchar},
+)
 
     message = unsafe_string(_message)
     category = unsafe_string(_category)
@@ -46,20 +34,13 @@ function fmi2CallbackLogger(_componentEnvironment::Ptr{FMU2ComponentEnvironment}
            (status == fmi2StatusPending && componentEnvironment.logStatusPending)
         @warn "[$status][$category][$instanceName]: $message"
     elseif (status == fmi2StatusDiscard && componentEnvironment.logStatusDiscard) ||
-           (status == fmi2StatusError   && componentEnvironment.logStatusError) ||
-           (status == fmi2StatusFatal   && componentEnvironment.logStatusFatal)
+           (status == fmi2StatusError && componentEnvironment.logStatusError) ||
+           (status == fmi2StatusFatal && componentEnvironment.logStatusFatal)
         @error "[$status][$category][$instanceName]: $message"
     end
 
     return nothing
 end
-
-# (cfmi2CallbackLogger, fmi2CallbackLogger) = Cfunction{                      fmi2ComponentEnvironment,               Ptr{Cchar},         Cuint,           Ptr{Cchar},          Tuple{Ptr{Cchar}, Vararg}   }() do componentEnvironment::fmi2ComponentEnvironment, instanceName::Ptr{Cchar}, status::Cuint, category::Ptr{Cchar}, message::Tuple{Ptr{Cchar}, Vararg}
-#     printf(message)
-#     nothing
-# end
-
-
 
 """
 Source: FMISpec2.0.2[p.21-22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
@@ -69,7 +50,7 @@ Function that is called in the FMU if memory needs to be allocated. If attribute
 function fmi2CallbackAllocateMemory(nobj::Csize_t, size::Csize_t)
     ptr = Libc.calloc(nobj, size)
     @debug "cbAllocateMemory($(nobj), $(size)): Allocated $(nobj) x $(size) bytes at $(ptr)."
-	ptr
+    ptr
 end
 
 """
@@ -79,7 +60,7 @@ Function that must be called in the FMU if memory is freed that has been allocat
 """
 function fmi2CallbackFreeMemory(obj::Ptr{Cvoid})
     @debug "cbFreeMemory($(obj)): Freeing object at $(obj)."
-	Libc.free(obj)
+    Libc.free(obj)
     nothing
 end
 
@@ -95,54 +76,7 @@ end
 
 # Common function for ModelExchange & CoSimulation
 
-"""
-    fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
-
-Disposes the given instance, unloads the loaded model, and frees all the allocated memory and other resources that have been allocated by the functions of the FMU interface.
-If a null pointer is provided for “c”, the function call is ignored (does not have an effect).
-    
-Removes the component from the FMUs component list.
-
-# Arguments
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-
-# Returns
-- nothing
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
-- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-See Also [`fmi2FreeInstance!`](@ref).
-"""
-lk_fmi2FreeInstance = ReentrantLock()
-function fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
-
-    global lk_fmi2FreeInstance
-
-    compAddr = c.compAddr
-
-    @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.compAddr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
-
-    if popComponent
-        lock(lk_fmi2FreeInstance) do 
-            ind = findall(x -> x.compAddr == compAddr, c.fmu.components)
-            @assert length(ind) == 1 "fmi2FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed. Target address `$(compAddr)` was found $(length(ind)) times at indicies $(ind)."
-            deleteat!(c.fmu.components, ind)
-
-            for key in keys(c.fmu.threadComponents)
-                if !isnothing(c.fmu.threadComponents[key]) && c.fmu.threadComponents[key].compAddr == compAddr
-                    c.fmu.threadComponents[key] = nothing
-                end
-            end
-        end
-    end
-
-    fmi2FreeInstance!(c.fmu.cFreeInstance, compAddr)
-
-    nothing
-end
-
+import FMIBase.FMICore: fmi2GetTypesPlatform
 """
     fmi2GetTypesPlatform(fmu::FMU2)
 
@@ -160,37 +94,15 @@ The standard header file, as documented in this specification, has fmi2TypesPlat
 - FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
-function fmi2GetTypesPlatform(fmu::FMU2)
+function FMICore.fmi2GetTypesPlatform(fmu::FMU2)
 
     typesPlatform = fmi2GetTypesPlatform(fmu.cGetTypesPlatform)
 
     unsafe_string(typesPlatform)
 end
-# special case
+FMICore.fmi2GetTypesPlatform(c::FMU2Component) = fmi2GetTypesPlatform(c.fmu)
 
-
-
-"""
-    fmi2GetTypesPlatform(c::FMU2Component)
-
-Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
-The standard header file, as documented in this specification, has fmi2TypesPlatform set to “default” (so this function usually returns “default”).
-
-# Arguments
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-
-# Returns
-- Returns the string to uniquely identify the “fmi2TypesPlatform.h” header file used for compilation of the functions of the FMU.
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
-- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-"""
-function fmi2GetTypesPlatform(c::FMU2Component)
-    fmi2GetTypesPlatform(c.fmu)
-end
-
+import FMIBase.FMICore: fmi2GetVersion
 """
     fmi2GetVersion(fmu::FMU2)
 
@@ -208,33 +120,13 @@ Returns the version of the “fmi2Functions.h” header file which was used to c
 - FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
-function fmi2GetVersion(fmu::FMU2)
+function FMICore.fmi2GetVersion(fmu::FMU2)
 
     fmi2Version = fmi2GetVersion(fmu.cGetVersion)
 
     unsafe_string(fmi2Version)
 end
-# special case
-"""
-    fmi2GetVersion(c::FMU2Component)
-
-Returns the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU.
-
-# Arguments
-- `c::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-
-# Returns
-- Returns a string from the address of a C-style (NUL-terminated) string. The string represents the version of the “fmi2Functions.h” header file which was used to compile the functions of the FMU. The function returns “fmiVersion” which is defined in this header file. The standard header file as documented in this specification has version “2.0”
-
-
-# Source
-- FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
-- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
-"""
-function fmi2GetVersion(c::FMU2Component)
-    fmi2GetVersion(c.fmu)
-end
+FMICore.fmi2GetVersion(c::FMU2Component) = fmi2GetVersion(c.fmu)
 
 # helper
 function checkStatus(c::FMU2Component, status::fmi2Status)
@@ -251,14 +143,15 @@ function checkStatus(c::FMU2Component, status::fmi2Status)
     end
 end
 
+import FMIBase.FMICore: fmi2SetDebugLogging
 """
-    fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
+    fmi2SetDebugLogging(c::FMU2Component, loggingOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
 
 Control the use of the logging callback function, version independent.
 
 # Arguments
 - `c::FMU2Component`: Argument `c` is a Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
-- `logginOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
+- `loggingOn::fmi2Boolean`: If `loggingOn = fmi2True`, debug logging is enabled for the log categories specified in categories, otherwise it is disabled. Type `fmi2Boolean` is defined as an alias Type for the C-Type Boolean and is to be used with `fmi2True` and `fmi2False`.
 - `nCategories::Unsigned`: Argument `nCategories` defines the length of the argument `categories`.
 - `categories::Ptr{Nothing}`:
 
@@ -278,13 +171,25 @@ More detailed:
 - FMISpec2.0.2[p.22]: 2.1.5 Creation, Destruction and Logging of FMU Instances
 See also [`fmi2SetDebugLogging`](@ref).
 """
-function fmi2SetDebugLogging(c::FMU2Component, logginOn::fmi2Boolean, nCategories::Unsigned, categories::Ptr{Nothing})
+function FMICore.fmi2SetDebugLogging(
+    c::FMU2Component,
+    loggingOn::fmi2Boolean,
+    nCategories::Unsigned,
+    categories::Ptr{Nothing},
+)
 
-    status = fmi2SetDebugLogging(c.fmu.cSetDebugLogging, c.compAddr, logginOn, nCategories, categories)
+    status = fmi2SetDebugLogging(
+        c.fmu.cSetDebugLogging,
+        c.addr,
+        loggingOn,
+        nCategories,
+        categories,
+    )
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2SetupExperiment
 """
     fmi2SetupExperiment(c::FMU2Component, toleranceDefined::fmi2Boolean, tolerance::fmi2Real, startTime::fmi2Real, stopTimeDefined::fmi2Boolean, stopTime::fmi2Real)
 
@@ -318,12 +223,14 @@ More detailed:
 See also [`fmi2SetupExperiment`](@ref).
 
 """
-function fmi2SetupExperiment(c::FMU2Component,
+function FMICore.fmi2SetupExperiment(
+    c::FMU2Component,
     toleranceDefined::fmi2Boolean,
     tolerance::fmi2Real,
     startTime::fmi2Real,
     stopTimeDefined::fmi2Boolean,
-    stopTime::fmi2Real)
+    stopTime::fmi2Real,
+)
 
     if c.state != fmi2ComponentStateInstantiated
         @warn "fmi2SetupExperiment(...): Needs to be called in state `fmi2ComponentStateInstantiated`."
@@ -338,8 +245,15 @@ function fmi2SetupExperiment(c::FMU2Component,
         end
     end
 
-    status = fmi2SetupExperiment(c.fmu.cSetupExperiment,
-                c.compAddr, toleranceDefined, tolerance, startTime, stopTimeDefined, stopTime)
+    status = fmi2SetupExperiment(
+        c.fmu.cSetupExperiment,
+        c.addr,
+        toleranceDefined,
+        tolerance,
+        startTime,
+        stopTimeDefined,
+        stopTime,
+    )
     checkStatus(c, status)
 
     # remain in status on success, nothing to do here
@@ -347,6 +261,7 @@ function fmi2SetupExperiment(c::FMU2Component,
     return status
 end
 
+import FMIBase.FMICore: fmi2EnterInitializationMode
 """
     fmi2EnterInitializationMode(c::FMU2Component)
 
@@ -373,12 +288,12 @@ More detailed:
 See also [`fmi2EnterInitializationMode`](@ref).
 
 """
-function fmi2EnterInitializationMode(c::FMU2Component)
+function FMICore.fmi2EnterInitializationMode(c::FMU2Component)
 
     if c.state != fmi2ComponentStateInstantiated
         @warn "fmi2EnterInitializationMode(...): Needs to be called in state `fmi2ComponentStateInstantiated`."
     end
-    status = fmi2EnterInitializationMode(c.fmu.cEnterInitializationMode, c.compAddr)
+    status = fmi2EnterInitializationMode(c.fmu.cEnterInitializationMode, c.addr)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.state = fmi2ComponentStateInitializationMode
@@ -386,6 +301,7 @@ function fmi2EnterInitializationMode(c::FMU2Component)
     return status
 end
 
+import FMIBase.FMICore: fmi2ExitInitializationMode
 """
     fmi2ExitInitializationMode(c::FMU2Component)
 
@@ -410,13 +326,13 @@ More detailed:
 - FMISpec2.0.2[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
 See also [`fmi2EnterInitializationMode`](@ref).
 """
-function fmi2ExitInitializationMode(c::FMU2Component)
+function FMICore.fmi2ExitInitializationMode(c::FMU2Component)
 
     if c.state != fmi2ComponentStateInitializationMode
         @warn "fmi2ExitInitializationMode(...): Needs to be called in state `fmi2ComponentStateInitializationMode`."
     end
 
-    status = fmi2ExitInitializationMode(c.fmu.cExitInitializationMode, c.compAddr)
+    status = fmi2ExitInitializationMode(c.fmu.cExitInitializationMode, c.addr)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.state = fmi2ComponentStateEventMode
@@ -424,6 +340,7 @@ function fmi2ExitInitializationMode(c::FMU2Component)
     return status
 end
 
+import FMIBase.FMICore: fmi2Terminate
 """
     fmi2Terminate(c::FMU2Component; soft::Bool=false)
 
@@ -452,8 +369,9 @@ More detailed:
 - FMISpec2.0.2[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
 See also [`fmi2Terminate`](@ref).
 """
-function fmi2Terminate(c::FMU2Component; soft::Bool=false)
-    if c.state != fmi2ComponentStateContinuousTimeMode && c.state != fmi2ComponentStateEventMode
+function FMICore.fmi2Terminate(c::FMU2Component; soft::Bool = false)
+    if c.state != fmi2ComponentStateContinuousTimeMode &&
+       c.state != fmi2ComponentStateEventMode
         if soft
             return fmi2StatusOK
         else
@@ -461,7 +379,7 @@ function fmi2Terminate(c::FMU2Component; soft::Bool=false)
         end
     end
 
-    status = fmi2Terminate(c.fmu.cTerminate, c.compAddr)
+    status = fmi2Terminate(c.fmu.cTerminate, c.addr)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.state = fmi2ComponentStateTerminated
@@ -469,6 +387,7 @@ function fmi2Terminate(c::FMU2Component; soft::Bool=false)
     return status
 end
 
+import FMIBase.FMICore: fmi2Reset
 """
     fmi2Reset(c::FMU2Component; soft::Bool=false)
 
@@ -497,7 +416,7 @@ More detailed:
 - FMISpec2.0.3[p.22]: 2.1.6 Initialization, Termination, and Resetting an FMU
 See also [`fmi2Terminate`](@ref).
 """
-function fmi2Reset(c::FMU2Component; soft::Bool=false)
+function FMICore.fmi2Reset(c::FMU2Component; soft::Bool = false)
     # according to FMISpec2.0.3[p.90], fmi2Reset can be called almost always, except before 
     # instantiation and after a fatal error.
     if c.state == fmi2ComponentStateFatal
@@ -510,18 +429,27 @@ function fmi2Reset(c::FMU2Component; soft::Bool=false)
     end
 
     if c.fmu.cReset == C_NULL
-        fmi2FreeInstance!(c.fmu.cFreeInstance, c.compAddr)
-        compAddr = fmi2Instantiate(c.fmu.cInstantiate, pointer(c.fmu.instanceName), c.fmu.type, pointer(c.fmu.modelDescription.guid), pointer(c.fmu.fmuResourceLocation), Ptr{fmi2CallbackFunctions}(pointer_from_objref(c.callbackFunctions)), fmi2Boolean(false), fmi2Boolean(false))
+        fmi2FreeInstance!(c.fmu.cFreeInstance, c.addr)
+        addr = fmi2Instantiate(
+            c.fmu.cInstantiate,
+            pointer(c.fmu.instanceName),
+            c.fmu.type,
+            pointer(c.fmu.modelDescription.guid),
+            pointer(c.fmu.fmuResourceLocation),
+            Ptr{fmi2CallbackFunctions}(pointer_from_objref(c.callbackFunctions)),
+            fmi2Boolean(false),
+            fmi2Boolean(false),
+        )
 
-        if compAddr == Ptr{Cvoid}(C_NULL)
+        if addr == Ptr{Cvoid}(C_NULL)
             @error "fmi2Reset(...): Reinstantiation failed!"
             return fmi2StatusError
         end
 
-        c.compAddr = compAddr
+        c.addr = addr
         return fmi2StatusOK
     else
-        status = fmi2Reset(c.fmu.cReset, c.compAddr)
+        status = fmi2Reset(c.fmu.cReset, c.addr)
         checkStatus(c, status)
         if status == fmi2StatusOK
             c.state = fmi2ComponentStateInstantiated
@@ -530,6 +458,7 @@ function fmi2Reset(c::FMU2Component; soft::Bool=false)
     end
 end
 
+import FMIBase.FMICore: fmi2GetReal!
 """
     fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
@@ -558,15 +487,19 @@ More detailed:
 See also [`fmi2GetReal!`](@ref).
 
 """
-function fmi2GetReal!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
+function FMICore.fmi2GetReal!(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::AbstractArray{fmi2Real},
+)
 
-    status = fmi2GetReal!(c.fmu.cGetReal,
-          c.compAddr, vr, nvr, value)
+    status = fmi2GetReal!(c.fmu.cGetReal, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2SetReal
 """
     fmi2SetReal(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Real})
 
@@ -593,26 +526,27 @@ More detailed:
 
 See also [`fmi2GetReal`](@ref).
 """
-function fmi2SetReal(c::FMU2Component, 
-    vr::AbstractArray{fmi2ValueReference}, 
-    nvr::Csize_t, 
+function FMICore.fmi2SetReal(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
     value::AbstractArray{fmi2Real};
-    track::Bool=true)
+    track::Bool = true,
+)
 
-    status = fmi2SetReal(c.fmu.cSetReal,
-                c.compAddr, vr, nvr, value)
+    status = fmi2SetReal(c.fmu.cSetReal, c.addr, vr, nvr, value)
     checkStatus(c, status)
 
-    if track && status == fmi2StatusOK 
-        check_invalidate!(vr, c.∂ẋ_∂x) 
+    if track && status == fmi2StatusOK
+        check_invalidate!(vr, c.∂ẋ_∂x)
         check_invalidate!(vr, c.∂ẋ_∂u)
         check_invalidate!(vr, c.∂ẋ_∂p)
-        
-        check_invalidate!(vr, c.∂y_∂x) 
+
+        check_invalidate!(vr, c.∂y_∂x)
         check_invalidate!(vr, c.∂y_∂u)
         check_invalidate!(vr, c.∂y_∂p)
 
-        check_invalidate!(vr, c.∂e_∂x) 
+        check_invalidate!(vr, c.∂e_∂x)
         check_invalidate!(vr, c.∂e_∂u)
         check_invalidate!(vr, c.∂e_∂p)
 
@@ -625,6 +559,7 @@ function fmi2SetReal(c::FMU2Component,
     return status
 end
 
+import FMIBase.FMICore: fmi2GetInteger!
 """
     fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -657,15 +592,19 @@ More detailed:
 See also [`fmi2GetInteger!`](@ref).
 
 """
-function fmi2GetInteger!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
+function FMICore.fmi2GetInteger!(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::AbstractArray{fmi2Integer},
+)
 
-    status = fmi2GetInteger!(c.fmu.cGetInteger,
-                c.compAddr, vr, nvr, value)
+    status = fmi2GetInteger!(c.fmu.cGetInteger, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2SetInteger
 """
     fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
 
@@ -695,15 +634,19 @@ More detailed:
 
 See also [`fmi2GetInteger!`](@ref).
 """
-function fmi2SetInteger(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Integer})
+function FMICore.fmi2SetInteger(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::AbstractArray{fmi2Integer},
+)
 
-    status = fmi2SetInteger(c.fmu.cSetInteger,
-                c.compAddr, vr, nvr, value)
+    status = fmi2SetInteger(c.fmu.cSetInteger, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2GetBoolean!
 """
     fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
@@ -735,15 +678,19 @@ More detailed:
 See also [`fmi2GetBoolean!`](@ref).
 
 """
-function fmi2GetBoolean!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
+function FMICore.fmi2GetBoolean!(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::AbstractArray{fmi2Boolean},
+)
 
-    status = fmi2GetBoolean!(c.fmu.cGetBoolean,
-                c.compAddr, vr, nvr, value)
+    status = fmi2GetBoolean!(c.fmu.cGetBoolean, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2SetBoolean
 """
     fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
 
@@ -771,15 +718,19 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 See also [`fmi2GetBoolean`](@ref).
 """
-function fmi2SetBoolean(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::AbstractArray{fmi2Boolean})
+function FMICore.fmi2SetBoolean(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::AbstractArray{fmi2Boolean},
+)
 
-    status = fmi2SetBoolean(c.fmu.cSetBoolean,
-                c.compAddr, vr, nvr, value)
+    status = fmi2SetBoolean(c.fmu.cSetBoolean, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2GetString!
 """
     fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -811,15 +762,19 @@ More detailed:
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 See also [`fmi2GetString!`](@ref).
 """
-function fmi2GetString!(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
+function FMICore.fmi2GetString!(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::Union{AbstractArray{Ptr{Cchar}},AbstractArray{Ptr{UInt8}}},
+)
 
-    status = fmi2GetString!(c.fmu.cGetString,
-                c.compAddr, vr, nvr, value)
+    status = fmi2GetString!(c.fmu.cGetString, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2SetString
 """
     fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
 
@@ -849,15 +804,19 @@ More detailed:
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 See also [`fmi2GetString!`](@ref).
 """
-function fmi2SetString(c::FMU2Component, vr::AbstractArray{fmi2ValueReference}, nvr::Csize_t, value::Union{AbstractArray{Ptr{Cchar}}, AbstractArray{Ptr{UInt8}}})
+function FMICore.fmi2SetString(
+    c::FMU2Component,
+    vr::AbstractArray{fmi2ValueReference},
+    nvr::Csize_t,
+    value::Union{AbstractArray{Ptr{Cchar}},AbstractArray{Ptr{UInt8}}},
+)
 
-    status = fmi2SetString(c.fmu.cSetString,
-                c.compAddr, vr, nvr, value)
+    status = fmi2SetString(c.fmu.cSetString, c.addr, vr, nvr, value)
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2GetFMUstate!
 """
     fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
@@ -884,14 +843,14 @@ More detailed:
 - FMISpec2.0.2[p.24]: 2.1.7 Getting and Setting Variable Values
 See also [`fmi2GetFMUstate!`](@ref).
 """
-function fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
+function FMICore.fmi2GetFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
-    status = fmi2GetFMUstate!(c.fmu.cGetFMUstate,
-                c.compAddr, FMUstate)
+    status = fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, FMUstate)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2SetFMUstate
 """
     fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
 
@@ -923,16 +882,16 @@ More detailed:
 
 See also [`fmi2GetFMUstate`](@ref).
 """
-function fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
+function FMICore.fmi2SetFMUstate(c::FMU2Component, FMUstate::fmi2FMUstate)
 
-    status = fmi2SetFMUstate(c.fmu.cSetFMUstate,
-                c.compAddr, FMUstate)
+    status = fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, FMUstate)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2FreeFMUstate
 """
-    fmi2FreeFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
+    fmi2FreeFMUstate(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
 Frees all memory and other resources allocated with the fmi2GetFMUstate call for this FMUstate.
 
@@ -957,14 +916,14 @@ More detailed:
 
 See also [`fmi2FreeFMUstate`](@ref).
 """
-function fmi2FreeFMUstate!(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
+function FMICore.fmi2FreeFMUstate(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
-    status = fmi2FreeFMUstate!(c.fmu.cFreeFMUstate,
-                c.compAddr, FMUstate)
+    status = fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, FMUstate)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2SerializedFMUstateSize!
 """
     fmi2SerializedFMUstateSize!(c::FMU2Component, FMUstate::fmi2FMUstate, size::Ref{Csize_t})
 
@@ -991,14 +950,19 @@ More detailed:
 
 See also [`fmi2SerializedFMUstateSize!`](@ref).
 """
-function fmi2SerializedFMUstateSize!(c::FMU2Component, FMUstate::fmi2FMUstate, size::Ref{Csize_t})
+function FMICore.fmi2SerializedFMUstateSize!(
+    c::FMU2Component,
+    FMUstate::fmi2FMUstate,
+    size::Ref{Csize_t},
+)
 
-    status = fmi2SerializedFMUstateSize!(c.fmu.cSerializedFMUstateSize,
-                c.compAddr, FMUstate, size)
+    status =
+        fmi2SerializedFMUstateSize!(c.fmu.cSerializedFMUstateSize, c.addr, FMUstate, size)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2SerializeFMUstate!
 """
     fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
 
@@ -1028,15 +992,25 @@ More detailed:
 
 See also [`fmi2SerializeFMUstate`](@ref).
 """
-function fmi2SerializeFMUstate!(c::FMU2Component, FMUstate::fmi2FMUstate, serialzedState::AbstractArray{fmi2Byte}, size::Csize_t)
+function FMICore.fmi2SerializeFMUstate!(
+    c::FMU2Component,
+    FMUstate::fmi2FMUstate,
+    serialzedState::AbstractArray{fmi2Byte},
+    size::Csize_t,
+)
 
-    status = fmi2SerializeFMUstate!(c.fmu.cSerializeFMUstate,
-                c.compAddr, FMUstate, serialzedState, size)
+    status = fmi2SerializeFMUstate!(
+        c.fmu.cSerializeFMUstate,
+        c.addr,
+        FMUstate,
+        serialzedState,
+        size,
+    )
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2DeSerializeFMUstate!
 """
     fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
 
@@ -1068,15 +1042,25 @@ More detailed:
 See also [`fmi2DeSerializeFMUstate!`](@ref).
 
 """
-function fmi2DeSerializeFMUstate!(c::FMU2Component, serializedState::AbstractArray{fmi2Byte}, size::Csize_t, FMUstate::Ref{fmi2FMUstate})
+function FMICore.fmi2DeSerializeFMUstate!(
+    c::FMU2Component,
+    serializedState::AbstractArray{fmi2Byte},
+    size::Csize_t,
+    FMUstate::Ref{fmi2FMUstate},
+)
 
-    status = fmi2DeSerializeFMUstate!(c.fmu.cDeSerializeFMUstate,
-                c.compAddr, serializedState, size, FMUstate)
+    status = fmi2DeSerializeFMUstate!(
+        c.fmu.cDeSerializeFMUstate,
+        c.addr,
+        serializedState,
+        size,
+        FMUstate,
+    )
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2GetDirectionalDerivative!
 """
     fmi2GetDirectionalDerivative!(c::FMU2Component,
                                        vUnknown_ref::AbstractArray{fmi2ValueReference},
@@ -1129,22 +1113,66 @@ More detailed:
 - FMISpec2.0.2[p.25]: 2.1.9 Getting Partial Derivatives
 See also [`fmi2GetDirectionalDerivative!`](@ref).
 """
-function fmi2GetDirectionalDerivative!(c::FMU2Component,
-                                       vUnknown_ref::AbstractArray{fmi2ValueReference},
-                                       nUnknown::Csize_t,
-                                       vKnown_ref::AbstractArray{fmi2ValueReference},
-                                       nKnown::Csize_t,
-                                       dvKnown::AbstractArray{fmi2Real},
-                                       dvUnknown::AbstractArray{fmi2Real})
-    @assert fmi2ProvidesDirectionalDerivative(c.fmu) ["fmi2GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!"]
+function FMICore.fmi2GetDirectionalDerivative!(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    nUnknown::Csize_t,
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    nKnown::Csize_t,
+    dvKnown::AbstractArray{fmi2Real},
+    dvUnknown::AbstractArray{fmi2Real},
+)
 
-    status = fmi2GetDirectionalDerivative!(c.fmu.cGetDirectionalDerivative,
-          c.compAddr, vUnknown_ref, nUnknown, vKnown_ref, nKnown, dvKnown, dvUnknown)
+    @assert providesDirectionalDerivatives(c.fmu) [
+        "fmi2GetDirectionalDerivative!(...): This FMU does not support build-in directional derivatives!",
+    ]
+
+    status = fmi2GetDirectionalDerivative!(
+        c.fmu.cGetDirectionalDerivative,
+        c.addr,
+        vUnknown_ref,
+        nUnknown,
+        vKnown_ref,
+        nKnown,
+        dvKnown,
+        dvUnknown,
+    )
     checkStatus(c, status)
+    return status
+end
+function FMICore.fmi2GetDirectionalDerivative!(
+    c::FMU2Component,
+    vUnknown_ref::AbstractArray{fmi2ValueReference},
+    nUnknown::Csize_t,
+    vKnown_ref::AbstractArray{fmi2ValueReference},
+    nKnown::Csize_t,
+    dvKnown::AbstractArray{fmi2Real},
+    dvUnknown::AbstractArray{<:Real},
+)
+
+    logWarning(
+        c.fmu,
+        "fmi2GetDirectionalDerivative! is called on `dvUnknown::AbstractArray{<:Real}`, this is slow.\nConsider using `Float64` instead.",
+        1,
+    )
+
+    _dvUnknown = zeros(fmi2Real, length(dvUnknown))
+    status = fmi2GetDirectionalDerivative!(
+        c::FMU2Component,
+        vUnknown_ref,
+        nUnknown,
+        vKnown_ref,
+        nKnown,
+        dvKnown,
+        _dvUnknown,
+    )
+    dvUnknown[:] = _dvUnknown
     return status
 end
 
 # Functions specificly for isCoSimulation
+
+import FMIBase.FMICore: fmi2SetRealInputDerivatives
 """
     fmi2SetRealInputDerivatives(c::FMU2Component,
                                     vr::AbstractArray{fmi2ValueReference},
@@ -1179,15 +1207,27 @@ More detailed:
 
 See also [`fmi2SetRealInputDerivatives`](@ref).
 """
-function fmi2SetRealInputDerivatives(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
+function FMICore.fmi2SetRealInputDerivatives(
+    c::FMU2Component,
+    vr::Array{fmi2ValueReference},
+    nvr::Csize_t,
+    order::Array{fmi2Integer},
+    value::Array{fmi2Real},
+)
 
-    status = fmi2SetRealInputDerivatives(c.fmu.cSetRealInputDerivatives,
-                c.compAddr, vr, nvr, order, value)
+    status = fmi2SetRealInputDerivatives(
+        c.fmu.cSetRealInputDerivatives,
+        c.addr,
+        vr,
+        nvr,
+        order,
+        value,
+    )
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2GetRealOutputDerivatives!
 """
     fmi2GetRealOutputDerivatives!(c::FMU2Component,  
                                     vr::AbstractArray{fmi2ValueReference}, 
@@ -1219,15 +1259,27 @@ More detailed:
 - FMISpec2.0.2[p.18]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.104]: 4.2.1 Transfer of Input / Output Values and Parameters
 """
-function fmi2GetRealOutputDerivatives!(c::FMU2Component, vr::Array{fmi2ValueReference}, nvr::Csize_t, order::Array{fmi2Integer}, value::Array{fmi2Real})
+function FMICore.fmi2GetRealOutputDerivatives!(
+    c::FMU2Component,
+    vr::Array{fmi2ValueReference},
+    nvr::Csize_t,
+    order::Array{fmi2Integer},
+    value::Array{fmi2Real},
+)
 
-    status = fmi2GetRealOutputDerivatives!(c.fmu.cGetRealOutputDerivatives,
-                c.compAddr, vr, nvr, order, value)
+    status = fmi2GetRealOutputDerivatives!(
+        c.fmu.cGetRealOutputDerivatives,
+        c.addr,
+        vr,
+        nvr,
+        order,
+        value,
+    )
     checkStatus(c, status)
     return status
 end
 
-
+import FMIBase.FMICore: fmi2DoStep
 """
     fmi2DoStep(c::FMU2Component, 
                     currentCommunicationPoint::fmi2Real, 
@@ -1259,15 +1311,28 @@ More detailed:
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
 See also [`fmi2DoStep`](@ref).
 """
-function fmi2DoStep(c::FMU2Component, currentCommunicationPoint::fmi2Real, communicationStepSize::fmi2Real, noSetFMUStatePriorToCurrentPoint::fmi2Boolean)
-    @assert c.fmu.cDoStep != C_NULL ["fmi2DoStep(...): This FMU does not support fmi2DoStep, probably it's a ME-FMU with no CS-support?"]
+function FMICore.fmi2DoStep(
+    c::FMU2Component,
+    currentCommunicationPoint::fmi2Real,
+    communicationStepSize::fmi2Real,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+)
+    @assert c.fmu.cDoStep != C_NULL [
+        "fmi2DoStep(...): This FMU does not support fmi2DoStep, probably it's a ME-FMU with no CS-support?",
+    ]
 
-    status = fmi2DoStep(c.fmu.cDoStep,
-          c.compAddr, currentCommunicationPoint, communicationStepSize, noSetFMUStatePriorToCurrentPoint)
+    status = fmi2DoStep(
+        c.fmu.cDoStep,
+        c.addr,
+        currentCommunicationPoint,
+        communicationStepSize,
+        noSetFMUStatePriorToCurrentPoint,
+    )
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2CancelStep
 """
     fmi2CancelStep(c::FMU2Component)
 
@@ -1293,13 +1358,14 @@ More detailed:
 - FMISpec2.0.2[p.104]: 4.2.2 Computation
 See also [`fmi2DoStep`](@ref).
 """
-function fmi2CancelStep(c::FMU2Component)
+function FMICore.fmi2CancelStep(c::FMU2Component)
 
-    status = fmi2CancelStep(c.fmu.cCancelStep, c.compAddr)
+    status = fmi2CancelStep(c.fmu.cCancelStep, c.addr)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetStatus!
 """
     fmi2GetStatus!(c::FMU2Component, 
                         s::fmi2StatusKind, 
@@ -1333,7 +1399,7 @@ More detailed:
 - FMISpec2.0.2[p.106]: 4.2.3 Retrieving Status Information from the Slave
 See also [`fmi2GetStatus!`](@ref).
 """
-function fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value)
+function FMICore.fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value)
     rtype = nothing
     if s == fmi2Terminated
         rtype = fmi2Boolean
@@ -1344,13 +1410,13 @@ function fmi2GetStatus!(c::FMU2Component, s::fmi2StatusKind, value)
 
     status = fmi2Error
     if rtype == fmi2Boolean
-        status = fmi2GetStatus!(c.fmu.cGetRealStatus,
-                    c.compAddr, s, Ref(value))
+        status = fmi2GetStatus!(c.fmu.cGetRealStatus, c.addr, s, Ref(value))
         checkStatus(c, status)
     end
     return status
 end
 
+import FMIBase.FMICore: fmi2GetRealStatus!
 """
     fmi2GetRealStatus!(c::FMU2Component, 
                             s::fmi2StatusKind, 
@@ -1384,14 +1450,14 @@ More detailed:
 - FMISpec2.0.2[p.106]: 4.2.3 Retrieving Status Information from the Slave
 See also [`fmi2GetRealStatus!`](@ref).
 """
-function fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Real)
+function FMICore.fmi2GetRealStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Real)
 
-    status = fmi2GetRealStatus!(c.fmu.cGetRealStatus,
-                c.compAddr, s, Ref(value))
+    status = fmi2GetRealStatus!(c.fmu.cGetRealStatus, c.addr, s, Ref(value))
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetIntegerStatus!
 """
     fmi2GetIntegerStatus!(c::FMU2Component, 
                                 s::fmi2StatusKind, 
@@ -1425,14 +1491,18 @@ More detailed:
 - FMISpec2.0.2[p.106]: 4.2.3 Retrieving Status Information from the Slave
 See also [`fmi2GetIntegerStatus!`](@ref).
 """
-function fmi2GetIntegerStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Integer)
+function FMICore.fmi2GetIntegerStatus!(
+    c::FMU2Component,
+    s::fmi2StatusKind,
+    value::fmi2Integer,
+)
 
-    status = fmi2GetIntegerStatus!(c.fmu.cGetIntegerStatus,
-                c.compAddr, s, Ref(value))
+    status = fmi2GetIntegerStatus!(c.fmu.cGetIntegerStatus, c.addr, s, Ref(value))
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetBooleanStatus!
 """
     fmi2GetBooleanStatus!(c::FMU2Component, 
                             s::fmi2StatusKind, 
@@ -1466,14 +1536,18 @@ More detailed:
 - FMISpec2.0.2[p.106]: 4.2.3 Retrieving Status Information from the Slave
 See also [`fmi2GetBooleanStatus!`](@ref).
 """
-function fmi2GetBooleanStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2Boolean)
+function FMICore.fmi2GetBooleanStatus!(
+    c::FMU2Component,
+    s::fmi2StatusKind,
+    value::fmi2Boolean,
+)
 
-    status = fmi2GetBooleanStatus!(c.fmu.cGetBooleanStatus,
-                c.compAddr, s, Ref(value))
+    status = fmi2GetBooleanStatus!(c.fmu.cGetBooleanStatus, c.addr, s, Ref(value))
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetStringStatus!
 """
     fmi2GetStringStatus!(c::FMU2Component, 
                             s::fmi2StatusKind, 
@@ -1507,15 +1581,20 @@ More detailed:
 - FMISpec2.0.2[p.106]: 4.2.3 Retrieving Status Information from the Slave
 See also [`fmi2GetStringStatus!`](@ref).
 """
-function fmi2GetStringStatus!(c::FMU2Component, s::fmi2StatusKind, value::fmi2String)
+function FMICore.fmi2GetStringStatus!(
+    c::FMU2Component,
+    s::fmi2StatusKind,
+    value::fmi2String,
+)
 
-    status = fmi2GetStringStatus!(c.fmu.cGetStringStatus,
-                c.compAddr, s, Ref(value))
+    status = fmi2GetStringStatus!(c.fmu.cGetStringStatus, c.addr, s, Ref(value))
     checkStatus(c, status)
     return status
 end
 
 # Model Exchange specific Functions
+
+import FMIBase.FMICore: fmi2SetTime
 """
     fmi2SetTime(c::FMU2Component, 
                     time::fmi2Real; 
@@ -1552,7 +1631,14 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref).
 """
-function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::Bool=true, force::Bool=c.force, time_shift::Bool=c.fmu.executionConfig.autoTimeShift)
+function FMICore.fmi2SetTime(
+    c::FMU2Component,
+    time::fmi2Real;
+    soft::Bool = false,
+    track::Bool = true,
+    force::Bool = c.force,
+    time_shift::Bool = c.fmu.executionConfig.autoTimeShift,
+)
 
     # ToDo: Double-check this in the spec.
     # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)
@@ -1570,12 +1656,12 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
     end
 
     if !force
-        if c.t == time 
+        if c.t == time
             return fmi2StatusOK
         end
     end
 
-    status = fmi2SetTime(c.fmu.cSetTime, c.compAddr, time)
+    status = fmi2SetTime(c.fmu.cSetTime, c.addr, time)
     checkStatus(c, status)
 
     if track
@@ -1591,6 +1677,7 @@ function fmi2SetTime(c::FMU2Component, time::fmi2Real; soft::Bool=false, track::
     return status
 end
 
+import FMIBase.FMICore: fmi2SetContinuousStates
 """
     fmi2SetContinuousStates(c::FMU2Component,
                                  x::AbstractArray{fmi2Real},
@@ -1621,24 +1708,26 @@ More detailed:
 See also [`fmi2SetContinuousStates`](@ref).
 """
 
-function fmi2SetContinuousStates(c::FMU2Component,
+function FMICore.fmi2SetContinuousStates(
+    c::FMU2Component,
     x::AbstractArray{fmi2Real},
     nx::Csize_t;
-    track::Bool=true,
-    force::Bool=c.force)
+    track::Bool = true,
+    force::Bool = c.force,
+)
 
     if !force
-        if c.x == x 
-            return fmi2StatusOK 
+        if c.x == x
+            return fmi2StatusOK
         end
     end
 
-    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x, nx)
+    status = fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.addr, x, nx)
     checkStatus(c, status)
 
     if track
         if status == fmi2StatusOK
-            isnothing(c.x) ? (c.x = copy(x);) : copyto!(c.x, x)
+            isnothing(c.x) ? (c.x = copy(x)) : copyto!(c.x, x)
 
             invalidate!(c.∂ẋ_∂x)
             invalidate!(c.∂y_∂x)
@@ -1649,6 +1738,7 @@ function fmi2SetContinuousStates(c::FMU2Component,
     return status
 end
 
+import FMIBase.FMICore: fmi2EnterEventMode
 """
     fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
 
@@ -1677,7 +1767,7 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2EnterEventMode`](@ref).
 """
-function fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
+function FMICore.fmi2EnterEventMode(c::FMU2Component; soft::Bool = false)
 
     if c.state != fmi2ComponentStateContinuousTimeMode
         if soft
@@ -1687,8 +1777,7 @@ function fmi2EnterEventMode(c::FMU2Component; soft::Bool=false)
         end
     end
 
-    status = fmi2EnterEventMode(c.fmu.cEnterEventMode,
-          c.compAddr)
+    status = fmi2EnterEventMode(c.fmu.cEnterEventMode, c.addr)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.state = fmi2ComponentStateEventMode
@@ -1730,14 +1819,17 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2NewDiscreteStates`](@ref).
 """
-function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
+function FMICore.fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
 
     if c.state != fmi2ComponentStateEventMode
         @warn "fmi2NewDiscreteStates(...): Needs to be called in state `fmi2ComponentStateEventMode` [$(fmi2ComponentStateEventMode)], is in [$(c.state)]."
     end
 
-    status = fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates,
-                    c.compAddr, Ptr{fmi2EventInfo}(pointer_from_objref(eventInfo)) )
+    status = fmi2NewDiscreteStates!(
+        c.fmu.cNewDiscreteStates,
+        c.addr,
+        Ptr{fmi2EventInfo}(pointer_from_objref(eventInfo)),
+    )
 
     if eventInfo.nextEventTimeDefined == fmi2True
         eventInfo.nextEventTime -= c.t_offset
@@ -1748,6 +1840,7 @@ function fmi2NewDiscreteStates!(c::FMU2Component, eventInfo::fmi2EventInfo)
     return status
 end
 
+import FMIBase.FMICore: fmi2EnterContinuousTimeMode
 """
     fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
 
@@ -1779,7 +1872,7 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2EnterContinuousTimeMode`](@ref).
 """
-function fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
+function FMICore.fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool = false)
 
     if c.state != fmi2ComponentStateEventMode
         if soft
@@ -1789,8 +1882,7 @@ function fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
         end
     end
 
-    status = fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode,
-          c.compAddr)
+    status = fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode, c.addr)
     checkStatus(c, status)
     if status == fmi2StatusOK
         c.state = fmi2ComponentStateContinuousTimeMode
@@ -1798,11 +1890,12 @@ function fmi2EnterContinuousTimeMode(c::FMU2Component; soft::Bool=false)
     return status
 end
 
+import FMIBase.FMICore: fmi2CompletedIntegratorStep!
 """
     fmi2CompletedIntegratorStep!(c::FMU2Component,
                                     noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                    enterEventMode::Ref{fmi2Boolean},
-                                    terminateSimulation::Ref{fmi2Boolean})
+                                    enterEventMode::Ptr{fmi2Boolean},
+                                    terminateSimulation::Ptr{fmi2Boolean})
 
 This function must be called by the environment after every completed step of the integrator provided the capability flag completedIntegratorStepNotNeeded = false.
 
@@ -1827,17 +1920,25 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2CompletedIntegratorStep!`](@ref).
 """
-function fmi2CompletedIntegratorStep!(c::FMU2Component,
-                                      noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
-                                      enterEventMode::Ptr{fmi2Boolean},
-                                      terminateSimulation::Ptr{fmi2Boolean})
+function FMICore.fmi2CompletedIntegratorStep!(
+    c::FMU2Component,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+    enterEventMode::Ptr{fmi2Boolean},
+    terminateSimulation::Ptr{fmi2Boolean},
+)
 
-    status = fmi2CompletedIntegratorStep!(c.fmu.cCompletedIntegratorStep,
-          c.compAddr, noSetFMUStatePriorToCurrentPoint, enterEventMode, terminateSimulation)
+    status = fmi2CompletedIntegratorStep!(
+        c.fmu.cCompletedIntegratorStep,
+        c.addr,
+        noSetFMUStatePriorToCurrentPoint,
+        enterEventMode,
+        terminateSimulation,
+    )
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetDerivatives!
 """
     fmi2GetDerivatives!(c::FMU2Component,
                        derivatives::AbstractArray{fmi2Real},
@@ -1868,17 +1969,19 @@ More detailed:
 See also [`fmi2GetDerivatives!`](@ref).
 
 """
-function fmi2GetDerivatives!(c::FMU2Component,
-                            derivatives::AbstractArray{fmi2Real},
-                            nx::Csize_t)
+function FMICore.fmi2GetDerivatives!(
+    c::FMU2Component,
+    derivatives::AbstractArray{fmi2Real},
+    nx::Csize_t,
+)
 
-    status = fmi2GetDerivatives!(c.fmu.cGetDerivatives,
-          c.compAddr, derivatives, nx)
+    status = fmi2GetDerivatives!(c.fmu.cGetDerivatives, c.addr, derivatives, nx)
     checkStatus(c, status)
-    
+
     return status
 end
 
+import FMIBase.FMICore: fmi2GetEventIndicators!
 """
     fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
 
@@ -1905,14 +2008,18 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetEventIndicators!(c::FMU2Component, eventIndicators::AbstractArray{fmi2Real}, ni::Csize_t)
+function FMICore.fmi2GetEventIndicators!(
+    c::FMU2Component,
+    eventIndicators::AbstractArray{fmi2Real},
+    ni::Csize_t,
+)
 
-    status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators,
-                    c.compAddr, eventIndicators, ni)
+    status = fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.addr, eventIndicators, ni)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetContinuousStates!
 """
     fmi2GetContinuousStates!(c::FMU2Component,
                                 x::AbstractArray{fmi2Real},
@@ -1941,16 +2048,18 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetContinuousStates!(c::FMU2Component,
-                                 x::AbstractArray{fmi2Real},
-                                 nx::Csize_t)
+function FMICore.fmi2GetContinuousStates!(
+    c::FMU2Component,
+    x::AbstractArray{fmi2Real},
+    nx::Csize_t,
+)
 
-    status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates,
-          c.compAddr, x, nx)
+    status = fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.addr, x, nx)
     checkStatus(c, status)
     return status
 end
 
+import FMIBase.FMICore: fmi2GetNominalsOfContinuousStates!
 """
     fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
 
@@ -1977,10 +2086,18 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.2 Evaluation of Model Equations
 See also [`fmi2GetEventIndicators!`](@ref).
 """
-function fmi2GetNominalsOfContinuousStates!(c::FMU2Component, x_nominal::AbstractArray{fmi2Real}, nx::Csize_t)
+function FMICore.fmi2GetNominalsOfContinuousStates!(
+    c::FMU2Component,
+    x_nominal::AbstractArray{fmi2Real},
+    nx::Csize_t,
+)
 
-    status = fmi2GetNominalsOfContinuousStates!(c.fmu.cGetNominalsOfContinuousStates,
-                    c.compAddr, x_nominal, nx)
+    status = fmi2GetNominalsOfContinuousStates!(
+        c.fmu.cGetNominalsOfContinuousStates,
+        c.addr,
+        x_nominal,
+        nx,
+    )
     checkStatus(c, status)
     return status
 end

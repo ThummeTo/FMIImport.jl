@@ -9,8 +9,8 @@
 
 import FMIImport.FMICore: fmi3FMUState
 
-myFMU = fmi3Load("BouncingBall", "ModelicaReferenceFMUs", "0.0.20")
-inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn = true)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
@@ -20,7 +20,7 @@ inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=true)
 # Testing state functions #
 ###########################
 
-if fmi3CanGetSetState(myFMU) && fmi3CanSerializeFMUState(myFMU)
+if canGetSetFMUState(myFMU) && canSerializeFMUState(myFMU)
     @test fmi3GetFloat64(inst, "h") == 1.0
     FMUState = fmi3GetFMUState(inst)
     @test typeof(FMUState) == fmi3FMUState
@@ -40,8 +40,8 @@ if fmi3CanGetSetState(myFMU) && fmi3CanSerializeFMUState(myFMU)
     @test fmi3GetFloat64(inst, "h") == 1.0
     fmi3SetFMUState(inst, FMUState)
     @test fmi3GetFloat64(inst, "h") == 10.0
-    fmi3FreeFMUState!(inst, FMUState)
-    fmi3FreeFMUState!(inst, FMUState2)
+    fmi3FreeFMUState(inst, FMUState)
+    fmi3FreeFMUState(inst, FMUState2)
 else
     @info "The FMU provided from the tool `$(ENV["EXPORTINGTOOL"])` does not support state get, set, serialization and deserialization. Skipping related tests."
 end
@@ -51,4 +51,4 @@ end
 ############
 
 @test fmi3Terminate(inst) == 0
-fmi3Unload(myFMU)
+unloadFMU(myFMU)

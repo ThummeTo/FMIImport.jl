@@ -5,11 +5,11 @@
 
 import FMIImport: fmi2StatusError, fmi2StatusOK
 
-myFMU = fmi2Load("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
+myFMU = loadFMU("SpringPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 myFMU.executionConfig.assertOnError = false
 
 ### CASE A: Print log ###
-comp = fmi2Instantiate!(myFMU; loggingOn=true, externalCallbacks=true)
+comp = fmi2Instantiate!(myFMU; loggingOn = true, externalCallbacks = true)
 @test comp != 0
 
 @info "The following warning is forced and not an issue:"
@@ -20,9 +20,10 @@ open(joinpath(pwd(), "stdout"), "w") do out
                 @test fmi2SetupExperiment(comp) == fmi2StatusOK
             end
         end
-    end 
+    end
 end
-# ToDo: this test is wrong / not working (capture doesn't work for color output)
+
+# [ToDo]: the following test is wrong / not working (capture doesn't work for color output)
 #output = read(joinpath(pwd(), "stdout"), String)
 #@test output == "" 
 #output = read(joinpath(pwd(), "stderr"), String)
@@ -30,7 +31,12 @@ end
 
 ### CASE B: Print log, but catch infos ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=true, logStatusError=false, externalCallbacks=true)
+comp = fmi2Instantiate!(
+    myFMU;
+    loggingOn = true,
+    logStatusError = false,
+    externalCallbacks = true,
+)
 @test comp != 0
 
 # # deactivate errors to capture them
@@ -45,7 +51,7 @@ open(joinpath(pwd(), "stdout"), "w") do out
                 @test fmi2ExitInitializationMode(comp) == fmi2StatusError
             end
         end
-    end 
+    end
 end
 
 # ToDo: this test is wrong / not working (capture doesn't work for color output)
@@ -63,7 +69,7 @@ end
 
 ### CASE C: Disable Log ###
 
-comp = fmi2Instantiate!(myFMU; loggingOn=false, externalCallbacks=true)
+comp = fmi2Instantiate!(myFMU; loggingOn = false, externalCallbacks = true)
 @test comp != 0
 
 @info "The following warning is forced and not an issue:"
@@ -74,7 +80,7 @@ open(joinpath(pwd(), "stdout"), "w") do out
                 @test fmi2SetupExperiment(comp) == fmi2StatusOK
             end
         end
-    end 
+    end
 end
 # ToDo: this test is wrong / not working (capture doesn't work for color output)
 #output = read(joinpath(pwd(), "stdout"), String)
@@ -84,4 +90,4 @@ end
 
 # cleanup
 myFMU.executionConfig.assertOnError = true
-fmi2Unload(myFMU)
+unloadFMU(myFMU)

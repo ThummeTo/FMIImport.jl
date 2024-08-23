@@ -7,10 +7,9 @@
 # Prepare FMU #
 ###############
 
-myFMU = fmi2Load("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
-myFMU.executionConfig.assertOnWarning = true
+myFMU = loadFMU("IO", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
-comp = fmi2Instantiate!(myFMU; loggingOn=false)
+comp = fmi2Instantiate!(myFMU; loggingOn = false)
 @test comp != 0
 
 @test fmi2SetupExperiment(comp, 0.0) == 0
@@ -54,12 +53,25 @@ cacheString = ""
 @test fmi2SetString(comp, stringValueReferences[1], rndString) == 0
 @test fmi2GetString(comp, stringValueReferences[1]) == rndString
 
-fmi2Set(comp, 
-        [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]], 
-        [rndReal,                rndInteger,                rndBoolean,                rndString])
-@test fmi2Get(comp, 
-                [realValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1]]) == 
-                [rndReal,                rndInteger,                rndBoolean,                rndString]
+setValue(
+    comp,
+    [
+        realValueReferences[1],
+        integerValueReferences[1],
+        booleanValueReferences[1],
+        stringValueReferences[1],
+    ],
+    [rndReal, rndInteger, rndBoolean, rndString],
+)
+@test getValue(
+    comp,
+    [
+        realValueReferences[1],
+        integerValueReferences[1],
+        booleanValueReferences[1],
+        stringValueReferences[1],
+    ],
+) == [rndReal, rndInteger, rndBoolean, rndString]
 
 ##################
 # Testing Arrays #
@@ -72,7 +84,7 @@ tmp = Random.randstring(8)
 rndString = [tmp, tmp]
 
 cacheReal = [0.0, 0.0]
-cacheInteger =  [fmi2Integer(0), fmi2Integer(0)]
+cacheInteger = [fmi2Integer(0), fmi2Integer(0)]
 cacheBoolean = [fmi2Boolean(false), fmi2Boolean(false)]
 cacheString = [pointer(""), pointer("")]
 
@@ -124,4 +136,4 @@ dirs = fmi2GetRealOutputDerivatives(comp, ["y_real"], ones(fmi2Integer, 1))
 # Clean up #
 ############
 
-fmi2Unload(myFMU)
+unloadFMU(myFMU)
