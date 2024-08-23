@@ -6,10 +6,10 @@
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl).
 
 
-[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMI.jl/dev) 
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://thummeto.github.io/FMI.jl/dev/) 
 [![Run Tests](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml)
-[![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIImport.jl)
+[![Coverage](https://app.codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ThummeTo/FMIImport.jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
