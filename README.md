@@ -2,7 +2,7 @@
 # FMIImport.jl
 
 ## What is FMIImport.jl?
-[*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) implements the import functionalities of the FMI-standard ([fmi-standard.org](http://fmi-standard.org/)) for the Julia programming language. 
+[*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) implements the import functionalities of the FMI-standard ([fmi-standard.org](https://fmi-standard.org/)) for the Julia programming language. 
 [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl).
 
 
