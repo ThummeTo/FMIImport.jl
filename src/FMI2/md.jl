@@ -437,6 +437,7 @@ end
 # ToDo: Comment
 function parseDerivatives(md::fmi2ModelDescription, nodes::EzXML.Node)
     @assert (nodes.name == "Derivatives") "Wrong element name."
+    
     md.modelStructure.derivatives = []
     for node in eachelement(nodes)
         if node.name == "Unknown"
@@ -463,6 +464,8 @@ function parseDerivatives(md::fmi2ModelDescription, nodes::EzXML.Node)
             @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
         end
     end
+
+    nothing
 end
 
 # ToDo: Comment

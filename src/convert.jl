@@ -40,7 +40,7 @@ function getState(
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -102,7 +102,7 @@ function getStateDerivative(
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -164,7 +164,7 @@ function FMIBase.getValue(
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not exist for this system."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not exist for this system."
                 end
             end
 
