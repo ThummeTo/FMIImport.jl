@@ -914,7 +914,7 @@ More detailed:
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
 
-See also [`fmi2FreeFMUstate!`](@ref).
+See also [`fmi2FreeFMUstate`](@ref).
 """
 function FMICore.fmi2FreeFMUstate(c::FMU2Component, FMUstate::Ref{fmi2FMUstate})
 
