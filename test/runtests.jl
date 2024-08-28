@@ -22,8 +22,8 @@ using FMIImport.FMICore:
     fmi3UInt64
 using FMIImport.FMICore: fmi3Boolean, fmi3String, fmi3Binary
 
-exportingToolsWindows = [("Dymola", "2022x")]
-exportingToolsLinux = [("Dymola", "2022x")]
+exportingToolsWindows = [("Dymola", "2023x")]
+exportingToolsLinux = [("Dymola", "2023x")]
 
 function runtestsFMI2(exportingTool)
     ENV["EXPORTINGTOOL"] = exportingTool[1]

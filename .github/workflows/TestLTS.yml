@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         julia-version: ['1.6']
-        julia-arch: [x64]
+        julia-arch: [x64, x86]
         os: [ubuntu-latest, windows-latest]
         experimental: [false]
 
