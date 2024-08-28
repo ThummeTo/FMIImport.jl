@@ -59,6 +59,7 @@ function loadFMU(
     unpackPath::Union{String,Nothing} = nothing,
     cleanup::Bool = true,
     type::Union{Symbol,Nothing} = nothing,
+    kwargs...
 )
 
     unzippedAbsPath, zipAbsPath =
@@ -72,11 +73,11 @@ function loadFMU(
     version = root["fmiVersion"]
 
     if version == "1.0"
-        @assert false "FMI version 1.0 deteted, this is (currently) not supported by FMI.jl."
+        @assert false "FMI version 1.0 detected, this is (currently) not supported by FMI.jl."
     elseif version == "2.0"
-        return createFMU2(unzippedAbsPath, zipAbsPath; type = type)
+        return createFMU2(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
     elseif version == "3.0"
-        return createFMU3(unzippedAbsPath, zipAbsPath; type = type)
+        return createFMU3(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
     else
         @assert false, "Unknwon FMI version `$(version)`."
     end
@@ -113,7 +114,7 @@ function unloadFMU(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool = true
     end
 
     # the components are removed from the component list via call to fmi2FreeInstance!
-    @assert length(fmu.components) == 0 "fmi2Unload(...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
+    @assert length(fmu.components) == 0 "unloadFMU(fmu::FMU2, ...): Failure during deleting components, $(length(fmu.components)) remaining in stack."
 
     if secure_pointers
         unloadPointers(fmu)
@@ -139,7 +140,7 @@ function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
     dlclose(fmu.libHandle)
 
     # the instances are removed from the instances list via call to fmi3FreeInstance!
-    @assert length(fmu.instances) == 0 "fmi3Unload(...): Failure during deleting instances, $(length(fmu.instances)) remaining in stack."
+    @assert length(fmu.instances) == 0 "unloadFMU(fmu::FMU3, ...): Failure during deleting instances, $(length(fmu.instances)) remaining in stack."
 
     if cleanUp
         try

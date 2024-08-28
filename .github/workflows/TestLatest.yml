@@ -1,4 +1,4 @@
-name: Run Tests
+name: Test v1 (latest)
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ on:
     paths:
       - 'src/**'
       - 'test/**'
-      - '.github/**'
+      - '.github/workflows/Test.yml'
       - 'Project.toml'
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        julia-version: ['1.6', '1']
+        julia-version: ['1']
         julia-arch: [x64]
         os: [ubuntu-latest, windows-latest]
         experimental: [false]
@@ -35,7 +35,7 @@ jobs:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
 
-      # Set up cache
+     # Set up cache
       - name: "Set up cache"
         uses: actions/cache@v3
         env:
@@ -47,7 +47,7 @@ jobs:
             ${{ runner.os }}-test-${{ env.cache-name }}-
             ${{ runner.os }}-test-
             ${{ runner.os }}-
-      
+
       # Build package
       - name: "Build package"
         uses: julia-actions/julia-buildpkg@v1
@@ -62,6 +62,8 @@ jobs:
 
       # Run codecov
       - name: "Run CodeCov"
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           file: lcov.info

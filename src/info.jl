@@ -11,13 +11,11 @@ function printValueReferences(fmu, vrs; max = 10)
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
     else
-        half = floor(Integer, max) - 1
+        half = floor(Integer, max/2) - 1
         for vr in vrs[1:half]
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
-        println(".")
-        println(".")
-        println(".")
+        println("\t\t...")
         for vr in vrs[len-half:end]
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
@@ -63,7 +61,7 @@ function info(fmu::FMU2)
     println("\tStates:\t\t\t\t$(length(fmu.modelDescription.stateValueReferences))")
     printValueReferences(fmu, fmu.modelDescription.stateValueReferences)
 
-    println("\tParameters:\t\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
+    println("\tParameters:\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
     printValueReferences(fmu, fmu.modelDescription.parameterValueReferences)
 
     println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")
@@ -137,7 +135,7 @@ function info(fmu::FMU3)
     println("\tStates:\t\t\t\t$(length(fmu.modelDescription.stateValueReferences))")
     printValueReferences(fmu, fmu.modelDescription.stateValueReferences)
 
-    println("\tParameters:\t\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
+    println("\tParameters:\t\t\t$(length(fmu.modelDescription.parameterValueReferences))")
     printValueReferences(fmu, fmu.modelDescription.parameterValueReferences)
 
     println("\tSupports Co-Simulation:\t\t$(isCoSimulation(fmu))")

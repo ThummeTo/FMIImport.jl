@@ -69,7 +69,7 @@ Computes the directional derivatives of an FMU. An FMU has different Modes and i
 𝐯_unknown = 𝐡(𝐯_known, 𝐯_rest)
 
 - `v_unknown`: vector of unknown Real variables computed in the actual Mode:
-   - Initialization Mode: unkowns kisted under `<ModelStructure><InitialUnknowns>` that have type Real.
+   - Initialization Mode: unknowns listed under `<ModelStructure><InitialUnknowns>` that have type Real.
    - Continuous-Time Mode (ModelExchange): The continuous-time outputs and state derivatives. (= the variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` and the variables listed as state derivatives under `<ModelStructure><Derivatives>)`.
    - Event Mode (ModelExchange): The same variables as in the Continuous-Time Mode and additionally variables under `<ModelStructure><Outputs>` with type Real and variability = `discrete`.
    - Step Mode (CoSimulation):  The variables listed under `<ModelStructure><Outputs>` with type Real and variability = `continuous` or `discrete`. If `<ModelStructure><Derivatives>` is present, also the variables listed here as state derivatives.
@@ -305,7 +305,7 @@ function getJacobian!(
 )
 
     @assert size(jac) == (length(rdx), length(rx)) [
-        "fmi2GetJacobian!: Dimension missmatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx)).",
+        "fmi2GetJacobian!: Dimension mismatch between `jac` $(size(jac)), `rdx` $(length(rdx)) and `rx` $(length(rx)).",
     ]
 
     if length(rdx) == 0 || length(rx) == 0
