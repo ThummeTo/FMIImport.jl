@@ -19,7 +19,6 @@ import FMIBase.ChainRulesCore: ignore_derivatives
 using RelocatableFolders
 
 import FMIBase: EzXML
-include("convert.jl")
 include("zip.jl")
 include("binary.jl")
 include("md_parse.jl")

@@ -7,7 +7,8 @@
 
 
 [![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://thummeto.github.io/FMI.jl/dev/) 
-[![Run Tests](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Test.yml)
+[![Test (latest)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLatest.yml) 
+[![Test (LTS)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLTS.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ThummeTo/FMIImport.jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
