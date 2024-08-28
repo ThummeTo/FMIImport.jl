@@ -77,11 +77,14 @@ function fmi2Instantiate!(
     )
     if externalCallbacks
         if fmu.callbackLibHandle == C_NULL
-            @assert Sys.WORD_SIZE == 64 "`externalCallbacks=true` is only supported for 64-bit."
-
+            @assert Sys.WORD_SIZE == 64 || (Sys.iswindows() && Sys.WORD_SIZE == 32) "`externalCallbacks=true` is only supported for 64-bit and 32-Bit Windows"
             cbLibPath = CB_LIB_PATH
             if Sys.iswindows()
-                cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+                if Sys.WORD_SIZE == 64
+                    cbLibPath = joinpath(cbLibPath, "win64", "callbackFunctions.dll")
+                else
+                    cbLibPath = joinpath(cbLibPath, "win32", "callbackFunctions.dll")
+                end
             elseif Sys.islinux()
                 cbLibPath = joinpath(cbLibPath, "linux64", "libcallbackFunctions.so")
             elseif Sys.isapple()
@@ -401,7 +404,6 @@ function fmi2GetReal(c::FMU2Component, vr::fmi2ValueReferenceFormat)
     nvr = Csize_t(length(vr))
     values = zeros(fmi2Real, nvr)
     fmi2GetReal!(c, vr, nvr, values)
-
     if length(values) == 1
         return values[1]
     else

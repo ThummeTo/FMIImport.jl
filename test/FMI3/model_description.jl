@@ -5,7 +5,7 @@
 
 import FMIImport.FMICore: fmi3VariableNamingConventionFlat
 
-myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 
 @test fmi3GetVersion(myFMU) == "3.0"
 
@@ -17,8 +17,8 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.20", "3.0")
 # [TODO] scheduledExecution
 
 @test getInstantiationToken(myFMU) == "{1AE5E10D-9521-4DE3-80B9-D0EAAA7D5AF1}" # [TODO] update
-@test getGenerationTool(myFMU) == "Reference FMUs (v0.0.20)"
-@test getGenerationDateAndTime(myFMU) == "[Unknown generation date and time]"
+@test getGenerationTool(myFMU) == "Reference FMUs (v0.0.30)"
+@test getGenerationDateAndTime(myFMU) == "2024-04-18T08:15:35.162720+00:00"
 @test getNumberOfEventIndicators(myFMU) == 1
 @test canGetSetFMUState(myFMU)
 @test canSerializeFMUState(myFMU)
