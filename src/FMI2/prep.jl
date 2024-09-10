@@ -45,6 +45,8 @@ function prepareSolveFMU(
 
     ignore_derivatives() do
 
+        autoInstantiated = false
+
         # instantiate (hard)
         if instantiate
             # remove old one if we missed it (callback)
@@ -58,6 +60,7 @@ function prepareSolveFMU(
             end
 
             c = fmi2Instantiate!(fmu; type = type, instantiateKwargs...)
+
         else # use existing instance
             if c === nothing
                 if hasCurrentInstance(fmu)
@@ -65,6 +68,7 @@ function prepareSolveFMU(
                 else
                     @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one.\nUse `fmi2Instantiate(fmu)` to prevent this message."
                     c = fmi2Instantiate!(fmu; type = type, instantiateKwargs...)
+                    autoInstantiated = true
                 end
             end
         end
@@ -183,11 +187,19 @@ function prepareSolveFMU(
                 x0 = fmi2GetContinuousStates(c)
             end
 
-            if instantiate || reset # we have a fresh instance 
-                @debug "[NEW INST]"
+            if instantiate || reset # autoInstantiated 
+
+                if !setup 
+                    @debug "[AUTO] setup"
+
+                    fmi2SetupExperiment(c, t_start, t_stop; tolerance = tolerance)
+                    fmi2EnterInitializationMode(c)
+                    fmi2ExitInitializationMode(c)
+                end
+
                 handleEvents(c)
             end
-
+            
             c.fmu.hasStateEvents = (c.fmu.modelDescription.numberOfEventIndicators > 0)
             c.fmu.hasTimeEvents = isTrue(c.eventInfo.nextEventTimeDefined)
         end
@@ -208,7 +220,7 @@ function prepareSolveFMU(
     elseif type == :SE
         @assert false "FMU type `SE` is not supported in FMI2!"
     else
-        @assert false "Unknwon FMU type `$(type)`"
+        @assert false "Unknown FMU type `$(type)`"
     end
 end
 
@@ -241,7 +253,7 @@ function finishSolveFMU(
 
         # freeInstance (hard)
         if freeInstance
-            fmi2FreeInstance!(c; popComponent = popComponent) # , doccall=freeInstance
+            fmi2FreeInstance!(c; popComponent = popComponent)
             c = nothing
         end
     end

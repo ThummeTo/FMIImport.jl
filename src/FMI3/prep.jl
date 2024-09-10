@@ -42,6 +42,8 @@ function prepareSolveFMU(
 
     ignore_derivatives() do
 
+        autoInstantiated = false
+
         c = nothing
 
         # instantiate (hard)
@@ -53,7 +55,7 @@ function prepareSolveFMU(
             elseif type == fmi3TypeScheduledExecution
                 c = fmi3InstantiateScheduledExecution!(fmu; instantiateKwargs...)
             else
-                @assert false "Unknwon fmi3Type `$(type)`"
+                @assert false "Unknown fmi3Type `$(type)`"
             end
         else
             if c === nothing
@@ -63,12 +65,15 @@ function prepareSolveFMU(
                     @warn "Found no FMU instance, but executionConfig doesn't force allocation. Allocating one. Use `fmi3Instantiate[TYPE](fmu)` to prevent this message."
                     if type == fmi3TypeCoSimulation
                         c = fmi3InstantiateCoSimulation!(fmu; instantiateKwargs...)
+                        autoInstantiated = true
                     elseif type == fmi3TypeModelExchange
                         c = fmi3InstantiateModelExchange!(fmu; instantiateKwargs...)
+                        autoInstantiated = true
                     elseif type == fmi3TypeScheduledExecution
                         c = fmi3InstantiateScheduledExecution!(fmu; instantiateKwargs...)
+                        autoInstantiated = true
                     else
-                        @assert false "Unknwon FMU type `$(type)`."
+                        @assert false "Unknown FMU type `$(type)`."
                     end
                 end
             end
@@ -181,8 +186,14 @@ function prepareSolveFMU(
                 x0 = fmi3GetContinuousStates(c)
             end
 
-            if instantiate || reset # we have a fresh instance 
-                @debug "[NEW INST]"
+            if instantiate || reset # autoInstantiated 
+                @debug "[AUTO] setup"
+
+                if !setup 
+                    fmi3EnterInitializationMode(c, t_start, t_stop; tolerance = tolerance)
+                    fmi3ExitInitializationMode(c)
+                end
+
                 handleEvents(c)
             end
 
@@ -202,7 +213,7 @@ function prepareSolveFMU(fmu::FMU3, c::Union{Nothing,FMU3Instance}, type::Symbol
     elseif type == :SE
         return prepareSolveFMU(fmu, c, fmi3TypeScheduledExecution; kwargs...)
     else
-        @assert false "Unknwon FMU type `$(type)`"
+        @assert false "Unknown FMU type `$(type)`"
     end
 end
 
