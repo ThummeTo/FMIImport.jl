@@ -1,7 +1,7 @@
 name = "FMIImport"
 uuid = "9fcbc62e-52a0-44e9-a616-1359a0008194"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>", "JK <josef.kircher@student.uni-augsburg.de>"]
-version = "1.1.0"
+version = "1.0.7"
 
 [deps]
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
