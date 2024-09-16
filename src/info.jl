@@ -11,7 +11,7 @@ function printValueReferences(fmu, vrs; max = 10)
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
     else
-        half = floor(Integer, max/2) - 1
+        half = floor(Integer, max / 2) - 1
         for vr in vrs[1:half]
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
