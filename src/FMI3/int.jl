@@ -2727,8 +2727,8 @@ function fmi3GetAdjointDerivative!(
     c::FMU3Instance,
     unknowns::AbstractArray{fmi3ValueReference},
     knowns::AbstractArray{fmi3ValueReference},
-    sensitivity::AbstractArray,
     seed::AbstractArray{fmi3Float64},
+    sensitivity::AbstractArray{fmi3Float64},
 )
 
     nKnowns = Csize_t(length(knowns))
