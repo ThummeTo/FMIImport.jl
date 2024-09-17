@@ -30,6 +30,11 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 @test getDefaultTolerance(myFMU.modelDescription) === nothing
 @test getDefaultStepSize(myFMU.modelDescription) === 0.01
 
+@test myFMU.modelDescription.numberOfEventIndicators == 1
+@test myFMU.modelDescription.eventIndicatorValueReferences == [1]
+@test typeof(myFMU.modelDescription.modelStructure.eventIndicators[1]) == fmi3VariableDependency
+
+
 info(myFMU) # check if there is an error thrown
 
 unloadFMU(myFMU)

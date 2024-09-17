@@ -48,6 +48,7 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
     md.inputValueReferences = Array{fmi3ValueReference}(undef, 0)
     md.stateValueReferences = Array{fmi3ValueReference}(undef, 0)
     md.derivativeValueReferences = Array{fmi3ValueReference}(undef, 0)
+    md.eventIndicatorValueReferences = Array{fmi3ValueReference}(undef, 0)
     md.intermediateUpdateValueReferences = Array{fmi3ValueReference}(undef, 0)
     md.numberOfEventIndicators = 0
 
@@ -415,8 +416,10 @@ function parseModelStructure(md::fmi3ModelDescription, nodes::EzXML.Node)
                 push!(md.modelStructure.initialUnknowns, varDep)
             elseif node.name == "EventIndicator"
                 md.numberOfEventIndicators += 1
-                push!(md.modelStructure.eventIndicators)
-                # [TODO] parse valueReferences to another array
+                varDep = parseDependencies(md, node)
+                push!(md.modelStructure.eventIndicators, varDep)
+                eIvalueRef = parseNode(node, "valueReference", fmi3ValueReference)
+                push!(md.eventIndicatorValueReferences, eIvalueRef)
             elseif node.name == "ContinuousStateDerivative"
 
                 # find states and derivatives
@@ -482,37 +485,4 @@ function parseDependencies(md::fmi3ModelDescription, node::EzXML.Node)
     end
 
     return varDep
-end
-
-function parseContinuousStateDerivative(md::fmi3ModelDescription, nodes::EzXML.Node)
-    @assert (nodes.name == "ContinuousStateDerivative") "Wrong element name."
-    md.modelStructure.derivatives = []
-    for node in eachelement(nodes)
-        if node.name == "InitialUnknown"
-            if haskey(node, "index")
-                varDep = parseUnknwon(md, node)
-
-                # find states and derivatives
-                derSV = md.modelVariables[varDep.index]
-                derVR = derSV.valueReference
-                stateVR = md.modelVariables[derSV.derivative].valueReference
-
-                if stateVR ∉ md.stateValueReferences
-                    push!(md.stateValueReferences, stateVR)
-                end
-                if derVR ∉ md.derivativeValueReferences
-                    push!(md.derivativeValueReferences, derVR)
-                end
-
-                push!(md.modelStructure.derivatives, varDep)
-            else
-                @warn "Invalid entry for node `Unknown` in `ModelStructure`, missing entry `index`."
-            end
-        elseif node.name == "EventIndicator"
-            md.numberOfEventIndicators += 1
-            # TODO parse valueReferences to another array
-        else
-            @warn "Unknown entry in `ModelStructure.Derivatives` named `$(node.name)`."
-        end
-    end
 end
