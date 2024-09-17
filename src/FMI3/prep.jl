@@ -189,7 +189,7 @@ function prepareSolveFMU(
             if instantiate || reset # autoInstantiated 
                 @debug "[AUTO] setup"
 
-                if !setup 
+                if !setup
                     fmi3EnterInitializationMode(c, t_start, t_stop; tolerance = tolerance)
                     fmi3ExitInitializationMode(c)
                 end

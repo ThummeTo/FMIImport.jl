@@ -107,7 +107,8 @@ function createFMU2(
             directories =
                 [joinpath("binaries", "win64"), joinpath("binaries", "x86_64-windows")]
         else
-            directories = [joinpath("binaries", "win32"), joinpath("binaries","x86-windows")]
+            directories =
+                [joinpath("binaries", "win32"), joinpath("binaries", "x86-windows")]
         end
         osStr = "Windows"
         fmuExt = "dll"

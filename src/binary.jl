@@ -59,7 +59,7 @@ function loadFMU(
     unpackPath::Union{String,Nothing} = nothing,
     cleanup::Bool = true,
     type::Union{Symbol,Nothing} = nothing,
-    kwargs...
+    kwargs...,
 )
 
     unzippedAbsPath, zipAbsPath =

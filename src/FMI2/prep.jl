@@ -189,7 +189,7 @@ function prepareSolveFMU(
 
             if instantiate || reset # autoInstantiated 
 
-                if !setup 
+                if !setup
                     @debug "[AUTO] setup"
 
                     fmi2SetupExperiment(c, t_start, t_stop; tolerance = tolerance)
@@ -199,7 +199,7 @@ function prepareSolveFMU(
 
                 handleEvents(c)
             end
-            
+
             c.fmu.hasStateEvents = (c.fmu.modelDescription.numberOfEventIndicators > 0)
             c.fmu.hasTimeEvents = isTrue(c.eventInfo.nextEventTimeDefined)
         end

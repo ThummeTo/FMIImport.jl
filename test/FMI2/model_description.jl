@@ -67,10 +67,18 @@ info(myFMU) # check if there is an error thrown
 
 @test length(getDerivativeNames(myFMU.modelDescription)) == 2
 @test length(getDerivativeNames(myFMU)) == 2
-@test getDerivativeNames(myFMU; mode=:first) == ["der(mass.s)", "mass.a_relfric"]
+@test getDerivativeNames(myFMU; mode = :first) == ["der(mass.s)", "mass.a_relfric"]
 # @test getDerivativeNames(myFMU; mode=:flat) == ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
-@test issetequal(getDerivativeNames(myFMU; mode=:flat) ,["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"])
-@test all(issetequal.(getDerivativeNames(myFMU; mode=:group) ,[["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]]))
+@test issetequal(
+    getDerivativeNames(myFMU; mode = :flat),
+    ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"],
+)
+@test all(
+    issetequal.(
+        getDerivativeNames(myFMU; mode = :group),
+        [["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]],
+    ),
+)
 
 @test length(getNamesAndDescriptions(myFMU.modelDescription)) == 50
 @test length(getNamesAndDescriptions(myFMU)) == 50
