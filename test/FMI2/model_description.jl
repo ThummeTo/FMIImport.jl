@@ -134,3 +134,17 @@ for sv in myFMU.modelDescription.modelVariables
 end
 
 unloadFMU(myFMU)
+
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "2.0")
+@test isnothing(myFMU.modelDescription.modelStructure.derivatives[1].dependencies)
+
+info(myFMU) # check if there is an error thrown
+
+unloadFMU(myFMU)
+
+myFMU = loadFMU("Dahlquist", "ModelicaReferenceFMUs", "0.0.30", "2.0")
+@test !isnothing(myFMU.modelDescription.modelStructure.outputs[1].dependencies)
+
+info(myFMU) # check if there is an error thrown
+
+unloadFMU(myFMU)

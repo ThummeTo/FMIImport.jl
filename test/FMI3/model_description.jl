@@ -34,7 +34,17 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 @test myFMU.modelDescription.eventIndicatorValueReferences == [1]
 @test typeof(myFMU.modelDescription.modelStructure.eventIndicators[1]) == fmi3VariableDependency
 
+@test isnothing(myFMU.modelDescription.modelStructure.continuousStateDerivatives[1].dependencies)
+
 
 info(myFMU) # check if there is an error thrown
 
 unloadFMU(myFMU)
+
+# Sadly there are no FMI3-Reference-FMUs with dependencies=""
+# myFMU = loadFMU("Dahlquist", "ModelicaReferenceFMUs", "0.0.30", "3.0")
+# @test !isnothing(myFMU.modelDescription.modelStructure.outputs[1].dependencies)
+
+# info(myFMU) # check if there is an error thrown
+
+# unloadFMU(myFMU)
