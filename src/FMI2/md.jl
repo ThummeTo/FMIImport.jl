@@ -407,7 +407,7 @@ function parseUnknown(md::fmi2ModelDescription, node::EzXML.Node)
                 if length(dependenciesSplit) > 0
                     varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
                 end
-            else 
+            else
                 varDep.dependencies = UInt[]
             end
         end
@@ -421,7 +421,7 @@ function parseUnknown(md::fmi2ModelDescription, node::EzXML.Node)
                         stringToDependencyKind(md, e) for e in dependenciesKindSplit
                     )
                 end
-            else 
+            else
                 varDep.dependenciesKind = fmi2DependencyKind[]
             end
         end
