@@ -376,19 +376,8 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
         end
 
         if haskey(node, "start")
-            if typename ∉ ("Binary", "Clock")
-                if !isnothing(node.firstelement) && node.firstelement.name == "Dimension"
-                    substrings = split(node["start"], " ")
-
-                    T = stringToDataType(md, typename)
-                    modelVariables[index].start = Array{T}(undef, 0)
-                    for string in substrings
-                        push!(modelVariables[index].start, parseType(string, T))
-                    end
-                else
-                    modelVariables[index].start =
-                        parseNode(node, "start", stringToDataType(md, typename))
-                end
+            if typename ∈ ("Binary", "Clock")
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `start`."
             elseif typename == "Enum"
                 for i = 1:length(md.enumerations)
                     if modelVariables[index].declaredType == md.enumerations[i][1] # identify the enum by the name
@@ -408,8 +397,19 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
                         modelVariables[index].start = pointer(n["value"])
                     end
                 end
-            else
-                @warn "Unsupported typename `$(typename)` for modelVariable attribute `start`."
+            else # all "common" types
+                if !isnothing(node.firstelement) && node.firstelement.name == "Dimension"
+                    substrings = split(node["start"], " ")
+
+                    T = stringToDataType(md, typename)
+                    modelVariables[index].start = Array{T}(undef, 0)
+                    for string in substrings
+                        push!(modelVariables[index].start, parseType(string, T))
+                    end
+                else
+                    modelVariables[index].start =
+                        parseNode(node, "start", stringToDataType(md, typename))
+                end
             end
         end
 
