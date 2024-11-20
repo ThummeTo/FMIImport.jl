@@ -398,14 +398,21 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
                     end
                 end
             else # all "common" types
-                if !isnothing(node.firstelement) && node.firstelement.name == "Dimension"
-                    substrings = split(node["start"], " ")
-
-                    T = stringToDataType(md, typename)
-                    modelVariables[index].start = Array{T}(undef, 0)
-                    for string in substrings
-                        push!(modelVariables[index].start, parseType(string, T))
+                dimensions = Vector{UInt32}()
+                for element in eachelement(node)
+                    if element.name == "Dimension"
+                        push!(dimensions, parseType(element["start"], UInt32))
                     end
+                end
+                if length(dimensions) > 0
+                    # substrings = split(node["start"], " ")
+
+                    # T = stringToDataType(md, typename)
+                    # modelVariables[index].start = Vector{T}()
+                    # for string in substrings
+                    #     push!(modelVariables[index].start, parseType(string, T))
+                    # end
+                    @warn "Parsing of multi-dimension variable start values not supported, yet.\nDimension is $(dimensions)"
                 else
                     modelVariables[index].start =
                         parseNode(node, "start", stringToDataType(md, typename))
