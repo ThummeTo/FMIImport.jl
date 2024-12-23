@@ -930,7 +930,7 @@ end
 export fmi2GetFMUstate
 
 """
-    fmi2FreeFMUstate!(c::FMU2Component, state::fmi2FMUstate)
+    fmi2FreeFMUstate(c::FMU2Component, state::fmi2FMUstate)
 
 Free the memory for the allocated FMU state
 
@@ -946,8 +946,6 @@ Free the memory for the allocated FMU state
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 - FMISpec2.0.2[p.16]: 2.1.3 Status Returned by Functions
 - FMISpec2.0.2[p.25]: 2.1.8 Getting and Setting the Complete FMU State
-
-See also [`fmi2FreeFMUstate`](@ref).
 """
 function fmi2FreeFMUstate(c::FMU2Component, state::fmi2FMUstate)
     stateRef = Ref(state)
