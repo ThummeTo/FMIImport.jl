@@ -45,6 +45,8 @@ function prepareSolveFMU(
 
     ignore_derivatives() do
 
+        @debug "prepareSolveFMU(type=$(type), t_start=$(t_start), t_stop=$(t_stop), x0=$(x0), ...)"
+
         autoInstantiated = false
 
         # instantiate (hard)
@@ -167,9 +169,6 @@ function prepareSolveFMU(
                 filter = setInInitialization,
             )
             @assert all(retcodes .== fmi2StatusOK) "fmi2Simulate(...): Setting initial inputs failed with return code $(retcodes)."
-
-            # safe start state in component
-            c.x = copy(x0)
         end
 
         # exit setup (hard)
@@ -178,6 +177,12 @@ function prepareSolveFMU(
             @assert retcode == fmi2StatusOK "fmi2Simulate(...): Exiting initialization mode failed with return code $(retcode)."
         end
 
+        # if !isnothing(x0)
+        #     @warn "experimental"
+        #     retcode = fmi2SetContinuousStates(c, x0; force=true)
+        #     @assert retcode == fmi2StatusOK "prepareSolveFMU(...): Setting state after exiting initialization mode failed with return code $(retcode)."
+        # end
+
         # allocate a solution object
         c.solution = FMUSolution(c)
 
@@ -185,7 +190,11 @@ function prepareSolveFMU(
         if type == fmi2TypeModelExchange
             if isnothing(x0) && !c.fmu.isZeroState
                 x0 = fmi2GetContinuousStates(c)
+            else
+                # Info: this is just for consistency, value is not used.
+                fmi2GetContinuousStates(c)
             end
+            c.x_nominals = fmi2GetNominalsOfContinuousStates(c)
 
             if instantiate || reset # autoInstantiated 
 
@@ -203,6 +212,11 @@ function prepareSolveFMU(
             c.fmu.hasStateEvents = (c.fmu.modelDescription.numberOfEventIndicators > 0)
             c.fmu.hasTimeEvents = isTrue(c.eventInfo.nextEventTimeDefined)
         end
+    end
+
+    if !isnothing(x0)
+        # safe start state in component
+        c.x = copy(x0)
     end
 
     return c, x0

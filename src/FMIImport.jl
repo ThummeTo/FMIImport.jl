@@ -11,7 +11,7 @@ using FMIBase.Reexport
 
 using FMIBase
 using FMIBase.FMICore
-using FMIBase: fast_copy!, invalidate!, check_invalidate!
+using FMIBase: fast_copy!, invalidate!, check_invalidate!, isStatusError, isStatusOK, isStatusDiscard
 using FMIBase.Requires
 
 import FMIBase.ChainRulesCore: ignore_derivatives
