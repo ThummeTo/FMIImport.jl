@@ -453,7 +453,7 @@ function fmi2GetReal!(
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
-    @assert length(vr) == length(values) "fmi2GetReal!(...): `vr` and `values` need to be the same length."
+    @assert length(vr) == length(values) "fmi2GetReal!(...): `vr` and `values` need to be the same length.\nvr     (length=$(length(vr))): $(vr)\nvalues (length=$(length(values))): $(values)"
 
     nvr = Csize_t(length(values))
     # values[:] = fmi2Real.(values)
