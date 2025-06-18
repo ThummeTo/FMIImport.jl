@@ -156,10 +156,6 @@ function loadPointers(fmu::FMU3)
     cd(lastDirectory)
 
     # retrieve functions 
-    fmu.cInstantiateModelExchange = dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
-    fmu.cInstantiateCoSimulation = dlsym(fmu.libHandle, :fmi3InstantiateCoSimulation)
-    fmu.cInstantiateScheduledExecution =
-        dlsym(fmu.libHandle, :fmi3InstantiateScheduledExecution)
     fmu.cGetVersion = dlsym(fmu.libHandle, :fmi3GetVersion)
     fmu.cFreeInstance = dlsym(fmu.libHandle, :fmi3FreeInstance)
     fmu.cSetDebugLogging = dlsym(fmu.libHandle, :fmi3SetDebugLogging)
@@ -226,6 +222,7 @@ function loadPointers(fmu::FMU3)
 
     # CS specific function calls
     if isCoSimulation(fmu)
+        fmu.cInstantiateCoSimulation = dlsym(fmu.libHandle, :fmi3InstantiateCoSimulation)
         fmu.cGetOutputDerivatives = dlsym(fmu.libHandle, :fmi3GetOutputDerivatives)
         fmu.cEnterStepMode = dlsym(fmu.libHandle, :fmi3EnterStepMode)
         fmu.cDoStep = dlsym(fmu.libHandle, :fmi3DoStep)
@@ -233,6 +230,8 @@ function loadPointers(fmu::FMU3)
 
     # ME specific function calls
     if isModelExchange(fmu)
+        fmu.cInstantiateModelExchange =
+            dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
         fmu.cGetNumberOfContinuousStates =
             dlsym(fmu.libHandle, :fmi3GetNumberOfContinuousStates)
         fmu.cGetNumberOfEventIndicators =
@@ -252,6 +251,8 @@ function loadPointers(fmu::FMU3)
     end
 
     if isScheduledExecution(fmu)
+        fmu.cInstantiateScheduledExecution =
+            dlsym(fmu.libHandle, :fmi3InstantiateScheduledExecution)
         fmu.cSetIntervalDecimal = dlsym(fmu.libHandle, :fmi3SetIntervalDecimal)
         fmu.cSetIntervalFraction = dlsym(fmu.libHandle, :fmi3SetIntervalFraction)
         fmu.cGetIntervalDecimal = dlsym(fmu.libHandle, :fmi3GetIntervalDecimal)
