@@ -230,8 +230,7 @@ function loadPointers(fmu::FMU3)
 
     # ME specific function calls
     if isModelExchange(fmu)
-        fmu.cInstantiateModelExchange =
-            dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
+        fmu.cInstantiateModelExchange = dlsym(fmu.libHandle, :fmi3InstantiateModelExchange)
         fmu.cGetNumberOfContinuousStates =
             dlsym(fmu.libHandle, :fmi3GetNumberOfContinuousStates)
         fmu.cGetNumberOfEventIndicators =
