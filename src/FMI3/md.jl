@@ -288,17 +288,21 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
         modelVariables[index].clocks =
             parseArrayValueReferences(md, parseNode(node, "clocks", String))
 
-        if typename ∉ ("Clock", "String")
-            modelVariables[index].intermediateUpdate =
-                parseNode(node, "intermediateUpdate", Bool)
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `intermediateUpdate`."
+        if haskey(node, "intermediateUpdate")
+            if typename ∉ ("Clock", "String")
+                modelVariables[index].intermediateUpdate =
+                    parseNode(node, "intermediateUpdate", Bool)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `intermediateUpdate`."
+            end
         end
 
-        if typename ∉ ("Clock", "String")
-            modelVariables[index].previous = parseNode(node, "previous", Bool)
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `previous`."
+        if haskey(node, "previous")
+            if typename ∉ ("Clock", "String")
+                modelVariables[index].previous = parseNode(node, "previous", Bool)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `previous`."
+            end
         end
 
         if haskey(node, "initial")
@@ -310,87 +314,126 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
             end
         end
 
-        if typename ∉ ("Clock", "String", "Binary", "Boolean")
-            modelVariables[index].quantity = parseNode(node, "quantity", String)
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `quantity`."
-        end
-
-        if typename == "Float64" || typename == "Float32"
-            modelVariables[index].unit = parseNode(node, "unit", String)
-            modelVariables[index].displayUnit = parseNode(node, "displayUnit", String)
-        end
-
-        if typename != "String"
-            modelVariables[index].declaredType = parseNode(node, "declaredType", String)
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `declaredType`."
-        end
-
-        if typename ∉ ("Clock", "String", "Binary", "Boolean")
-            modelVariables[index].min =
-                parseNode(node, "min", stringToDataType(md, typename))
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `min`."
-        end
-
-        if typename ∉ ("Clock", "String", "Binary", "Boolean")
-            modelVariables[index].max =
-                parseNode(node, "max", stringToDataType(md, typename))
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `max`."
-        end
-
-        if typename == "Float64" || typename == "Float32"
-            modelVariables[index].nominal =
-                parseNode(node, "nominal", stringToDataType(md, typename))
-            modelVariables[index].unbounded =
-                parseNode(node, "unbounded", stringToDataType(md, typename))
-        end
-
-        if typename ∉ ("Binary", "Clock")
-            if !isnothing(node.firstelement) && node.firstelement.name == "Dimension"
-                substrings = split(node["start"], " ")
-
-                T = stringToDataType(md, typename)
-                modelVariables[index].start = Array{T}(undef, 0)
-                for string in substrings
-                    push!(modelVariables[index].start, parseType(string, T))
-                end
+        if haskey(node, "quantity")
+            if typename ∉ ("Clock", "String", "Binary", "Boolean")
+                modelVariables[index].quantity = parseNode(node, "quantity", String)
             else
-                if typename == "Enum"
-                    for i = 1:length(md.enumerations)
-                        if modelVariables[index].declaredType == md.enumerations[i][1] # identify the enum by the name
-                            modelVariables[index].start =
-                                md.enumerations[i][1+parseNode(node, "start", Int)] # find the enum value and set it
-                        end
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `quantity`."
+            end
+        end
+
+        if haskey(node, "unit")
+            if typename == "Float64" || typename == "Float32"
+                modelVariables[index].unit = parseNode(node, "unit", String)
+                modelVariables[index].displayUnit = parseNode(node, "displayUnit", String)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `unit`."
+            end
+        end
+
+        if haskey(node, "declaredType")
+            if typename != "String"
+                modelVariables[index].declaredType = parseNode(node, "declaredType", String)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `declaredType`."
+            end
+        end
+
+        if haskey(node, "min")
+            if typename ∉ ("Clock", "String", "Binary", "Boolean")
+                modelVariables[index].min =
+                    parseNode(node, "min", stringToDataType(md, typename))
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `min`."
+            end
+        end
+
+        if haskey(node, "max")
+            if typename ∉ ("Clock", "String", "Binary", "Boolean")
+                modelVariables[index].max =
+                    parseNode(node, "max", stringToDataType(md, typename))
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `max`."
+            end
+        end
+
+        if haskey(node, "nominal")
+            if typename == "Float64" || typename == "Float32"
+                modelVariables[index].nominal =
+                    parseNode(node, "nominal", stringToDataType(md, typename))
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `nominal`."
+            end
+        end
+
+        if haskey(node, "unbounded")
+            if typename == "Float64" || typename == "Float32"
+                modelVariables[index].unbounded =
+                    parseNode(node, "unbounded", stringToDataType(md, typename))
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `unbounded`."
+            end
+        end
+
+        if haskey(node, "start")
+            if typename ∈ ("Binary", "Clock")
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `start`."
+            elseif typename == "Enum"
+                for i = 1:length(md.enumerations)
+                    if modelVariables[index].declaredType == md.enumerations[i][1] # identify the enum by the name
+                        modelVariables[index].start =
+                            md.enumerations[i][1+parseNode(node, "start", Int)] # find the enum value and set it
                     end
+                end
+            elseif typename == "String"
+                for n in eachelement(node)
+                    if n.name == "Start"
+                        modelVariables[index].start = n["value"]
+                    end
+                end
+            elseif typename == "Binary"
+                for n in eachelement(node)
+                    if n.name == "Start"
+                        modelVariables[index].start = pointer(n["value"])
+                    end
+                end
+            else # all "common" types
+                dimensions = Vector{UInt32}()
+                for element in eachelement(node)
+                    if element.name == "Dimension"
+                        push!(dimensions, parseType(element["start"], UInt32))
+                    end
+                end
+                if length(dimensions) > 0
+                    # substrings = split(node["start"], " ")
+
+                    # T = stringToDataType(md, typename)
+                    # modelVariables[index].start = Vector{T}()
+                    # for string in substrings
+                    #     push!(modelVariables[index].start, parseType(string, T))
+                    # end
+                    @warn "Parsing of multi-dimension variable start values not supported, yet.\nDimension is $(dimensions)"
                 else
                     modelVariables[index].start =
                         parseNode(node, "start", stringToDataType(md, typename))
                 end
             end
-        else
-            @warn "Unsupported typename `$(typename)` for modelVariable attribute `start`."
         end
 
-        if typename == "Float64" || typename == "Float32"
-            modelVariables[index].derivative =
-                parseNode(node, "derivative", fmi3ValueReference)
-            modelVariables[index].reinit = parseNode(node, "reinit", Bool)
-        end
-
-        if typename == "String"
-            for nod in eachelement(node)
-                if nod.name == "Start"
-                    modelVariables[index].start = nod["value"]
-                end
+        if haskey(node, "derivative")
+            if typename == "Float64" || typename == "Float32"
+                modelVariables[index].derivative =
+                    parseNode(node, "derivative", fmi3ValueReference)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `derivative`."
             end
-        elseif typename == "Binary"
-            for nod in eachelement(node)
-                if nod.name == "Start"
-                    modelVariables[index].start = pointer(nod["value"])
-                end
+        end
+
+        if haskey(node, "reinit")
+            if typename == "Float64" || typename == "Float32"
+                modelVariables[index].reinit = parseNode(node, "reinit", Bool)
+            else
+                @warn "Unsupported typename `$(typename)` for modelVariable attribute `reinit`."
             end
         end
 
@@ -464,7 +507,7 @@ function parseDependencies(md::fmi3ModelDescription, node::EzXML.Node)
             if length(dependenciesSplit) > 0
                 varDep.dependencies = collect(parse(UInt, e) for e in dependenciesSplit)
             end
-        else 
+        else
             varDep.dependencies = UInt[]
         end
     end
@@ -477,7 +520,7 @@ function parseDependencies(md::fmi3ModelDescription, node::EzXML.Node)
                 varDep.dependenciesKind =
                     collect(stringToDependencyKind(md, e) for e in dependenciesKindSplit)
             end
-        else 
+        else
             varDep.dependenciesKind = fmi3DependencyKind[]
         end
     end
