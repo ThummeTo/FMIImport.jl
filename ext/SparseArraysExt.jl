@@ -1,3 +1,7 @@
+#
+# Copyright (c) 2025 Valentin Hoepfner, Tobias Thummerer, Lars Mikelsons
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 
 module SparseArraysExt
 using FMIImport, SparseArrays
