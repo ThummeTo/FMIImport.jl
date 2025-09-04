@@ -1651,6 +1651,10 @@ function FMICore.fmi2SetTime(
     time_shift::Bool = c.fmu.executionConfig.autoTimeShift,
 )
 
+    @assert c.type == fmi2TypeModelExchange "`fmi2SetTime` only available for ME-FMUs."
+
+    @debug "fmi2SetTime(..., time=$(time); soft=$(soft), track=$(track), force=$(force), time_shift=$(time_shift))"
+
     # ToDo: Double-check this in the spec.
     # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)
     # if !( discrete && c.state == fmi2ComponentStateEventMode && c.eventInfo.newDiscreteStatesNeeded == fmi2False) &&

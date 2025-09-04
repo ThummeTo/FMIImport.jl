@@ -1377,13 +1377,9 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref)
 """
-function fmi2SetTime(c::FMU2Component, t::Real)
+function fmi2SetTime(c::FMU2Component, t::Real; kwargs...)
 
-    @assert c.type == fmi2TypeModelExchange "`fmi2SetTime` only available for ME-FMUs."
-
-    status = fmi2SetTime(c, fmi2Real(t))
-    c.t = t
-    return status
+    return fmi2SetTime(c, fmi2Real(t); kwargs...)
 end
 
 # Model Exchange specific functions
