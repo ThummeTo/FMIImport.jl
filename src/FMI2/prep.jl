@@ -219,6 +219,11 @@ function prepareSolveFMU(
         c.x = copy(x0)
     end
 
+    # if we reuse an instance, time is not set during setup experiment!
+    if c.t != t_start
+        fmi2SetTime(c, t_start)
+    end
+
     return c, x0
 end
 function prepareSolveFMU(
