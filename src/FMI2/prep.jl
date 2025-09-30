@@ -4,7 +4,7 @@
 #
 
 using FMIBase.FMICore: getAttributes, fmi2ScalarVariable
-using FMIBase: handleEvents
+using FMIBase: handleEvents, getDiscreteStates
 
 import FMIImport: fmi2VariabilityConstant, fmi2InitialApprox, fmi2InitialExact
 function setBeforeInitialization(mv::fmi2ScalarVariable)
@@ -194,6 +194,19 @@ function prepareSolveFMU(
                 # Info: this is just for consistency, value is not used.
                 fmi2GetContinuousStates(c)
             end
+
+            # if c.fmu.isDummyDiscrete
+            #     c.x_d = [0.0]
+            #     if isnothing(x0)
+            #         x0 = c.x_d
+            #     else
+            #         x0 = vcat(x0, c.x_d)
+            #     end
+            # else
+            #     c.x_d = getDiscreteStates(c)
+            # end
+            c.x_d = getDiscreteStates(c)
+            
             c.x_nominals = fmi2GetNominalsOfContinuousStates(c)
 
             if instantiate || reset # autoInstantiated 
