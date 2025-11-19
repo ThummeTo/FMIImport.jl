@@ -130,16 +130,27 @@ FMICore.fmi2GetVersion(c::FMU2Component) = fmi2GetVersion(c.fmu)
 
 # helper
 function checkStatus(c::FMU2Component, status::fmi2Status)
-    if status == fmi2StatusWarning
-        @assert !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning`. See stack for errors."
+
+    if isStatusDiscard(c, status)
+        c.termSim = true
+    end
+
+    if status >= fmi2StatusFatal
+        c.state = fmi2ComponentStateFatal
+        @assert false "Assert on `fmi2StatusFatal` at t=$(c.t). See stack for errors."
 
     elseif status == fmi2StatusError
         c.state = fmi2ComponentStateError
-        @assert !c.fmu.executionConfig.assertOnError "Assert on `fmi2StatusError`. See stack for errors."
+        @assert !c.fmu.executionConfig.assertOnError "Assert on `fmi2StatusError` at t=$(c.t). See stack for errors."
 
-    elseif status == fmi2StatusFatal
-        c.state = fmi2ComponentStateFatal
-        @assert false "Assert on `fmi2StatusFatal`. See stack for errors."
+    elseif status == fmi2StatusDiscard
+        @assert !c.fmu.executionConfig.assertOnDiscard "Assert on `fmi2StatusDiscard` at t=$(c.t). See stack for errors."
+
+    elseif status == fmi2StatusWarning
+        @assert !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning` at t=$(c.t). See stack for errors."
+
+        # else # status == fmiStatusOK 
+
     end
 end
 
@@ -1639,6 +1650,10 @@ function FMICore.fmi2SetTime(
     force::Bool = c.force,
     time_shift::Bool = c.fmu.executionConfig.autoTimeShift,
 )
+
+    @assert c.type == fmi2TypeModelExchange "`fmi2SetTime` only available for ME-FMUs."
+
+    @debug "fmi2SetTime(..., time=$(time); soft=$(soft), track=$(track), force=$(force), time_shift=$(time_shift))"
 
     # ToDo: Double-check this in the spec.
     # discrete = (c.fmu.hasStateEvents == true || c.fmu.hasTimeEvents == true)

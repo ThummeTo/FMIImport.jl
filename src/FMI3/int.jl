@@ -409,6 +409,11 @@ function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 
     addr = c.addr
 
+    # invalidate all active snapshots 
+    while length(c.snapshots) > 0
+        freeSnapshot!(c.snapshots[end]; lazy = false)
+    end
+
     if popInstance
         ind = findall(x -> x.addr == c.addr, c.fmu.instances)
         @assert length(ind) == 1 "fmi3FreeInstance!(...): Freeing $(length(ind)) instances with one call, this is not allowed."

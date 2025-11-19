@@ -1,4 +1,4 @@
-name: Test (LTS)
+name: Test 'lts'
 
 on:
   workflow_dispatch:

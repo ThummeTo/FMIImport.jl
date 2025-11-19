@@ -16,7 +16,7 @@ function printValueReferences(fmu, vrs; max = 10)
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
         println("\t\t...")
-        for vr in vrs[len-half:end]
+        for vr in vrs[(len-half):end]
             println("\t\t$(vr) $(valueReferenceToString(fmu, vr))")
         end
     end
