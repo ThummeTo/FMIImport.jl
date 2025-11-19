@@ -411,7 +411,7 @@ function fmi3FreeInstance!(c::FMU3Instance; popInstance::Bool = true)
 
     # invalidate all active snapshots 
     while length(c.snapshots) > 0
-        freeSnapshot!(c.snapshots[end]; lazy=false)
+        freeSnapshot!(c.snapshots[end]; lazy = false)
     end
 
     if popInstance

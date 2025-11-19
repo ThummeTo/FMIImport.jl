@@ -148,8 +148,8 @@ function checkStatus(c::FMU2Component, status::fmi2Status)
 
     elseif status == fmi2StatusWarning
         @assert !c.fmu.executionConfig.assertOnWarning "Assert on `fmi2StatusWarning` at t=$(c.t). See stack for errors."
-    
-    # else # status == fmiStatusOK 
+
+        # else # status == fmiStatusOK 
 
     end
 end

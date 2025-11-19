@@ -233,7 +233,7 @@ function fmi2FreeInstance!(
 
     # invalidate all active snapshots 
     while length(c.snapshots) > 0
-        freeSnapshot!(c.snapshots[end]; lazy=false)
+        freeSnapshot!(c.snapshots[end]; lazy = false)
     end
 
     @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.addr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"

@@ -206,7 +206,7 @@ function prepareSolveFMU(
             #     c.x_d = getDiscreteStates(c)
             # end
             c.x_d = getDiscreteStates(c)
-            
+
             c.x_nominals = fmi2GetNominalsOfContinuousStates(c)
 
             if instantiate || reset # autoInstantiated 
