@@ -38,6 +38,7 @@ include("FMI3/int.jl")
 include("FMI3/prep.jl")
 include("FMI3/ext.jl")
 include("FMI3/md.jl")
+include("FMI3/lssa.jl")
 
 # extensions
 using FMIBase.Requires
