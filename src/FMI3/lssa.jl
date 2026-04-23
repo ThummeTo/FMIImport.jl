@@ -1,7 +1,7 @@
 using FMIBase
 using FMIBase.EzXML
 
-# Sucht im entpackten FMU Verzeichnis nach fmi-ls-manifest.xml und fügt dies zur ModelDescription hinzu
+# Looks for fmi-ls-manifest.xml in the extracted FMU directory and add it to the ModelDescription
 function fmi3LoadLayeredStandards!(fmu::FMU3, unzippedAbsPath::String)
     lsRootPath = joinpath(unzippedAbsPath, "extra")
 
@@ -97,56 +97,53 @@ function parseLayeredStandardModelVariables!(
         if haskey(md.valueReferenceIndicies, vr)
             idx = md.valueReferenceIndicies[vr]
             var = md.modelVariables[idx]
-            @debug "Merge"
-
-            # Fehlerfall Warnung auswerfen (fallback)
         else
-            @warn "ModelVariable $vr not in original ModelDescription -> Fallback"
-            isNew = true
-            name = "LS_$(typename)_vr_$(vr)"
+            @error "ModelVariable $vr not in original ModelDescription."
 
-            # Hab jetzt mal alle möglichen aufgeschrieben
-            if typename == "Float32"
-                var = fmi3VariableFloat32(name, vr)
-            elseif typename == "Float64"
-                var = fmi3VariableFloat64(name, vr)
-            elseif typename == "Int8"
-                var = fmi3VariableInt8(name, vr)
-            elseif typename == "UInt8"
-                var = fmi3VariableUInt8(name, vr)
-            elseif typename == "Int16"
-                var = fmi3VariableInt16(name, vr)
-            elseif typename == "Int32"
-                var = fmi3VariableInt32(name, vr)
-            elseif typename == "UInt32"
-                var = fmi3VariableUInt32(name, vr)
-            elseif typename == "Int64"
-                var = fmi3VariableInt64(name, vr)
-            elseif typename == "UInt64"
-                var = fmi3VariableUInt64(name, vr)
-                # elseif typename == "Boolean"
-                #        var = fmi3VariableBoolean(name, vr)
-                # elseif typename == "String"
-                #        var = fmi3VariableString(name, vr)
-                # elseif typename == "Binary"
-                #        var = fmi3VariableBinary(name, vr)
-            elseif typename == "Enumeration"
-                var = fmi3VariableEnumeration(name, vr)
-                # elseif typename == "Clock"
-                #        var = fmi3VariableClock(name, vr)
-            else
-                @debug "Unknown Type: $typename"
-                continue
-            end
+            # @warn "ModelVariable $vr not in original ModelDescription -> Fallback"
+            # isNew = true
+            # name = "LS_$(typename)_vr_$(vr)"
+
+            # if typename == "Float32"
+            #     var = fmi3VariableFloat32(name, vr)
+            # elseif typename == "Float64"
+            #     var = fmi3VariableFloat64(name, vr)
+            # elseif typename == "Int8"
+            #     var = fmi3VariableInt8(name, vr)
+            # elseif typename == "UInt8"
+            #     var = fmi3VariableUInt8(name, vr)
+            # elseif typename == "Int16"
+            #     var = fmi3VariableInt16(name, vr)
+            # elseif typename == "Int32"
+            #     var = fmi3VariableInt32(name, vr)
+            # elseif typename == "UInt32"
+            #     var = fmi3VariableUInt32(name, vr)
+            # elseif typename == "Int64"
+            #     var = fmi3VariableInt64(name, vr)
+            # elseif typename == "UInt64"
+            #     var = fmi3VariableUInt64(name, vr)
+            # elseif typename == "Boolean"
+            #        var = fmi3VariableBoolean(name, vr)
+            # elseif typename == "String"
+            #        var = fmi3VariableString(name, vr)
+            # elseif typename == "Binary"
+            #        var = fmi3VariableBinary(name, vr)
+            # elseif typename == "Enumeration"
+            #     var = fmi3VariableEnumeration(name, vr)
+            # elseif typename == "Clock"
+            #        var = fmi3VariableClock(name, vr)
+            # else
+            #     @debug "Unknown Type: $typename"
+            #     continue
+            # end
         end
 
-        # Nicht notwendig (Nur für Fallback noch drinnen)
-        if isNew
-            push!(md.modelVariables, var)
-            push!(md.valueReferences, vr)
-            md.valueReferenceIndicies[vr] = length(md.modelVariables)
-            md.stringValueReferences[var.name] = vr
-        end
+        # if isNew
+        #     push!(md.modelVariables, var)
+        #     push!(md.valueReferences, vr)
+        #     md.valueReferenceIndicies[vr] = length(md.modelVariables)
+        #     md.stringValueReferences[var.name] = vr
+        # end
     end
 end
 
