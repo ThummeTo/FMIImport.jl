@@ -85,6 +85,10 @@ function runtestsFMI3(exportingTool)
         @testset "Logging" begin
             include("FMI3/logging.jl")
         end
+
+        @testset "LS-SA Import" begin
+            include("FMI3/lssa.jl")
+        end
     end
 end
 
