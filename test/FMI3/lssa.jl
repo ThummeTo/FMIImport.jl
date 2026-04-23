@@ -1,13 +1,6 @@
-using Revise
-using FMIImport
-using FMIBase
-using Test
-using FMI
-using FMIZoo
+# using FMIImport.FMIBase
 
-const FMU_PATH = get_model_filename("NBouncingBalls_1", "BouncingBall_lssa", "v1", "3.0")
-
-fmu = loadFMU(FMU_PATH)
+fmu = loadFMU("NBouncingBalls_1", "LSSAReferenceFMUs", "0.1.0", "3.0")
 
 @testset "Layered Standard Integration Test" begin
 
