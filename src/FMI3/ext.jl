@@ -103,8 +103,13 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
         fmuExt = "so"
     elseif Sys.isapple()
         if juliaArch == 64
-            directories =
-                [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+            if Sys.ARCH === :aarch64
+                directories =
+                    [joinpath("binaries", "aarch64-darwin")]
+            else
+                directories =
+                    [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+            end
         else
             directories = []
         end
