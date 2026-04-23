@@ -4,6 +4,7 @@
 #
 
 using FMIImport.FMICore: fmi2VariableNamingConventionStructured, fmi2Unit
+using SparseArrays
 
 myFMU = loadFMU("SpringFrictionPendulum1D", ENV["EXPORTINGTOOL"], ENV["EXPORTINGVERSION"])
 
@@ -132,6 +133,22 @@ for sv in myFMU.modelDescription.modelVariables
         end
     end
 end
+# Test DependencyMatrix creation and state derivative dependencies
+# Access DependencyMatrix from the extension when SparseArrays is loaded
+depMatrix = Base.get_extension(FMIImport, :SparseArraysExt).DependencyMatrix(myFMU.modelDescription)
+@test depMatrix isa Base.get_extension(FMIImport, :SparseArraysExt).DependencyMatrix
+
+stateVRs = myFMU.modelDescription.stateValueReferences
+derivativeVRs = myFMU.modelDescription.derivativeValueReferences
+
+# Test getting dependencies of first derivative on first state
+dep_value = depMatrix[derivativeVRs[1], stateVRs[1]]
+@test dep_value isa UInt32
+
+# Test getting dependencies of all derivatives on all states
+dep_matrix_subset = depMatrix[derivativeVRs, stateVRs]
+@test size(dep_matrix_subset) == (length(derivativeVRs), length(stateVRs))
+@test dep_matrix_subset == UInt32[0x00000000 0x00000002; 0x00000005 0x00000005]
 
 unloadFMU(myFMU)
 

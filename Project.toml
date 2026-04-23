@@ -11,9 +11,11 @@ RelocatableFolders = "05181044-ff0b-4ac5-8273-598c1e38db00"
 
 [weakdeps]
 FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [extensions]
 FMIZooExt = ["FMIZoo"]
+SparseArraysExt = ["SparseArrays"]
 
 [compat]
 Downloads = "1"
