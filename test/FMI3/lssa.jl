@@ -1,4 +1,7 @@
-# using FMIImport.FMIBase
+#
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Licensed under the MIT license. See LICENSE file in the project root for details.
+#
 
 fmu = loadFMU("NBouncingBalls_1", "LSSAReferenceFMUs", "0.1.0", "3.0")
 
