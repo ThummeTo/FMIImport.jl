@@ -114,9 +114,9 @@ setValue(
     ],
     [rndReal, Int32(rndInteger), rndBoolean, rndString, rndString],
 )
-# @test getValue(inst, 
-#                 [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) == 
-#                 [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                unsafe_string(rndString)]
+# @test getValue(inst,
+#     [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) ==
+#       [rndReal, Int32(rndInteger), rndBoolean, rndString, unsafe_string(rndString)]
 
 ##################
 # Testing Arrays #
@@ -244,7 +244,8 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # @test unsafe_string.(cacheString) == rndString
 
 # TODO only one variable is settable, we want to set at least two
-# @test fmi3SetBinary(inst, binaryValueReferences, Csize_t(length(rndString)), pointer(rndString)) == 0
+# @test fmi3SetBinary(inst, binaryValueReferences, 
+#   Csize_t(length(rndString)), pointer(rndString)) == 0
 # binary = FMI.fmi3GetBinary(inst, binaryValueReferences)
 # @test unsafe_string(binary) == rndString
 
