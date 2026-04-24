@@ -115,7 +115,8 @@ setValue(
     [rndReal, Int32(rndInteger), rndBoolean, rndString, rndString],
 )
 # @test getValue(inst,
-#     [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) ==
+#     [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], 
+#   stringValueReferences[1], binaryValueReferences[1]]) ==
 #       [rndReal, Int32(rndInteger), rndBoolean, rndString, unsafe_string(rndString)]
 
 ##################
@@ -258,7 +259,7 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # @test fmi3EnterInitializationMode(inst) == 0
 # dirs = fmi3GetOutputDerivatives(inst, ["h"], ones(Integer, 1))
 # @test dirs == -Inf # at this point, derivative is undefined
-# # removed @test fmi3SetRealInputDerivatives(inst, ["u_real"], ones(Int, 1), zeros(1)) == 0
+# @test fmi3SetRealInputDerivatives(inst, ["u_real"], ones(Int, 1), zeros(1)) == 0
 # @test fmi3ExitInitializationMode(inst) == 0
 # @test fmi3DoStep!(inst, 0.1) == 0
 
