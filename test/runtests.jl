@@ -85,6 +85,14 @@ function runtestsFMI3(exportingTool)
         @testset "Logging" begin
             include("FMI3/logging.jl")
         end
+
+        @testset "LS-SA Import" begin
+            if Sys.iswindows()
+                include("FMI3/lssa.jl")
+            else
+                @info "LSSA tests running on Windows only for now."
+            end
+        end
     end
 end
 

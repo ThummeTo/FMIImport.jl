@@ -8,7 +8,7 @@
 ###############
 
 myFMU = loadFMU("Feedthrough", "ModelicaReferenceFMUs", "0.0.30", "3.0")
-inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn = false)
+inst = fmi3InstantiateCoSimulation!(myFMU; loggingOn=false)
 @test inst != 0
 
 @test fmi3EnterInitializationMode(inst) == 0
@@ -114,9 +114,10 @@ setValue(
     ],
     [rndReal, Int32(rndInteger), rndBoolean, rndString, rndString],
 )
-# @test getValue(inst, 
-#                 [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], stringValueReferences[1], binaryValueReferences[1]]) == 
-#                 [rndReal,                Int32(rndInteger),                rndBoolean,                rndString,                unsafe_string(rndString)]
+# @test getValue(inst,
+#     [float64ValueReferences[1], integerValueReferences[1], booleanValueReferences[1], 
+#   stringValueReferences[1], binaryValueReferences[1]]) ==
+#       [rndReal, Int32(rndInteger), rndBoolean, rndString, unsafe_string(rndString)]
 
 ##################
 # Testing Arrays #
@@ -244,7 +245,8 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # @test unsafe_string.(cacheString) == rndString
 
 # TODO only one variable is settable, we want to set at least two
-# @test fmi3SetBinary(inst, binaryValueReferences, Csize_t(length(rndString)), pointer(rndString)) == 0
+# @test fmi3SetBinary(inst, binaryValueReferences, 
+#   Csize_t(length(rndString)), pointer(rndString)) == 0
 # binary = FMI.fmi3GetBinary(inst, binaryValueReferences)
 # @test unsafe_string(binary) == rndString
 
@@ -257,7 +259,7 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # @test fmi3EnterInitializationMode(inst) == 0
 # dirs = fmi3GetOutputDerivatives(inst, ["h"], ones(Integer, 1))
 # @test dirs == -Inf # at this point, derivative is undefined
-# # removed @test fmi3SetRealInputDerivatives(inst, ["u_real"], ones(Int, 1), zeros(1)) == 0
+# @test fmi3SetRealInputDerivatives(inst, ["u_real"], ones(Int, 1), zeros(1)) == 0
 # @test fmi3ExitInitializationMode(inst) == 0
 # @test fmi3DoStep!(inst, 0.1) == 0
 
@@ -268,4 +270,4 @@ fmi3GetFloat64!(inst, float64ValueReferences, cacheFloat64)
 # Clean up #
 ############
 
-# unloadFMU(myFMU)
+unloadFMU(myFMU)

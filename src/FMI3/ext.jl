@@ -32,7 +32,7 @@ Retrieves all the pointers of binary functions.
 
 See also .
 """
-function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
+function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing}=nothing)
     # Create uninitialized FMU
     fmu = FMU3()
 
@@ -45,6 +45,10 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
 
     # parse modelDescription.xml
     fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
+
+    # parse possible Layered Standard (LSSA)
+    fmi3LoadLayeredStandards!(fmu, fmu.path)
+
     fmu.modelName = fmu.modelDescription.modelName
     fmu.isZeroState = (length(fmu.modelDescription.stateValueReferences) == 0)
 
