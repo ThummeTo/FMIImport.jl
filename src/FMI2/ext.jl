@@ -125,7 +125,7 @@ function createFMU2(
         if juliaArch == 64
             if Sys.ARCH === :aarch64
                 directories =
-                    [joinpath("binaries", "aarch64-darwin")]
+                    [joinpath("binaries", "aarch64-darwin"), joinpath("binaries", "darwin64")]
             else
                 directories =
                     [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
