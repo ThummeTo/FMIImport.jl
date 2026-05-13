@@ -128,7 +128,7 @@ function createFMU2(
                     [joinpath("binaries", "aarch64-darwin"), joinpath("binaries", "darwin64")]
             else
                 directories =
-                    [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+                    [joinpath("binaries", "x86_64-darwin"), joinpath("binaries", "darwin64")]
             end
         else
             directories = []
