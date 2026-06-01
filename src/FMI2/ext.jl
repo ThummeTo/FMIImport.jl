@@ -124,11 +124,14 @@ function createFMU2(
     elseif Sys.isapple()
         if juliaArch == 64
             if Sys.ARCH === :aarch64
-                directories = [joinpath("binaries", "aarch64-darwin")]
+                directories = [
+                    joinpath("binaries", "aarch64-darwin"),
+                    joinpath("binaries", "darwin64"),
+                ]
             else
                 directories = [
-                    joinpath("binaries", "darwin64"),
                     joinpath("binaries", "x86_64-darwin"),
+                    joinpath("binaries", "darwin64"),
                 ]
             end
         else
