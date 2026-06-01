@@ -13,7 +13,6 @@ using FMIBase
 using FMIBase.FMICore
 using FMIBase:
     fast_copy!, invalidate!, check_invalidate!, isStatusError, isStatusOK, isStatusDiscard
-using FMIBase.Requires
 
 import FMIBase.ChainRulesCore: ignore_derivatives
 
@@ -39,13 +38,6 @@ include("FMI3/prep.jl")
 include("FMI3/ext.jl")
 include("FMI3/md.jl")
 include("FMI3/lssa.jl")
-
-# extensions
-using FMIBase.Requires
-using FMIBase.PackageExtensionCompat
-function __init__()
-    @require_extensions
-end
 
 # FMIZoo.jl
 # nothing to declare
