@@ -27,8 +27,8 @@ Retrieves all the pointers of binary functions.
 function createFMU2(
     fmuPath,
     fmuZipPath;
-    type::Union{Symbol,fmi2Type,Nothing}=nothing,
-    logLevel::Union{FMULogLevel,Symbol}=FMULogLevelWarn,
+    type::Union{Symbol,fmi2Type,Nothing} = nothing,
+    logLevel::Union{FMULogLevel,Symbol} = FMULogLevelWarn,
 )
     # Create uninitialized FMU
 
@@ -89,7 +89,7 @@ function createFMU2(
         end
     end
 
-    fmuName = getModelIdentifier(fmu.modelDescription; type=fmu.type) # tmpName[length(tmpName)]
+    fmuName = getModelIdentifier(fmu.modelDescription; type = fmu.type) # tmpName[length(tmpName)]
 
     directoryBinary = ""
     pathToBinary = ""
@@ -124,11 +124,15 @@ function createFMU2(
     elseif Sys.isapple()
         if juliaArch == 64
             if Sys.ARCH === :aarch64
-                directories =
-                    [joinpath("binaries", "aarch64-darwin")]
+                directories = [
+                    joinpath("binaries", "aarch64-darwin"),
+                    joinpath("binaries", "darwin64"),
+                ]
             else
-                directories =
-                    [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+                directories = [
+                    joinpath("binaries", "x86_64-darwin"),
+                    joinpath("binaries", "darwin64"),
+                ]
             end
         else
             directories = []
