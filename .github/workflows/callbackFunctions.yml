@@ -82,25 +82,25 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download windows binaries
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-win-binaries
           path: src/FMI2/callbackFunctions/binaries/win64/
 
       - name: Download windows x86 binaries
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-win32-binaries
           path: src/FMI2/callbackFunctions/binaries/win32/
 
       - name: Download linux binaries
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-linux-binaries
           path: src/FMI2/callbackFunctions/binaries/linux64/
 
       - name: Download darwin binaries
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-mac-binaries
           path: src/FMI2/callbackFunctions/binaries/darwin64/
