@@ -4,13 +4,17 @@ on:
   workflow_dispatch:
   pull_request:
   push:
-    branches: 
+    branches:
       - main
     paths:
       - 'src/**'
       - 'test/**'
-      - '.github/workflows/Test.yml'
+      - '.github/workflows/TestLatest.yml'
       - 'Project.toml'
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   test:
@@ -26,31 +30,18 @@ jobs:
     steps:
       # Checks-out your repository
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # Set up Julia
       - name: "Set up Julia"
-        uses: julia-actions/setup-julia@v2
+        uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.julia-version }}
           arch: ${{ matrix.julia-arch }}
 
       # Set up julia-cache
       - name: Set up julia-cache
-        uses: julia-actions/cache@v2
-
-     # Set up cache
-      - name: "Set up cache"
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+        uses: julia-actions/cache@v3
 
       # Build package
       - name: "Build package"
@@ -66,7 +57,7 @@ jobs:
 
       # Run codecov
       - name: "Run CodeCov"
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
