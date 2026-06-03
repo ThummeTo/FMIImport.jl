@@ -26,3 +26,4 @@ Manifest.toml
 # Custom
 .vscode/
 \tmp
+*.fmu

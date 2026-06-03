@@ -1,14 +1,14 @@
 #
-# Copyright (c) 2025 Valentin Hoepfner, Tobias Thummerer, Lars Mikelsons
+# Copyright (c) 2025 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
 module SparseArraysExt
 using FMIImport, SparseArrays
+# TODO: Change parsing logic and dependency fields in md.jl and FMICore UInt -> UInt32 to have it consistent everywhere
 
 
-
-# Maps FMI2 dependency kinds to FMI3 dependency index values:
+# Maps FMI2 dependency kinds to FMI3 dependency index values, we use them in both cases:
 # FMI2: 0->dependent, 1->constant, 2->fixed, 3->tunable, 4->discrete
 # FMI3: 0->independent, 1->constant, 2->fixed, 3->tunable, 4->discrete, 5->dependent
 function fmi2dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
@@ -18,15 +18,9 @@ function fmi2dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
     return kind
 end
 
-# FMI3 dependency kinds already match the expected index values:
-# FMI3: 0->independent, 1->constant, 2->fixed, 3->tunable, 4->discrete, 5->dependent
-function fmi3dependencyKindToDependencyIndex(kind::fmi3DependencyKind)
-    return kind
-end
-
 struct DependencyMatrix
-    matrix::SparseMatrixCSC
-    vr_idx_dict::Dict
+    matrix::SparseMatrixCSC{UInt32, Int}
+    vr_idx_dict::Dict{UInt32, Int}
 end
 
 # From FMI3-Standard:  
@@ -35,10 +29,10 @@ end
 DependencyMatrix(md::fmi2ModelDescription) = begin
     vrs = [mV.valueReference for mV in md.modelVariables]
     sort!(vrs); unique!(vrs)
-    vr_idx_dict = Dict(zip(vrs, 1:length(vrs)))
+    vr_idx_dict = Dict{UInt32, Int}(zip(vrs, 1:length(vrs)))
     dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
     @info "Constructing Dependency Matrix"
-    # Filter out nothing values from the dependency categories  
+    # Filter out nothing values from the dependency categories
     dependency_categories = filter(!isnothing, [md.modelStructure.derivatives, md.modelStructure.outputs, md.modelStructure.initialUnknowns])
     for dependency_category in dependency_categories
         for dep_info in dependency_category
@@ -46,11 +40,13 @@ DependencyMatrix(md::fmi2ModelDescription) = begin
             if !isnothing(dep_info.dependencies)
                 for (idx, dependency) in enumerate(dep_info.dependencies)
                     dependency_vR = md.modelVariables[dependency].valueReference
-                    dependency_kind = dep_info.dependenciesKind[idx]
+                    # "If dependenciesKind is not present, it must be assumed that the unknown vunknown depends on the knowns vknown without a particular structure." -> no dependenciesKind means dependent
+                    dependency_kind = isnothing(dep_info.dependenciesKind) ? fmi2DependencyKindDependent : dep_info.dependenciesKind[idx]
                     dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] = fmi2dependencyKindToDependencyIndex(dependency_kind)
                 end
             else
-                dep_mtx[vr_idx_dict[dependent_vR], :] .= 5
+                # this is fmi3DependencyKindDependent, because we use the fmi3-style in both cases
+                dep_mtx[vr_idx_dict[dependent_vR], :] .= fmi3DependencyKindDependent
             end
         end
     end
@@ -60,22 +56,23 @@ end
 DependencyMatrix(md::fmi3ModelDescription) = begin
     vrs = [mV.valueReference for mV in md.modelVariables]
     sort!(vrs); unique!(vrs)
-    vr_idx_dict = Dict(zip(vrs, 1:length(vrs)))
+    vr_idx_dict = Dict{UInt32, Int}(zip(vrs, 1:length(vrs)))
     dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
     @info "Constructing Dependency Matrix"
-    # Filter out nothing values from the dependency categories  
-    dependency_categories = filter(!isnothing, [md.modelStructure.continuousStateDerivatives, md.modelStructure.outputs, md.modelStructure.initialUnknowns])
+    # Filter out nothing values from the dependency categories
+    dependency_categories = filter(!isnothing, [md.modelStructure.continuousStateDerivatives, md.modelStructure.outputs, md.modelStructure.initialUnknowns, md.modelStructure.eventIndicators])
     for dependency_category in dependency_categories
         for dep_info in dependency_category
             dependent_vR = dep_info.index
             if !isnothing(dep_info.dependencies)
                 for (idx, dependency) in enumerate(dep_info.dependencies)
                     dependency_vR = dependency
-                    dependency_kind = dep_info.dependenciesKind[idx]
-                    dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] = fmi3dependencyKindToDependencyIndex(dependency_kind)
+                     # "If dependenciesKind is not present, it must be assumed that the unknown vunknown depends on the knowns vknown without a particular structure." -> no dependenciesKind means dependent
+                    dependency_kind = isnothing(dep_info.dependenciesKind) ? fmi3DependencyKindDependent : dep_info.dependenciesKind[idx]
+                    dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] = dependency_kind
                 end
             else
-                dep_mtx[vr_idx_dict[dependent_vR], :] .= 5
+                dep_mtx[vr_idx_dict[dependent_vR], :] .= fmi3DependencyKindDependent
             end
         end
     end
