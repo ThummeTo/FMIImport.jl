@@ -1,6 +1,6 @@
 name: CallbackFunctions
 
-on: 
+on:
   workflow_dispatch:
   pull_request:
   push:
@@ -8,7 +8,10 @@ on:
       - main
     paths:
       - 'src/FMI2/callbackFunctions/**'
-    
+
+permissions:
+  contents: write
+
 jobs:
   build-callbackFunctions:
     runs-on: ${{ matrix.os }}
@@ -27,7 +30,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configure CMake
         run:  cmake -S ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions -B ${{env.CMAKE_SOURCE_DIR}}/callbackFunctions/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}  ${{ matrix.arch }}
@@ -45,28 +48,28 @@ jobs:
 
       - name: Archive production artifacts (win)
         if: success() && matrix.os == 'windows-latest' && matrix.arch == ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: callbackFunctions-win-binaries
           path: src/FMI2/callbackFunctions/binaries/win64/
 
       - name: Archive production artifacts (win32)
         if: success() && matrix.os == 'windows-latest' && matrix.arch != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: callbackFunctions-win32-binaries
           path: src/FMI2/callbackFunctions/binaries/win32/
 
       - name: Archive production artifacts (linux)
         if: success() && matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: callbackFunctions-linux-binaries
           path: src/FMI2/callbackFunctions/binaries/linux64/
 
       - name: Archive production artifacts (darwin)
         if: success() && matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: callbackFunctions-mac-binaries
           path: src/FMI2/callbackFunctions/binaries/darwin64/
@@ -76,28 +79,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download windows binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-win-binaries
           path: src/FMI2/callbackFunctions/binaries/win64/
 
       - name: Download windows x86 binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-win32-binaries
           path: src/FMI2/callbackFunctions/binaries/win32/
 
       - name: Download linux binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-linux-binaries
           path: src/FMI2/callbackFunctions/binaries/linux64/
 
       - name: Download darwin binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: callbackFunctions-mac-binaries
           path: src/FMI2/callbackFunctions/binaries/darwin64/
@@ -108,5 +111,3 @@ jobs:
         with:
           commit_message: Update callbackFunctions
           push_options: '--force-with-lease'
-
-          

@@ -45,6 +45,10 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
 
     # parse modelDescription.xml
     fmu.modelDescription = fmi3LoadModelDescription(pathToModelDescription) # TODO Matrix mit Dimensions
+
+    # parse possible Layered Standard (LSSA)
+    fmi3LoadLayeredStandards!(fmu, fmu.path)
+
     fmu.modelName = fmu.modelDescription.modelName
     fmu.isZeroState = (length(fmu.modelDescription.stateValueReferences) == 0)
 
@@ -103,8 +107,14 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
         fmuExt = "so"
     elseif Sys.isapple()
         if juliaArch == 64
-            directories =
-                [joinpath("binaries", "darwin64"), joinpath("binaries", "x86_64-darwin")]
+            if Sys.ARCH === :aarch64
+                directories = [joinpath("binaries", "aarch64-darwin")]
+            else
+                directories = [
+                    joinpath("binaries", "darwin64"),
+                    joinpath("binaries", "x86_64-darwin"),
+                ]
+            end
         else
             directories = []
         end

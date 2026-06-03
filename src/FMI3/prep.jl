@@ -4,7 +4,7 @@
 #
 
 import FMIBase: isEventMode, isContinuousTimeMode, isTrue, isStatusOK
-using FMIBase: handleEvents
+using FMIBase: handleEvents, getDiscreteStates
 
 function setBeforeInitialization(mv::FMIImport.fmi3Variable)
     return mv.variability != fmi3VariabilityConstant &&
@@ -184,7 +184,24 @@ function prepareSolveFMU(
         if type == fmi3TypeModelExchange
             if isnothing(x0) && !c.fmu.isZeroState
                 x0 = fmi3GetContinuousStates(c)
+            else
+                # Info: this is just for consistency, value is not used.
+                fmi3GetContinuousStates(c)
             end
+
+            # if c.fmu.isDummyDiscrete
+            #     c.x_d = [0.0]
+            #     if isnothing(x0)
+            #         x0 = c.x_d
+            #     else
+            #         x0 = vcat(x0, c.x_d)
+            #     end
+            # else
+            #     c.x_d = getDiscreteStates(c)
+            # end
+            c.x_d = getDiscreteStates(c)
+
+            c.x_nominals = fmi3GetNominalsOfContinuousStates(c)
 
             if instantiate || reset # autoInstantiated 
                 @debug "[AUTO] setup"

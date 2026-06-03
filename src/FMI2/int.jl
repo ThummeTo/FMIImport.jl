@@ -233,7 +233,7 @@ function fmi2FreeInstance!(
 
     # invalidate all active snapshots 
     while length(c.snapshots) > 0
-        freeSnapshot!(c.snapshots[end])
+        freeSnapshot!(c.snapshots[end]; lazy = false)
     end
 
     @assert c.threadid == Threads.threadid() "Thread #$(Threads.threadid()) tried to free component with address $(c.addr), but doesn't own it.\nThe component is owned by thread $(c.threadid)"
@@ -453,7 +453,7 @@ function fmi2GetReal!(
 
     vr = prepareValueReference(c, vr)
     # values = prepareValue(values)
-    @assert length(vr) == length(values) "fmi2GetReal!(...): `vr` and `values` need to be the same length."
+    @assert length(vr) == length(values) "fmi2GetReal!(...): `vr` and `values` need to be the same length.\nvr     (length=$(length(vr))): $(vr)\nvalues (length=$(length(values))): $(values)"
 
     nvr = Csize_t(length(values))
     # values[:] = fmi2Real.(values)
@@ -1377,13 +1377,9 @@ More detailed:
 - FMISpec2.0.2[p.83]: 3.2.1 Providing Independent Variables and Re-initialization of Caching
 See also [`fmi2SetTime`](@ref)
 """
-function fmi2SetTime(c::FMU2Component, t::Real)
+function fmi2SetTime(c::FMU2Component, t::Real; kwargs...)
 
-    @assert c.type == fmi2TypeModelExchange "`fmi2SetTime` only available for ME-FMUs."
-
-    status = fmi2SetTime(c, fmi2Real(t))
-    c.t = t
-    return status
+    return fmi2SetTime(c, fmi2Real(t); kwargs...)
 end
 
 # Model Exchange specific functions
