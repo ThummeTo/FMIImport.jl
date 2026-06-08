@@ -163,6 +163,8 @@ function createFMU2(
     fmu.binaryPath = pathToBinary
     loadPointers(fmu)
 
+    loadDependencyMatrix!(fmu)
+
     return fmu
 end
 

@@ -7,6 +7,7 @@ using FMIImport
 using Test
 import Random
 using FMIZoo
+include("sparsity.jl")
 
 using FMIImport.FMICore: fmi2Integer, fmi2Boolean, fmi2Real, fmi2String
 using FMIImport.FMICore:
@@ -55,6 +56,8 @@ function runtestsFMI2(exportingTool)
         @testset "Logging with externalCallbacks" begin
             include("FMI2/externalLogging.jl")
         end
+
+        testSparsity("2.0")
     end
 end
 
@@ -93,6 +96,8 @@ function runtestsFMI3(exportingTool)
                 @info "LSSA tests running on Windows only for now."
             end
         end
+
+        testSparsity("3.0")
     end
 end
 
