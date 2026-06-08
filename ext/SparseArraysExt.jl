@@ -18,7 +18,7 @@ function fmi2dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
     return kind
 end
 
-struct DependencyMatrix
+struct DependencyMatrix <: FMIBase.AbstractDependencyMatrix
     matrix::SparseMatrixCSC{UInt32, Int}
     vr_idx_dict::Dict{UInt32, Int}
 end
@@ -85,5 +85,16 @@ end
 function Base.getindex(D::DependencyMatrix, i::Vector{UInt32}, j::Vector{UInt32})
     return D.matrix[getindex.(Ref(D.vr_idx_dict), i), getindex.(Ref(D.vr_idx_dict), j)]
 end
+
+function _loadDependencyMatrix!(fmu)
+    fmu.executionConfig.load_dep_matrix || return
+    fmu.dependencyMatrix = DependencyMatrix(fmu.modelDescription)
+    dvrs = fmu.modelDescription.derivativeValueReferences
+    svrs = fmu.modelDescription.stateValueReferences
+    fmu.jac_prototype = Float64.(fmu.dependencyMatrix[dvrs, svrs])
+end
+
+FMIBase.loadDependencyMatrix!(fmu::FMU2) = _loadDependencyMatrix!(fmu)
+FMIBase.loadDependencyMatrix!(fmu::FMU3) = _loadDependencyMatrix!(fmu)
 
 end

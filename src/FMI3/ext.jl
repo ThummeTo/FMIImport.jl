@@ -148,6 +148,8 @@ function createFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
     fmu.binaryPath = pathToBinary
     loadPointers(fmu)
 
+    loadDependencyMatrix!(fmu)
+
     return fmu
 end
 
