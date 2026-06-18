@@ -55,6 +55,10 @@ function runtestsFMI2(exportingTool)
         @testset "Logging with externalCallbacks" begin
             include("FMI2/externalLogging.jl")
         end
+
+        @testset "ME Simulation with Events" begin
+            include("FMI2/sim_me_events.jl")
+        end
     end
 end
 
@@ -92,6 +96,10 @@ function runtestsFMI3(exportingTool)
             else
                 @info "LSSA tests running on Windows only for now."
             end
+        end
+
+        @testset "ME Simulation with Events" begin
+            include("FMI3/sim_me_events.jl")
         end
     end
 end
