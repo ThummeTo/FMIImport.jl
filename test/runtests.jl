@@ -96,18 +96,104 @@ function runtestsFMI3(exportingTool)
     end
 end
 
+const fmuStructs = ("FMU", "INSTANCE")
+
+function getFMUStruct(
+    modelname,
+    mode,
+    tool = ENV["EXPORTINGTOOL"],
+    version = ENV["EXPORTINGVERSION"],
+    fmiversion = ENV["FMIVERSION"],
+    fmustruct = ENV["FMUSTRUCT"];
+    kwargs...,
+)
+
+    # choose FMU or FMUInstance
+    if endswith(modelname, ".fmu")
+        fmu = FMIImport.loadFMU(modelname; kwargs...)
+    else
+        fmu = FMIImport.loadFMU(modelname, tool, version, fmiversion; kwargs...)
+    end
+
+    if fmustruct == "FMU"
+        return fmu, fmu
+
+    elseif fmustruct == "INSTANCE"
+        inst, _ = FMIImport.prepareSolveFMU(fmu, nothing, mode; loggingOn = true)
+        @test !isnothing(inst)
+        return inst, fmu
+
+    else
+        @assert false "Unknown fmuStruct, variable `FMUSTRUCT` = `$(fmustruct)`"
+    end
+end
+
+function runtestsCommon(exportingTool)
+
+    ENV["EXPORTINGTOOL"] = exportingTool[1]
+    ENV["EXPORTINGVERSION"] = exportingTool[2]
+
+    # enable assertions for warnings/errors for all default execution configurations 
+    for exec in FMU_EXECUTION_CONFIGURATIONS
+        exec.assertOnError = true
+        exec.assertOnWarning = true
+    end
+
+    for fmiversion in (2.0, 3.0)
+        ENV["FMIVERSION"] = fmiversion
+
+        @testset "Testing FMI $(ENV["FMIVERSION"]) FMUs exported from $(ENV["EXPORTINGTOOL"]) $(ENV["EXPORTINGVERSION"])" begin
+
+            for fmustruct in fmuStructs
+                ENV["FMUSTRUCT"] = fmustruct
+
+                @testset "Functions for $(ENV["FMUSTRUCT"])" begin
+
+                    @info "CS Simulation (sim_CS.jl)"
+                    @testset "CS Simulation" begin
+                        include("sim_CS.jl")
+                    end
+
+                    @info "ME Simulation (sim_ME.jl)"
+                    @testset "ME Simulation" begin
+                        include("sim_ME.jl")
+                    end
+
+                    @info "SE Simulation (sim_SE.jl)"
+                    if fmiversion == 3.0
+                        @testset "SE Simulation" begin
+                            include("sim_SE.jl")
+                        end
+                    else
+                        @info "Skipping SE tests for FMI $(fmiversion), because this is not supported by the corresponding FMI version."
+                    end
+
+                    @info "Simulation FMU without states (sim_zero_state.jl)"
+                    @testset "Simulation FMU without states" begin
+                        include("sim_zero_state.jl")
+                    end
+
+                end
+            end
+        end
+    end
+
+end
+
 @testset "FMIImport.jl" begin
     if Sys.iswindows()
         @info "Automated testing is supported on Windows."
         for exportingTool in exportingToolsWindows
             runtestsFMI2(exportingTool)
             runtestsFMI3(exportingTool)
+            runtestsCommon(exportingTool)
         end
     elseif Sys.islinux()
         @info "Automated testing is supported on Linux."
         for exportingTool in exportingToolsLinux
             runtestsFMI2(exportingTool)
             runtestsFMI3(exportingTool)
+            runtestsCommon(exportingTool)
         end
     elseif Sys.isapple()
         @warn "Test-sets are currrently using Windows- and Linux-FMUs, automated testing for macOS is currently not supported."

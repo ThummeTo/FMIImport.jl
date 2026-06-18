@@ -1,17 +1,18 @@
 #
-# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMIBase: isEventMode, isContinuousTimeMode, isTrue, isStatusOK
-using FMIBase: handleEvents, getDiscreteStates
+using FMIBase.FMICore: getAttributes, fmi3Variable
+using FMIBase:
+    getDiscreteStates, getContinuousStates, getNominalsOfContinuousStates, doStep, eval!
 
-function setBeforeInitialization(mv::FMIImport.fmi3Variable)
+function setBeforeInitialization(mv::fmi3Variable)
     return mv.variability != fmi3VariabilityConstant &&
            mv.initial ∈ (fmi3InitialApprox, fmi3InitialExact)
 end
 
-function setInInitialization(mv::FMIImport.fmi3Variable)
+function setInInitialization(mv::fmi3Variable)
     return mv.causality == fmi3CausalityInput ||
            (
                mv.causality != fmi3CausalityParameter &&
@@ -36,7 +37,7 @@ function prepareSolveFMU(
     x0::Union{AbstractArray{<:Real},Nothing} = nothing,
     inputs::Union{Dict{<:Any,<:Any},Nothing} = nothing,
     cleanup::Bool = false,
-    handleEvents = handleEvents,
+    handleEvents = FMIBase.handleEvents,
     instantiateKwargs...,
 )
 
