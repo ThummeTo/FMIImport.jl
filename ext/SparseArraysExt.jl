@@ -27,7 +27,7 @@ end
 
 function DependencyMatrix(md::fmi2ModelDescription)
     vrs = [mV.valueReference for mV in md.modelVariables]
-    sort!(vrs);
+    sort!(vrs)
     unique!(vrs)
     vr_idx_dict = Dict{UInt32,Int}(zip(vrs, 1:length(vrs)))
     dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
@@ -65,7 +65,7 @@ end
 
 function DependencyMatrix(md::fmi3ModelDescription)
     vrs = [mV.valueReference for mV in md.modelVariables]
-    sort!(vrs);
+    sort!(vrs)
     unique!(vrs)
     vr_idx_dict = Dict{UInt32,Int}(zip(vrs, 1:length(vrs)))
     dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
