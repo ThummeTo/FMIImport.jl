@@ -57,7 +57,7 @@ info(myFMU) # check if there is an error thrown
     "mass.v_small",
     "mass.L",
     "mass.m",
-    "mass.fexp",
+    "mass.fexp"
 ]
 
 @test length(getStateNames(myFMU.modelDescription)) == 2
@@ -72,13 +72,13 @@ info(myFMU) # check if there is an error thrown
 # @test getDerivativeNames(myFMU; mode=:flat) == ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
 @test issetequal(
     getDerivativeNames(myFMU; mode = :flat),
-    ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"],
+    ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
 )
 @test all(
     issetequal.(
-        getDerivativeNames(myFMU; mode = :group),
-        [["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]],
-    ),
+    getDerivativeNames(myFMU; mode = :group),
+    [["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]]
+),
 )
 
 @test length(getNamesAndDescriptions(myFMU.modelDescription)) == 50
