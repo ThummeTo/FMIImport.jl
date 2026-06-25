@@ -4,9 +4,9 @@
 #
 
 using FMIBase.FMICore: getAttributes, fmi2ScalarVariable
-using FMIBase: handleEvents, getDiscreteStates
+using FMIBase:
+    getDiscreteStates, getContinuousStates, getNominalsOfContinuousStates, doStep, eval!
 
-import FMIImport: fmi2VariabilityConstant, fmi2InitialApprox, fmi2InitialExact
 function setBeforeInitialization(mv::fmi2ScalarVariable)
 
     causality, variability, initial = getAttributes(mv)
@@ -14,7 +14,6 @@ function setBeforeInitialization(mv::fmi2ScalarVariable)
            initial ∈ (fmi2InitialApprox, fmi2InitialExact)
 end
 
-import FMIImport: fmi2CausalityInput, fmi2CausalityParameter, fmi2VariabilityTunable
 function setInInitialization(mv::fmi2ScalarVariable)
 
     causality, variability, initial = getAttributes(mv)
@@ -39,7 +38,7 @@ function prepareSolveFMU(
     x0::Union{AbstractArray{<:Real},Nothing} = nothing,
     inputs::Union{Dict{<:Any,<:Any},Nothing} = nothing,
     cleanup::Bool = false,
-    handleEvents = handleEvents,
+    handleEvents = FMIBase.handleEvents,
     instantiateKwargs...,
 )
 
@@ -189,10 +188,10 @@ function prepareSolveFMU(
         # ME specific
         if type == fmi2TypeModelExchange
             if isnothing(x0) && !c.fmu.isZeroState
-                x0 = fmi2GetContinuousStates(c)
+                x0 = getContinuousStates(c)
             else
                 # Info: this is just for consistency, value is not used.
-                fmi2GetContinuousStates(c)
+                getContinuousStates(c)
             end
 
             # if c.fmu.isDummyDiscrete
@@ -207,7 +206,7 @@ function prepareSolveFMU(
             # end
             c.x_d = getDiscreteStates(c)
 
-            c.x_nominals = fmi2GetNominalsOfContinuousStates(c)
+            c.x_nominals = getNominalsOfContinuousStates(c)
 
             if instantiate || reset # autoInstantiated 
 
@@ -234,7 +233,7 @@ function prepareSolveFMU(
 
     # if we reuse an instance, time is not set during setup experiment!
     if c.t != t_start
-        fmi2SetTime(c, t_start)
+        setTime(c, t_start)
     end
 
     return c, x0
