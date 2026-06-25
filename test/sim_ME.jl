@@ -5,7 +5,8 @@
 
 # testing different modes for ME (model exchange) mode
 
-using DifferentialEquations
+using OrdinaryDiffEqRosenbrock: Rodas5
+using OrdinaryDiffEqTsit5: Tsit5
 using Sundials
 
 # to use autodiff!
