@@ -3,8 +3,6 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using DifferentialEquations
-
 t_start = 0.0
 t_stop = 8.0
 solver = Tsit5()

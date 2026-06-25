@@ -5,10 +5,6 @@
 
 # testing different modes for ME (model exchange) mode
 
-using OrdinaryDiffEqRosenbrock: Rodas5
-using OrdinaryDiffEqTsit5: Tsit5
-using Sundials
-
 # to use autodiff!
 using FMISensitivity
 using FMIImport.FMIBase: sense_setindex!
@@ -19,7 +15,7 @@ dtmax_inputs = 1e-3
 rand_x0 = rand(2)
 
 kwargs = Dict(:dtmin => 1e-64, :abstol => 1e-8, :reltol => 1e-6, :dt => 1e-32)
-solvers = [Tsit5(), Rodas5(autodiff = false)] # [Tsit5(), FBDF(autodiff=false), FBDF(autodiff=true), Rodas5(autodiff=false), Rodas5(autodiff=true)]
+solvers = [Tsit5(), Rodas5(autodiff = AutoFiniteDiff())] # [Tsit5(), FBDF(autodiff=AutoFiniteDiff()), FBDF(autodiff=AutoForwardDiff()), Rodas5(autodiff=AutoFiniteDiff()), Rodas5(autodiff=AutoForwardDiff())]
 
 extForce_t! = function (t::Real, u::AbstractArray{<:Real})
     sense_setindex!(u, sin(t), 1)

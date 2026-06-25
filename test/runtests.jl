@@ -8,6 +8,11 @@ using Test
 import Random
 using FMIZoo
 
+# solvers 
+using OrdinaryDiffEqRosenbrock: Rodas5
+using OrdinaryDiffEqTsit5: Tsit5
+using Sundials
+
 using FMIImport.FMICore: fmi2Integer, fmi2Boolean, fmi2Real, fmi2String
 using FMIImport.FMICore:
     fmi3Float32,
