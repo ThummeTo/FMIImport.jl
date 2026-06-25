@@ -9,6 +9,7 @@ import Random
 using FMIZoo
 
 # solvers 
+using DifferentiationInterface: AutoFiniteDiff, AutoForwardDiff
 using OrdinaryDiffEqRosenbrock: Rodas5
 using OrdinaryDiffEqTsit5: Tsit5
 using Sundials

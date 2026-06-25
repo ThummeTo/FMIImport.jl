@@ -2,6 +2,7 @@
 FMISensitivity = "3e748fe5-cd7f-4615-8419-3159287187d2"
 FMIZoo = "724179cf-c260-40a9-bd27-cccc6fe2f195"
 GitHub = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
+DifferentiationInterface = "a0c0ee7d-e4b9-4e03-894e-1c5f64a51d63"
 OrdinaryDiffEqRosenbrock = "43230ef6-c299-4910-a778-202eb28ce4ce"
 OrdinaryDiffEqTsit5 = "b1df2697-797e-41e3-8120-5422d3b24e4a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
