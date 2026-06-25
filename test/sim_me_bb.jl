@@ -22,9 +22,9 @@ c, x0 = prepareSolveFMU(
     myFMU,
     nothing,
     :ME;
-    instantiate=true,
-    t_start=t_start,
-    t_stop=t_stop,
+    instantiate = true,
+    t_start = t_start,
+    t_stop = t_stop,
 )
 @test !isnothing(c)
 @test myFMU.hasStateEvents
@@ -32,7 +32,7 @@ c, x0 = prepareSolveFMU(
 prob = setupODEProblem(c, x0, (t_start, t_stop))
 cbs = setupCallbacks(c, [], nothing, false, nothing, [], nothing, t_start, t_stop, nothing)
 
-sol = solve(prob, Tsit5(); callback=CallbackSet(cbs...))
+sol = solve(prob, Tsit5(); callback = CallbackSet(cbs...))
 @test successful_retcode(sol)
 
 # the ball must bounce several times within the simulated time span ...
@@ -58,5 +58,5 @@ else
     @info "Roots found check skipped for FMI version $(ENV["FMIVERSION"])"
 end
 
-c = finishSolveFMU(myFMU, c; freeInstance=true, terminate=true)
+c = finishSolveFMU(myFMU, c; freeInstance = true, terminate = true)
 unloadFMU(myFMU)

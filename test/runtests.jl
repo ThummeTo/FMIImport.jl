@@ -101,10 +101,10 @@ const fmuStructs = ("FMU", "INSTANCE")
 function getFMUStruct(
     modelname,
     mode,
-    tool=ENV["EXPORTINGTOOL"],
-    version=ENV["EXPORTINGVERSION"],
-    fmiversion=ENV["FMIVERSION"],
-    fmustruct=ENV["FMUSTRUCT"];
+    tool = ENV["EXPORTINGTOOL"],
+    version = ENV["EXPORTINGVERSION"],
+    fmiversion = ENV["FMIVERSION"],
+    fmustruct = ENV["FMUSTRUCT"];
     kwargs...,
 )
 
@@ -119,7 +119,7 @@ function getFMUStruct(
         return fmu, fmu
 
     elseif fmustruct == "INSTANCE"
-        inst, _ = FMIImport.prepareSolveFMU(fmu, nothing, mode; loggingOn=true)
+        inst, _ = FMIImport.prepareSolveFMU(fmu, nothing, mode; loggingOn = true)
         @test !isnothing(inst)
         return inst, fmu
 

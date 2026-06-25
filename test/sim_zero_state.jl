@@ -20,10 +20,10 @@ fmuStruct, fmu = getFMUStruct("IO", :ME)
 solution = simulateME(
     fmuStruct,
     (t_start, t_stop);
-    solver=solver,
-    recordValues=["y_real"], # , "y_boolean", "y_integer"], # [ToDo] different types to record
-    inputValueReferences=["u_real"], # [ToDo] different types to set
-    inputFunction=inputFct!,
+    solver = solver,
+    recordValues = ["y_real"], # , "y_boolean", "y_integer"], # [ToDo] different types to record
+    inputValueReferences = ["u_real"], # [ToDo] different types to set
+    inputFunction = inputFct!,
 )
 
 @test isnothing(solution.states)
@@ -32,7 +32,7 @@ solution = simulateME(
 @test isapprox(
     collect(u[1] for u in solution.values.saveval),
     sin.(solution.values.t);
-    atol=1e-6,
+    atol = 1e-6,
 )
 
 unloadFMU(fmu)
