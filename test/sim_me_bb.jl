@@ -16,15 +16,15 @@ using OrdinaryDiffEqTsit5: Tsit5
 t_start = 0.0
 t_stop = 2.0
 
-myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
+myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", ENV["FMIVERSION"])
 
 c, x0 = prepareSolveFMU(
     myFMU,
     nothing,
     :ME;
-    instantiate = true,
-    t_start = t_start,
-    t_stop = t_stop,
+    instantiate=true,
+    t_start=t_start,
+    t_stop=t_stop,
 )
 @test !isnothing(c)
 @test myFMU.hasStateEvents
@@ -32,7 +32,7 @@ c, x0 = prepareSolveFMU(
 prob = setupODEProblem(c, x0, (t_start, t_stop))
 cbs = setupCallbacks(c, [], nothing, false, nothing, [], nothing, t_start, t_stop, nothing)
 
-sol = solve(prob, Tsit5(); callback = CallbackSet(cbs...))
+sol = solve(prob, Tsit5(); callback=CallbackSet(cbs...))
 @test successful_retcode(sol)
 
 # the ball must bounce several times within the simulated time span ...
@@ -50,9 +50,13 @@ end
 # ... but never falls through the ground
 @test all(u[1] > -1e-4 for u in sol.u)
 
-# `rootsFound` (written by `FMIBase.setEventFlags!`, passed to `fmi3EnterEventMode`)
-# must be allocated with one entry per event indicator
-@test length(c.rootsFound) == 1
+if ENV["FMIVERSION"] == "3.0"
+    # `rootsFound` (written by `FMIBase.setEventFlags!`, passed to `fmi3EnterEventMode`)
+    # must be allocated with one entry per event indicator
+    @test length(c.rootsFound) == 1
+else
+    @info "Roots found check skipped for FMI version $(ENV["FMIVERSION"])"
+end
 
-c = finishSolveFMU(myFMU, c; freeInstance = true, terminate = true)
+c = finishSolveFMU(myFMU, c; freeInstance=true, terminate=true)
 unloadFMU(myFMU)

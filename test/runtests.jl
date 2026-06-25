@@ -55,10 +55,6 @@ function runtestsFMI2(exportingTool)
         @testset "Logging with externalCallbacks" begin
             include("FMI2/externalLogging.jl")
         end
-
-        @testset "ME Simulation with Events" begin
-            include("FMI2/sim_me_events.jl")
-        end
     end
 end
 
@@ -97,10 +93,6 @@ function runtestsFMI3(exportingTool)
                 @info "LSSA tests running on Windows only for now."
             end
         end
-
-        @testset "ME Simulation with Events" begin
-            include("FMI3/sim_me_events.jl")
-        end
     end
 end
 
@@ -109,10 +101,10 @@ const fmuStructs = ("FMU", "INSTANCE")
 function getFMUStruct(
     modelname,
     mode,
-    tool = ENV["EXPORTINGTOOL"],
-    version = ENV["EXPORTINGVERSION"],
-    fmiversion = ENV["FMIVERSION"],
-    fmustruct = ENV["FMUSTRUCT"];
+    tool=ENV["EXPORTINGTOOL"],
+    version=ENV["EXPORTINGVERSION"],
+    fmiversion=ENV["FMIVERSION"],
+    fmustruct=ENV["FMUSTRUCT"];
     kwargs...,
 )
 
@@ -127,7 +119,7 @@ function getFMUStruct(
         return fmu, fmu
 
     elseif fmustruct == "INSTANCE"
-        inst, _ = FMIImport.prepareSolveFMU(fmu, nothing, mode; loggingOn = true)
+        inst, _ = FMIImport.prepareSolveFMU(fmu, nothing, mode; loggingOn=true)
         @test !isnothing(inst)
         return inst, fmu
 
@@ -165,6 +157,11 @@ function runtestsCommon(exportingTool)
                     @info "ME Simulation (sim_ME.jl)"
                     @testset "ME Simulation" begin
                         include("sim_ME.jl")
+                    end
+
+                    @info "ME Simulation (sim_ME_bb.jl)"
+                    @testset "ME Simulation: Bouncing Ball" begin
+                        include("sim_ME_bb.jl")
                     end
 
                     @info "SE Simulation (sim_SE.jl)"

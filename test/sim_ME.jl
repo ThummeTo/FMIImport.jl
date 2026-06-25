@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
@@ -18,7 +18,7 @@ dtmax_inputs = 1e-3
 rand_x0 = rand(2)
 
 kwargs = Dict(:dtmin => 1e-64, :abstol => 1e-8, :reltol => 1e-6, :dt => 1e-32)
-solvers = [Tsit5(), Rodas5(autodiff = false)] # [Tsit5(), FBDF(autodiff=false), FBDF(autodiff=true), Rodas5(autodiff=false), Rodas5(autodiff=true)]
+solvers = [Tsit5(), Rodas5(autodiff=false)] # [Tsit5(), FBDF(autodiff=false), FBDF(autodiff=true), Rodas5(autodiff=false), Rodas5(autodiff=true)]
 
 extForce_t! = function (t::Real, u::AbstractArray{<:Real})
     sense_setindex!(u, sin(t), 1)
@@ -47,7 +47,7 @@ for solver in solvers
 
     fmuStruct, fmu = getFMUStruct("SpringFrictionPendulum1D", :ME)
 
-    solution = simulateME(fmuStruct, (t_start, t_stop); solver = solver, kwargs...)
+    solution = simulateME(fmuStruct, (t_start, t_stop); solver=solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 
@@ -65,7 +65,7 @@ for solver in solvers
 
     ### test without recording values
 
-    solution = simulateME(fmuStruct, (t_start, t_stop); solver = solver, kwargs...)
+    solution = simulateME(fmuStruct, (t_start, t_stop); solver=solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 
@@ -81,8 +81,8 @@ for solver in solvers
     solution = simulateME(
         fmuStruct,
         (t_start, t_stop);
-        recordValues = "mass.f",
-        solver = solver,
+        recordValues="mass.f",
+        solver=solver,
         kwargs...,
     )
     dataLength = length(solution.states.u)
@@ -99,12 +99,12 @@ for solver in solvers
     # value/state getters 
     @test solution.states.t == getTime(solution)
     @test collect(s[1] for s in solution.values.saveval) ==
-          getValue(solution, 1; isIndex = true)
-    @test collect(u[1] for u in solution.states.u) == getState(solution, 1; isIndex = true)
+          getValue(solution, 1; isIndex=true)
+    @test collect(u[1] for u in solution.states.u) == getState(solution, 1; isIndex=true)
     @test isapprox(
-        getState(solution, 2; isIndex = true),
-        getStateDerivative(solution, 1; isIndex = true);
-        atol = 1e-1,
+        getState(solution, 2; isIndex=true),
+        getStateDerivative(solution, 1; isIndex=true);
+        atol=1e-1,
     ) # tolerance is large, because Rosenbrock23 solution derivative is not that accurate (other solvers reach 1e-4 for this example)
     @info "Max error of solver polynomial derivative: $(max(abs.(getState(solution, 2; isIndex=true) .- getStateDerivative(solution, 1; isIndex=true))...))"
 
@@ -120,9 +120,9 @@ for solver in solvers
     solution = simulateME(
         fmuStruct,
         (t_start, t_stop);
-        recordValues = "mass.f",
-        saveat = tData,
-        solver = solver,
+        recordValues="mass.f",
+        saveat=tData,
+        solver=solver,
         kwargs...,
     )
     @test length(solution.states.u) == length(tData)
@@ -152,10 +152,10 @@ for solver in solvers
         solution = simulateME(
             fmuStruct,
             (t_start, t_stop);
-            inputValueReferences = ["extForce"],
-            inputFunction = inpfct!,
-            solver = solver,
-            dtmax = dtmax_inputs,
+            inputValueReferences=["extForce"],
+            inputFunction=inpfct!,
+            solver=solver,
+            dtmax=dtmax_inputs,
             kwargs...,
         ) # dtmax to force resolution
         @test length(solution.states.u) > 0
@@ -180,8 +180,8 @@ for solver in solvers
         solution = simulateME(
             fmuStruct,
             (t_start, t_stop);
-            solver = solver,
-            dtmax = dtmax_inputs,
+            solver=solver,
+            dtmax=dtmax_inputs,
             kwargs...,
         ) # dtmax to force resolution
 
@@ -205,9 +205,9 @@ for solver in solvers
     solution = simulateME(
         fmuStruct,
         (t_start, t_stop);
-        saveat = tData,
-        recordValues = :states,
-        solver = solver,
+        saveat=tData,
+        recordValues=:states,
+        solver=solver,
         kwargs...,
     )
     @test length(solution.states.u) == length(tData)
@@ -215,16 +215,16 @@ for solver in solvers
     @test length(solution.values.saveval) == length(tData)
     @test length(solution.values.t) == length(tData)
 
-    @test isapprox(solution.states.t, solution.states.t; atol = 1e-6)
+    @test isapprox(solution.states.t, solution.states.t; atol=1e-6)
     @test isapprox(
         collect(u[1] for u in solution.states.u),
         collect(u[1] for u in solution.values.saveval);
-        atol = 1e-6,
+        atol=1e-6,
     )
     @test isapprox(
         collect(u[2] for u in solution.states.u),
         collect(u[2] for u in solution.values.saveval);
-        atol = 1e-6,
+        atol=1e-6,
     )
 
     unloadFMU(fmu)
@@ -234,7 +234,7 @@ for solver in solvers
     fmuStruct, fmu = getFMUStruct("SpringFrictionPendulum1D", :ME)
 
     solution =
-        simulateME(fmuStruct, (t_start, t_stop); x0 = rand_x0, solver = solver, kwargs...)
+        simulateME(fmuStruct, (t_start, t_stop); x0=rand_x0, solver=solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 
