@@ -32,7 +32,7 @@ Retrieves all the pointers of binary functions.
 
 See also .
 """
-function setupFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing}=nothing)
+function setupFMU3(fmuPath, fmuZipPath; type::Union{Symbol,Nothing} = nothing)
     # Create uninitialized FMU
     fmu = FMU3()
 
