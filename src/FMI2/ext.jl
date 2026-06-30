@@ -8,7 +8,7 @@ using Libdl
 const CB_LIB_PATH = @path joinpath(dirname(@__FILE__), "callbackFunctions", "binaries")
 
 """
-    createFMU2
+    setupFMU2
 
 Sets the properties of the fmu by reading the modelDescription.xml.
 Retrieves all the pointers of binary functions.
@@ -24,11 +24,11 @@ Retrieves all the pointers of binary functions.
 # Returns
 - Returns the instance of the FMU struct.
 """
-function createFMU2(
+function setupFMU2(
     fmuPath,
     fmuZipPath;
-    type::Union{Symbol,fmi2Type,Nothing} = nothing,
-    logLevel::Union{FMULogLevel,Symbol} = FMULogLevelWarn,
+    type::Union{Symbol,fmi2Type,Nothing}=nothing,
+    logLevel::Union{FMULogLevel,Symbol}=FMULogLevelWarn,
 )
     # Create uninitialized FMU
 
@@ -75,7 +75,7 @@ function createFMU2(
             fmu.type = fmi2TypeCoSimulation
             logInfo(
                 fmu,
-                "createFMU2(...): FMU supports both CS and ME, using CS as default if nothing specified.",
+                "setupFMU2(...): FMU supports both CS and ME, using CS as default if nothing specified.",
             )
 
         elseif isCoSimulation(fmu.modelDescription)
@@ -89,7 +89,7 @@ function createFMU2(
         end
     end
 
-    fmuName = getModelIdentifier(fmu.modelDescription; type = fmu.type) # tmpName[length(tmpName)]
+    fmuName = getModelIdentifier(fmu.modelDescription; type=fmu.type) # tmpName[length(tmpName)]
 
     directoryBinary = ""
     pathToBinary = ""
@@ -100,7 +100,7 @@ function createFMU2(
     osStr = ""
 
     juliaArch = Sys.WORD_SIZE
-    @assert (juliaArch == 64 || juliaArch == 32) "createFMU2(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
+    @assert (juliaArch == 64 || juliaArch == 32) "setupFMU2(...): Unknown Julia Architecture with $(juliaArch)-bit, must be 64- or 32-bit."
 
     if Sys.iswindows()
         if juliaArch == 64
@@ -140,10 +140,10 @@ function createFMU2(
         osStr = "Mac"
         fmuExt = "dylib"
     else
-        @assert false "createFMU2(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS/architecture."
+        @assert false "setupFMU2(...): Unsupported target platform. Supporting Windows, Linux and Mac. Please open an issue if you want to use another OS/architecture."
     end
 
-    @assert (length(directories) > 0) "createFMU2(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
+    @assert (length(directories) > 0) "setupFMU2(...): Unsupported architecture. Supporting Julia for Windows (64- and 32-bit), Linux (64-bit) and Mac (64-bit). Please open an issue if you want to use another architecture."
     for directory in directories
         directoryBinary = joinpath(fmu.path, directory)
         if isdir(directoryBinary)
@@ -151,14 +151,14 @@ function createFMU2(
             break
         end
     end
-    @assert isfile(pathToBinary) "createFMU2(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
+    @assert isfile(pathToBinary) "setupFMU2(...): Target platform is $(osStr), but can't find valid FMU binary at `$(pathToBinary)` for path `$(fmu.path)`."
 
     # make URI ressource location
     tmpResourceLocation = string("file:///", fmu.path)
     tmpResourceLocation = joinpath(tmpResourceLocation, "resources")
     fmu.fmuResourceLocation = replace(tmpResourceLocation, "\\" => "/") # URIs.escapeuri(tmpResourceLocation)
 
-    logInfo(fmu, "createFMU2(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
+    logInfo(fmu, "setupFMU2(...): FMU resources location is `$(fmu.fmuResourceLocation)`")
 
     fmu.binaryPath = pathToBinary
     loadPointers(fmu)
