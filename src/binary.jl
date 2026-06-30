@@ -75,9 +75,9 @@ function loadFMU(
     if version == "1.0"
         @assert false "FMI version 1.0 detected, this is (currently) not supported by FMI.jl."
     elseif version == "2.0"
-        return createFMU2(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
+        return setupFMU2(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
     elseif version == "3.0"
-        return createFMU3(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
+        return setupFMU3(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
     else
         @assert false, "Unknwon FMI version `$(version)`."
     end
