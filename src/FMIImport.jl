@@ -27,17 +27,19 @@ include("info.jl")
 ### FMI2 ###
 include("FMI2/c.jl")
 include("FMI2/int.jl")
-include("FMI2/prep.jl")
 include("FMI2/ext.jl")
 include("FMI2/md.jl")
+include("FMI2/prep.jl")
 
 ### FMI3 ###
 include("FMI3/c.jl")
 include("FMI3/int.jl")
-include("FMI3/prep.jl")
 include("FMI3/ext.jl")
 include("FMI3/md.jl")
 include("FMI3/lssa.jl")
+include("FMI3/prep.jl")
+
+include("sim.jl")
 
 # FMIZoo.jl
 # nothing to declare
