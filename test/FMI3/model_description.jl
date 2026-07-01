@@ -49,7 +49,7 @@ depMatrix = ext.DependencyMatrix(myFMU.modelDescription)
 @test depMatrix isa ext.DependencyMatrix
 eventIndicatorVR = myFMU.modelDescription.eventIndicatorValueReferences[1]
 stateVRs = myFMU.modelDescription.stateValueReferences
-@test all(depMatrix[eventIndicatorVR, stateVR] == UInt32(5) for stateVR in stateVRs)
+@test all(depMatrix[eventIndicatorVR, stateVR] == fmi3DependencyKindDependent for stateVR in stateVRs)
 
 unloadFMU(myFMU)
 

@@ -5,21 +5,20 @@
 
 module SparseArraysExt
 using FMIImport, SparseArrays
-# TODO: Change parsing logic and dependency fields in md.jl and FMICore UInt -> UInt32 to have it consistent everywhere
 
 # Maps FMI2 dependency kinds to FMI3 dependency index values, we use them in both cases:
 # FMI2: 0->dependent, 1->constant, 2->fixed, 3->tunable, 4->discrete
 # FMI3: 0->independent, 1->constant, 2->fixed, 3->tunable, 4->discrete, 5->dependent
 function dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
     if kind == fmi2DependencyKindDependent
-        return UInt32(5)
+        return fmi3DependencyKindDependent
     end
     return kind
 end
 
 struct DependencyMatrix <: FMIBase.AbstractDependencyMatrix
-    matrix::SparseMatrixCSC{UInt32,Int}
-    vr_idx_dict::Dict{UInt32,Int}
+    matrix::SparseMatrixCSC{fmi3DependencyKind,Int}
+    vr_idx_dict::Dict{fmi3ValueReference,Int}
 end
 
 # From FMI3-Standard:  
@@ -29,8 +28,8 @@ function DependencyMatrix(md::fmi2ModelDescription)
     vrs = [mV.valueReference for mV in md.modelVariables]
     sort!(vrs)
     unique!(vrs)
-    vr_idx_dict = Dict{UInt32,Int}(zip(vrs, 1:length(vrs)))
-    dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
+    vr_idx_dict = Dict{fmi3ValueReference,Int}(zip(vrs, 1:length(vrs)))
+    dep_mtx = spzeros(fmi3DependencyKind, length(vrs), length(vrs))
     @info "Constructing Dependency Matrix"
     # Filter out nothing values from the dependency categories
     dependency_categories = filter(
@@ -67,8 +66,8 @@ function DependencyMatrix(md::fmi3ModelDescription)
     vrs = [mV.valueReference for mV in md.modelVariables]
     sort!(vrs)
     unique!(vrs)
-    vr_idx_dict = Dict{UInt32,Int}(zip(vrs, 1:length(vrs)))
-    dep_mtx = spzeros(UInt32, length(vrs), length(vrs))
+    vr_idx_dict = Dict{fmi3ValueReference,Int}(zip(vrs, 1:length(vrs)))
+    dep_mtx = spzeros(fmi3DependencyKind, length(vrs), length(vrs))
     @info "Constructing Dependency Matrix"
     # Filter out nothing values from the dependency categories
     dependency_categories = filter(
@@ -101,10 +100,10 @@ function DependencyMatrix(md::fmi3ModelDescription)
     DependencyMatrix(dep_mtx, vr_idx_dict)
 end
 
-function Base.getindex(D::DependencyMatrix, i::UInt32, j::UInt32)
+function Base.getindex(D::DependencyMatrix, i::fmi3ValueReference, j::fmi3ValueReference)
     return D.matrix[D.vr_idx_dict[i], D.vr_idx_dict[j]]
 end
-function Base.getindex(D::DependencyMatrix, i::Vector{UInt32}, j::Vector{UInt32})
+function Base.getindex(D::DependencyMatrix, i::Vector{fmi3ValueReference}, j::Vector{fmi3ValueReference})
     return D.matrix[getindex.(Ref(D.vr_idx_dict), i), getindex.(Ref(D.vr_idx_dict), j)]
 end
 
