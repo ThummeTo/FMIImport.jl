@@ -21,7 +21,7 @@ struct DependencyMatrix <: FMIBase.AbstractDependencyMatrix
     vr_idx_dict::Dict{fmi3ValueReference,Int}
 
     # From FMI3-Standard:  
-# If dependencies is not present, it must be assumed that the unknown depends on all knowns. If dependencies is present as empty list, the unknown depends on none of the knowns.
+    # If dependencies is not present, it must be assumed that the unknown depends on all knowns. If dependencies is present as empty list, the unknown depends on none of the knowns.
 
     function DependencyMatrix(md::fmi2ModelDescription)
         vrs = [mV.valueReference for mV in md.modelVariables]
@@ -47,8 +47,8 @@ struct DependencyMatrix <: FMIBase.AbstractDependencyMatrix
                         dependency_vR = md.modelVariables[dependency].valueReference
                         # "If dependenciesKind is not present, it must be assumed that the unknown vunknown depends on the knowns vknown without a particular structure." -> no dependenciesKind means dependent
                         dependency_kind =
-                            isnothing(dep_info.dependenciesKind) ? fmi2DependencyKindDependent :
-                            dep_info.dependenciesKind[idx]
+                            isnothing(dep_info.dependenciesKind) ?
+                            fmi2DependencyKindDependent : dep_info.dependenciesKind[idx]
                         dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] =
                             dependencyKindToDependencyIndex(dependency_kind)
                     end
@@ -86,8 +86,8 @@ struct DependencyMatrix <: FMIBase.AbstractDependencyMatrix
                         dependency_vR = dependency
                         # "If dependenciesKind is not present, it must be assumed that the unknown vunknown depends on the knowns vknown without a particular structure." -> no dependenciesKind means dependent
                         dependency_kind =
-                            isnothing(dep_info.dependenciesKind) ? fmi3DependencyKindDependent :
-                            dep_info.dependenciesKind[idx]
+                            isnothing(dep_info.dependenciesKind) ?
+                            fmi3DependencyKindDependent : dep_info.dependenciesKind[idx]
                         dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] =
                             dependency_kind
                     end
@@ -104,7 +104,11 @@ end
 function Base.getindex(D::DependencyMatrix, i::fmi3ValueReference, j::fmi3ValueReference)
     return D.matrix[D.vr_idx_dict[i], D.vr_idx_dict[j]]
 end
-function Base.getindex(D::DependencyMatrix, i::Vector{fmi3ValueReference}, j::Vector{fmi3ValueReference})
+function Base.getindex(
+    D::DependencyMatrix,
+    i::Vector{fmi3ValueReference},
+    j::Vector{fmi3ValueReference},
+)
     return D.matrix[getindex.(Ref(D.vr_idx_dict), i), getindex.(Ref(D.vr_idx_dict), j)]
 end
 
