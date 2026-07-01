@@ -10,7 +10,7 @@ using FMIImport, SparseArrays
 # Maps FMI2 dependency kinds to FMI3 dependency index values, we use them in both cases:
 # FMI2: 0->dependent, 1->constant, 2->fixed, 3->tunable, 4->discrete
 # FMI3: 0->independent, 1->constant, 2->fixed, 3->tunable, 4->discrete, 5->dependent
-function fmi2dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
+function dependencyKindToDependencyIndex(kind::fmi2DependencyKind)
     if kind == fmi2DependencyKindDependent
         return UInt32(5)
     end
@@ -52,7 +52,7 @@ function DependencyMatrix(md::fmi2ModelDescription)
                         isnothing(dep_info.dependenciesKind) ? fmi2DependencyKindDependent :
                         dep_info.dependenciesKind[idx]
                     dep_mtx[vr_idx_dict[dependent_vR], vr_idx_dict[dependency_vR]] =
-                        fmi2dependencyKindToDependencyIndex(dependency_kind)
+                        dependencyKindToDependencyIndex(dependency_kind)
                 end
             else
                 # this is fmi3DependencyKindDependent, because we use the fmi3-style in both cases
