@@ -11,7 +11,7 @@ function FMIImport.loadFMU(
     modelName::AbstractString,
     tool::AbstractString,
     version::AbstractString,
-    fmiversion::AbstractString="2.0";
+    fmiversion::AbstractString = "2.0";
     kwargs...,
 )
     fname = get_model_filename(modelName, tool, version, fmiversion)

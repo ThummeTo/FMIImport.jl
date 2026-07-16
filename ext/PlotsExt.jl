@@ -43,12 +43,7 @@ Runs a FMU simulation, plots the solution into `fig` and returns the figure agai
 # Keywords
 - `plotkwargs...`: Keyword arguments, that are passed on to Plots.plot
 """
-function Plots.plot!(
-    fig::Plots.Plot,
-    fmu::FMU,
-    plotargs...;
-    plotkwargs...,
-)
+function Plots.plot!(fig::Plots.Plot, fmu::FMU, plotargs...; plotkwargs...)
     solution = simulate(fmu)
     fig = Plots.plot!(fig, solution, plotargs...; plotkwargs...)
     return fig
