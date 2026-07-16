@@ -19,7 +19,7 @@ The same as `dlsym(libHandle, symbol)`, but returns - `Ptr{Cvoid}(C_NULL)` if th
 Library symbol if available, else `Ptr{Cvoid}(C_NULL)`.
 """
 function dlsym_opt(fmu, libHandle, symbol)
-    addr = dlsym(libHandle, symbol; throw_error = false)
+    addr = dlsym(libHandle, symbol; throw_error=false)
     if isnothing(addr)
         logInfo(fmu, "This FMU does not support the optional function '$symbol'.")
         addr = Ptr{Cvoid}(C_NULL)
@@ -56,14 +56,14 @@ Loads an FMU, independent of the used FMI-version (the version is checked during
 """
 function loadFMU(
     pathToFMU::String;
-    unpackPath::Union{String,Nothing} = nothing,
-    cleanup::Bool = true,
-    type::Union{Symbol,Nothing} = nothing,
+    unpackPath::Union{String,Nothing}=nothing,
+    cleanup::Bool=true,
+    type::Union{Symbol,Nothing}=nothing,
     kwargs...,
 )
 
     unzippedAbsPath, zipAbsPath =
-        unzip(pathToFMU; unpackPath = unpackPath, cleanup = cleanup)
+        unzip(pathToFMU; unpackPath=unpackPath, cleanup=cleanup)
 
     # read version tag
 
@@ -74,12 +74,18 @@ function loadFMU(
 
     if version == "1.0"
         @assert false "FMI version 1.0 detected, this is (currently) not supported by FMI.jl."
-    elseif version == "2.0"
-        return setupFMU2(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
-    elseif version == "3.0"
-        return setupFMU3(unzippedAbsPath, zipAbsPath; type = type, kwargs...)
+    elseif startswith(version, "2.0")
+        if version != "2.0"
+            @warn "FMI version specifier `$(version)` seems to match FMI version `2.0`, however, could be a beta release or similar."
+        end
+        return setupFMU2(unzippedAbsPath, zipAbsPath; type=type, kwargs...)
+    elseif startswith(version, "3.0")
+        if version != "3.0"
+            @warn "FMI version specifier `$(version)` seems to match FMI version `3.0`, however, could be a beta release or similar."
+        end
+        return setupFMU3(unzippedAbsPath, zipAbsPath; type=type, kwargs...)
     else
-        @assert false, "Unknwon FMI version `$(version)`."
+        @assert false "Unknwon FMI version `$(version)`."
     end
 end
 export loadFMU
@@ -97,7 +103,7 @@ Free the allocated memory, close the binaries and remove temporary zip and unzip
 # Keywords
 - `secure_pointers=true` whether pointers to C-functions should be overwritten with dummies with Julia assertions, instead of pointing to dead memory (slower, but more user safe)
 """
-function unloadFMU(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool = true)
+function unloadFMU(fmu::FMU2, cleanUp::Bool=true; secure_pointers::Bool=true)
 
     while length(fmu.components) > 0
         c = fmu.components[end]
@@ -124,14 +130,14 @@ function unloadFMU(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool = true
 
     if cleanUp
         try
-            rm(fmu.path; recursive = true, force = true)
-            rm(fmu.zipPath; recursive = true, force = true)
+            rm(fmu.path; recursive=true, force=true)
+            rm(fmu.zipPath; recursive=true, force=true)
         catch e
             @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
         end
     end
 end
-function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
+function unloadFMU(fmu::FMU3, cleanUp::Bool=true)
 
     while length(fmu.instances) > 0
         fmi3FreeInstance!(fmu.instances[end])
@@ -144,8 +150,8 @@ function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
 
     if cleanUp
         try
-            rm(fmu.path; recursive = true, force = true)
-            rm(fmu.zipPath; recursive = true, force = true)
+            rm(fmu.path; recursive=true, force=true)
+            rm(fmu.zipPath; recursive=true, force=true)
         catch e
             @warn "Cannot delete unpacked data on disc. Maybe some files are opened in another application."
         end

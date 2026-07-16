@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2021 Frederic Bruder, Tobias Thummerer, Lars Mikelsons
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
@@ -11,7 +11,7 @@ function FMIImport.loadFMU(
     modelName::AbstractString,
     tool::AbstractString,
     version::AbstractString,
-    fmiversion::AbstractString = "2.0";
+    fmiversion::AbstractString="2.0";
     kwargs...,
 )
     fname = get_model_filename(modelName, tool, version, fmiversion)
