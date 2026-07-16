@@ -20,7 +20,7 @@ PlotsExt = ["Plots"]
 
 [compat]
 Downloads = "1"
-FMIBase = "1.5.0"
+FMIBase = "1.6.0"
 Libdl = "1"
 LinearAlgebra = "1"
 Plots = "1"

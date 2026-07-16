@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIBase.SciMLBase: solve, RightRootFind, ReturnCode
+using FMIBase.SciMLBase: solve, RightRootFind, ReturnCode, NullParameters
 using FMIBase.DiffEqCallbacks: CallbackSet, SavedValues, copyat_or_push!
 
 import LinearAlgebra: eigvals
@@ -253,6 +253,13 @@ function simulateME(
         push!(cbs, cb)
     end
 
+    # Combine user-supplied SciML callbacks with the internal FMU event callbacks.
+    if haskey(solveKwargs, :callback)
+        push!(cbs, pop!(solveKwargs, :callback))
+    end
+
+    c.callback = CallbackSet(cbs...)
+
     # from here on, we are in event mode, if `setup=false` this is the job of the user
     #@assert c.state == fmi2ComponentStateEventMode "FMU needs to be in event mode after setup."
 
@@ -268,10 +275,9 @@ function simulateME(
     # callback functions
 
     if isnothing(solver)
-        c.solution.states = solve(c.problem; callback = CallbackSet(cbs...), solveKwargs...)
+        c.solution.states = solve(c.problem; callback = c.callback, solveKwargs...)
     else
-        c.solution.states =
-            solve(c.problem, solver; callback = CallbackSet(cbs...), solveKwargs...)
+        c.solution.states = solve(c.problem, solver; callback = c.callback, solveKwargs...)
     end
 
     c.solution.success = (c.solution.states.retcode == ReturnCode.Success)
@@ -558,6 +564,109 @@ simulateCS(c::FMUInstance, tspan::Tuple{Float64,Float64}; kwargs...) =
 simulateCS(fmu::FMU, tspan::Tuple{Float64,Float64}; kwargs...) =
     simulateCS(fmu, nothing, tspan; kwargs...)
 export simulateCS
+
+function _with_fmu_problem_state_kwargs(prob::FMUProblem, sim_kwargs::NamedTuple)
+    # Bridge SciML problem fields to the existing FMI simulation keyword API.
+    if prob.u0 !== nothing && !haskey(sim_kwargs, :x0)
+        sim_kwargs = merge(sim_kwargs, (; x0 = prob.u0))
+    end
+
+    if !(prob.p isa NullParameters) &&
+       prob.p isa AbstractDict &&
+       !haskey(sim_kwargs, :parameters)
+        sim_kwargs = merge(sim_kwargs, (; parameters = prob.p))
+    end
+
+    return sim_kwargs
+end
+
+function _update_fmu_problem_after_solve!(prob::FMUProblem, solution::FMUSolution)
+    # Keep the reusable FMUProblem aligned with the concrete instance prepared by solve.
+    prob.instance = solution.instance
+
+    if !isnothing(prob.instance) &&
+       hasproperty(prob.instance, :problem) &&
+       !isnothing(prob.instance.problem)
+        prob.problem = prob.instance.problem
+        prob.f = prob.problem.f
+        prob.u0 = prob.problem.u0
+        prob.tspan = prob.problem.tspan
+    end
+
+    if !isnothing(prob.instance) &&
+       hasproperty(prob.instance, :callback) &&
+       !isnothing(prob.instance.callback)
+        prob.callback = prob.instance.callback
+    end
+
+    return solution
+end
+
+function solveFMUProblem!(prob::FMUProblem, args...; kwargs...)
+    sim_kwargs = merge(prob.kwargs, (; kwargs...))
+
+    if prob.mode == :ME
+        # ME is an actual ODE solve; a positional solver algorithm is meaningful here.
+        if length(args) > 1
+            throw(
+                ArgumentError(
+                    "Model Exchange FMUProblem accepts at most one positional solver algorithm.",
+                ),
+            )
+        elseif length(args) == 1
+            sim_kwargs = merge(sim_kwargs, (; solver = args[1]))
+        end
+
+        sim_kwargs = _with_fmu_problem_state_kwargs(prob, sim_kwargs)
+        solution = simulateME(prob.fmu, prob.instance, prob.tspan; sim_kwargs...)
+        _update_fmu_problem_after_solve!(prob, solution)
+        return solution.states
+
+    elseif prob.mode == :CS
+        # CS advances through the FMU's internal solver, so ODE solver concepts do not apply.
+        if length(args) > 0
+            throw(
+                ArgumentError(
+                    "Co-Simulation FMUProblem uses the FMU's internal solver and does not accept an ODE solver algorithm. Use `dt`, `saveat` and `tolerance` keywords instead.",
+                ),
+            )
+        end
+        if prob.u0 !== nothing || haskey(sim_kwargs, :x0)
+            throw(
+                ArgumentError(
+                    "`u0`/`x0` is only supported for Model Exchange FMUProblem. Co-Simulation FMUs do not expose continuous states to the solver.",
+                ),
+            )
+        end
+        if haskey(sim_kwargs, :callback)
+            throw(
+                ArgumentError(
+                    "`callback` is only supported for Model Exchange FMUProblem. Co-Simulation FMUs advance through `doStep`.",
+                ),
+            )
+        end
+
+        solution = simulateCS(prob.fmu, prob.instance, prob.tspan; sim_kwargs...)
+        # CS does not produce an ODESolution; keep returning the FMUSolution wrapper.
+        return _update_fmu_problem_after_solve!(prob, solution)
+
+    elseif prob.mode == :SE
+        # Scheduled Execution is surfaced for completeness, but implementation is still delegated.
+        if length(args) > 0
+            throw(
+                ArgumentError(
+                    "Scheduled-Execution FMUProblem does not accept an ODE solver algorithm.",
+                ),
+            )
+        end
+
+        solution = simulateSE(prob.fmu, prob.instance, prob.tspan; sim_kwargs...)
+        _update_fmu_problem_after_solve!(prob, solution)
+        return solution.states
+    end
+
+    throw(ArgumentError("Unknown FMUProblem mode `$(prob.mode)`."))
+end
 
 # [TODO] implement scheduled execution
 """

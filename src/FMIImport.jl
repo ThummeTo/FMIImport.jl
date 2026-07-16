@@ -13,6 +13,7 @@ using FMIBase
 using FMIBase.FMICore
 using FMIBase:
     fast_copy!, invalidate!, check_invalidate!, isStatusError, isStatusOK, isStatusDiscard
+import FMIBase: prepareSolveFMU, finishSolveFMU, solveFMUProblem!
 
 import FMIBase.ChainRulesCore: ignore_derivatives
 
