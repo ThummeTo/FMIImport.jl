@@ -44,7 +44,7 @@ for solver in solvers
 
     fmuStruct, fmu = getFMUStruct("SpringFrictionPendulum1D", :ME)
 
-    solution = simulateME(fmuStruct, (t_start, t_stop); solver = solver, kwargs...)
+    solution = simulateME(fmuStruct; tspan = (t_start, t_stop), solver = solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 
@@ -62,7 +62,7 @@ for solver in solvers
 
     ### test without recording values
 
-    solution = simulateME(fmuStruct, (t_start, t_stop); solver = solver, kwargs...)
+    solution = simulateME(fmuStruct; tspan = (t_start, t_stop), solver = solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 
@@ -76,8 +76,8 @@ for solver in solvers
     ### test with recording values (variable step record values)
 
     solution = simulateME(
-        fmuStruct,
-        (t_start, t_stop);
+        fmuStruct;
+        tspan = (t_start, t_stop),
         recordValues = "mass.f",
         solver = solver,
         kwargs...,
@@ -115,8 +115,8 @@ for solver in solvers
 
     tData = t_start:0.1:t_stop
     solution = simulateME(
-        fmuStruct,
-        (t_start, t_stop);
+        fmuStruct;
+        tspan = (t_start, t_stop),
         recordValues = "mass.f",
         saveat = tData,
         solver = solver,
@@ -147,8 +147,8 @@ for solver in solvers
     for inpfct! in [extForce_cxt!, extForce_t!]
 
         solution = simulateME(
-            fmuStruct,
-            (t_start, t_stop);
+            fmuStruct;
+            tspan = (t_start, t_stop),
             inputValueReferences = ["extForce"],
             inputFunction = inpfct!,
             solver = solver,
@@ -175,8 +175,8 @@ for solver in solvers
     # ToDo: Fix Linux FMU
     if VERSION >= v"1.7.0" && !Sys.islinux()
         solution = simulateME(
-            fmuStruct,
-            (t_start, t_stop);
+            fmuStruct;
+            tspan = (t_start, t_stop),
             solver = solver,
             dtmax = dtmax_inputs,
             kwargs...,
@@ -200,8 +200,8 @@ for solver in solvers
     fmuStruct, fmu = getFMUStruct("SpringPendulumExtForce1D", :ME)
 
     solution = simulateME(
-        fmuStruct,
-        (t_start, t_stop);
+        fmuStruct;
+        tspan = (t_start, t_stop),
         saveat = tData,
         recordValues = :states,
         solver = solver,
@@ -231,7 +231,7 @@ for solver in solvers
     fmuStruct, fmu = getFMUStruct("SpringFrictionPendulum1D", :ME)
 
     solution =
-        simulateME(fmuStruct, (t_start, t_stop); x0 = rand_x0, solver = solver, kwargs...)
+        simulateME(fmuStruct; tspan = (t_start, t_stop), x0 = rand_x0, solver = solver, kwargs...)
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 

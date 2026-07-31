@@ -12,7 +12,13 @@ using FMIBase.Reexport
 using FMIBase
 using FMIBase.FMICore
 using FMIBase:
-    fast_copy!, invalidate!, check_invalidate!, isStatusError, isStatusOK, isStatusDiscard
+    fast_copy!,
+    invalidate!,
+    check_invalidate!,
+    isStatusError,
+    isStatusOK,
+    isStatusDiscard,
+    setTime
 import FMIBase: prepareSolveFMU, finishSolveFMU, solveFMUProblem!
 
 import FMIBase.ChainRulesCore: ignore_derivatives
@@ -41,6 +47,7 @@ include("FMI3/lssa.jl")
 include("FMI3/prep.jl")
 
 include("sim.jl")
+include("deprecated.jl")
 
 # FMIZoo.jl
 # nothing to declare

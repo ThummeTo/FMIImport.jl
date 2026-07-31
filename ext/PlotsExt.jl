@@ -7,6 +7,7 @@ module PlotsExt
 
 import Plots
 import FMIImport.FMIBase: FMU
+import FMIImport: simulate
 
 """
     Plots.plot(fmu::FMU, 
