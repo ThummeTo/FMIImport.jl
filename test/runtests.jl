@@ -175,6 +175,11 @@ function runtestsCommon(exportingTool)
                         include("sim_ME_bb.jl")
                     end
 
+                    @info "FMUProblem solve (problem.jl)"
+                    @testset "FMUProblem solve" begin
+                        include("problem.jl")
+                    end
+
                     @info "SE Simulation (sim_SE.jl)"
                     if fmiversion == 3.0
                         @testset "SE Simulation" begin

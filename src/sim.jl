@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-using FMIBase.SciMLBase: solve, RightRootFind, ReturnCode
+using FMIBase.SciMLBase: solve, RightRootFind, ReturnCode, NullParameters
 using FMIBase.DiffEqCallbacks: CallbackSet, SavedValues, copyat_or_push!
 
 import LinearAlgebra: eigvals
@@ -18,9 +18,8 @@ import FMIBase:
     isTrue
 
 """
-    simulate(fmu, instance=nothing, tspan=nothing; kwargs...)
-    simulate(fmu, tspan; kwargs...)
-    simulate(instance, tspan; kwargs...)
+    simulate(fmu, instance=nothing; tspan=nothing, kwargs...)
+    simulate(instance; tspan=nothing, kwargs...)
 
 Starts a simulation of the `FMU2` for the instantiated type: CS, ME or SE (this is selected automatically or during loading of the FMU).
 You can force a specific simulation mode by calling [`simulateCS`](@ref), [`simulateME`](@ref) or [`simulateSE`](@ref) directly.
@@ -28,9 +27,9 @@ You can force a specific simulation mode by calling [`simulateCS`](@ref), [`simu
 # Arguments
 - `fmu::FMU`: The FMU to be simulated.
 - `c::Union{FMUInstance, Nothing}=nothing`: The instance (FMI3) or component (FMI2) of the FMU, `nothing` if not available. 
-- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 
 # Keyword arguments
+- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 - `recordValues::fmi2ValueReferenceFormat` = nothing: Array of variables (Strings or variableIdentifiers) to record. Results are returned as `DiffEqCallbacks.SavedValues`
 - `saveat = nothing`: Time points to save (interpolated) values at (default = nothing: save at each solver timestep)
 - `setup::Bool`: call fmi2SetupExperiment, fmi2EnterInitializationMode and fmi2ExitInitializationMode before the simulation (default = nothing: use value from `fmu`'s `FMUExecutionConfiguration`)
@@ -56,48 +55,35 @@ You can force a specific simulation mode by calling [`simulateCS`](@ref), [`simu
 
 See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateCS`](@ref), [`simulateSE`](@ref).
 """
-function simulate(
-    fmu::FMU2,
-    c::Union{FMU2Component,Nothing} = nothing,
-    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing;
-    kwargs...,
-)
+function simulate(fmu::FMU2, c::Union{FMU2Component,Nothing} = nothing; kwargs...)
 
     if fmu.type == fmi2TypeCoSimulation
-        return simulateCS(fmu, c, tspan; kwargs...)
+        return simulateCS(fmu, c; kwargs...)
     elseif fmu.type == fmi2TypeModelExchange
-        return simulateME(fmu, c, tspan; kwargs...)
+        return simulateME(fmu, c; kwargs...)
     else
         error(unknownFMUType)
     end
 end
-function simulate(
-    fmu::FMU3,
-    c::Union{FMU3Instance,Nothing} = nothing,
-    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing;
-    kwargs...,
-)
+function simulate(fmu::FMU3, c::Union{FMU3Instance,Nothing} = nothing; kwargs...)
 
     if fmu.type == fmi3TypeCoSimulation
-        return simulateCS(fmu, c, tspan; kwargs...)
+        return simulateCS(fmu, c; kwargs...)
     elseif fmu.type == fmi3TypeModelExchange
-        return simulateME(fmu, c, tspan; kwargs...)
+        return simulateME(fmu, c; kwargs...)
     elseif fmu.type == fmi3TypeScheduledExecution
-        return simulateSE(fmu, c, tspan; kwargs...)
+        return simulateSE(fmu, c; kwargs...)
     else
         error(unknownFMUType)
     end
 end
-simulate(c::FMUInstance, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulate(c.fmu, c, tspan; kwargs...)
-simulate(fmu::FMU, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulate(fmu, nothing, tspan; kwargs...)
+simulate(c::FMUInstance; kwargs...) = simulate(c.fmu, c; kwargs...)
+simulate(fmu::FMU; kwargs...) = simulate(fmu, nothing; kwargs...)
 export simulate
 
 """
-    simulateME(fmu, instance=nothing, tspan=nothing; kwargs...)
-    simulateME(fmu, tspan; kwargs...)
-    simulateME(instance, tspan; kwargs...)
+    simulateME(fmu, instance=nothing; tspan=nothing, kwargs...)
+    simulateME(instance; tspan=nothing, kwargs...)
 
 Simulate ME-FMU for the given simulation time interval.
 State- and Time-Events are handled correctly.
@@ -105,9 +91,9 @@ State- and Time-Events are handled correctly.
 # Arguments
 - `fmu::FMU`: The FMU to be simulated.
 - `c::Union{FMUInstance, Nothing}=nothing`: The instance (FMI3) or component (FMI2) of the FMU, `nothing` if not available. 
-- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 
 # Keyword arguments
+- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 - `solver = nothing`: Any Julia-supported ODE-solver (default = nothing: use DifferentialEquations.jl default solver)
 - `recordValues::fmi2ValueReferenceFormat` = nothing: Array of variables (Strings or variableIdentifiers) to record. Results are returned as `DiffEqCallbacks.SavedValues`
 - `recordEventIndicators::Union{AbstractArray{<:Integer, 1}, UnitRange{<:Integer}, Nothing} = nothing`: Array or Range of event indicators to record
@@ -142,8 +128,8 @@ See also [`simulate`](@ref), [`simulateCS`](@ref), [`simulateSE`](@ref).
 """
 function simulateME(
     fmu::FMU,
-    c::Union{FMUInstance,Nothing},
-    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing;
+    c::Union{FMUInstance,Nothing} = nothing;
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
     solver = nothing, # [ToDo] type
     recordValues::fmi2ValueReferenceFormat = nothing,
     recordEventIndicators::Union{AbstractArray{<:Integer,1},UnitRange{<:Integer},Nothing} = nothing,
@@ -253,6 +239,13 @@ function simulateME(
         push!(cbs, cb)
     end
 
+    # Combine user-supplied SciML callbacks with the internal FMU event callbacks.
+    if haskey(solveKwargs, :callback)
+        push!(cbs, pop!(solveKwargs, :callback))
+    end
+
+    c.callback = CallbackSet(cbs...)
+
     # from here on, we are in event mode, if `setup=false` this is the job of the user
     #@assert c.state == fmi2ComponentStateEventMode "FMU needs to be in event mode after setup."
 
@@ -268,10 +261,9 @@ function simulateME(
     # callback functions
 
     if isnothing(solver)
-        c.solution.states = solve(c.problem; callback = CallbackSet(cbs...), solveKwargs...)
+        c.solution.states = solve(c.problem; callback = c.callback, solveKwargs...)
     else
-        c.solution.states =
-            solve(c.problem, solver; callback = CallbackSet(cbs...), solveKwargs...)
+        c.solution.states = solve(c.problem, solver; callback = c.callback, solveKwargs...)
     end
 
     c.solution.success = (c.solution.states.retcode == ReturnCode.Success)
@@ -302,10 +294,7 @@ function simulateME(
 
     return c.solution
 end
-simulateME(c::FMUInstance, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateME(c.fmu, c, tspan; kwargs...)
-simulateME(fmu::FMU, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateME(fmu, nothing, tspan; kwargs...)
+simulateME(c::FMUInstance; kwargs...) = simulateME(c.fmu, c; kwargs...)
 export simulateME
 
 ############ Co-Simulation ############
@@ -338,9 +327,8 @@ function auto_interval(t)
     return h
 end
 """
-    simulateCS(fmu, instance=nothing, tspan=nothing; kwargs...)
-    simulateCS(fmu, tspan; kwargs...)
-    simulateCS(instance, tspan; kwargs...)
+    simulateCS(fmu, instance=nothing; tspan=nothing, kwargs...)
+    simulateCS(instance; tspan=nothing, kwargs...)
 
 Simulate CS-FMU for the given simulation time interval.
 State- and Time-Events are handled internally by the FMU.
@@ -348,9 +336,9 @@ State- and Time-Events are handled internally by the FMU.
 # Arguments
 - `fmu::FMU`: The FMU to be simulated.
 - `c::Union{FMUInstance, Nothing}=nothing`: The instance (FMI3) or component (FMI2) of the FMU, `nothing` if not available. 
-- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 
 # Keyword arguments
+- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 - `tolerance::Union{Real, Nothing} = nothing`: The tolerance for the internal FMU solver.
 - `recordValues::fmi2ValueReferenceFormat` = nothing: Array of variables (Strings or variableIdentifiers) to record. Results are returned as `DiffEqCallbacks.SavedValues`
 - `saveat = nothing`: Time points to save (interpolated) values at (default = nothing: save at each solver timestep)
@@ -379,8 +367,8 @@ See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateSE`](@ref).
 """
 function simulateCS(
     fmu::FMU,
-    c::Union{FMUInstance,Nothing},
-    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing;
+    c::Union{FMUInstance,Nothing} = nothing;
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
     tolerance::Union{Real,Nothing} = nothing,
     dt::Union{Real,Nothing} = nothing,
     recordValues::fmi2ValueReferenceFormat = nothing,
@@ -553,26 +541,125 @@ function simulateCS(
 
     return fmusol
 end
-simulateCS(c::FMUInstance, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateCS(c.fmu, c, tspan; kwargs...)
-simulateCS(fmu::FMU, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateCS(fmu, nothing, tspan; kwargs...)
+simulateCS(c::FMUInstance; kwargs...) = simulateCS(c.fmu, c; kwargs...)
 export simulateCS
+
+function _with_fmu_problem_state_kwargs(prob::FMUProblem, sim_kwargs::NamedTuple)
+    # Bridge SciML problem fields to the existing FMI simulation keyword API.
+    if prob.u0 !== nothing && !haskey(sim_kwargs, :x0)
+        sim_kwargs = merge(sim_kwargs, (; x0 = prob.u0))
+    end
+
+    if !(prob.p isa NullParameters) &&
+       prob.p isa AbstractDict &&
+       !haskey(sim_kwargs, :parameters)
+        sim_kwargs = merge(sim_kwargs, (; parameters = prob.p))
+    end
+
+    return sim_kwargs
+end
+
+function _update_fmu_problem_after_solve!(prob::FMUProblem, solution::FMUSolution)
+    # Keep the reusable FMUProblem aligned with the concrete instance prepared by solve.
+    prob.instance = solution.instance
+
+    if !isnothing(prob.instance) &&
+       hasproperty(prob.instance, :problem) &&
+       !isnothing(prob.instance.problem)
+        prob.problem = prob.instance.problem
+        prob.f = prob.problem.f
+        prob.u0 = prob.problem.u0
+        prob.tspan = prob.problem.tspan
+    end
+
+    if !isnothing(prob.instance) &&
+       hasproperty(prob.instance, :callback) &&
+       !isnothing(prob.instance.callback)
+        prob.callback = prob.instance.callback
+    end
+
+    return solution
+end
+
+function solveFMUProblem!(prob::FMUProblem, args...; kwargs...)
+    sim_kwargs = merge(prob.kwargs, (; kwargs...))
+
+    if prob.mode == :ME
+        # ME is an actual ODE solve; a positional solver algorithm is meaningful here.
+        if length(args) > 1
+            throw(
+                ArgumentError(
+                    "Model Exchange FMUProblem accepts at most one positional solver algorithm.",
+                ),
+            )
+        elseif length(args) == 1
+            sim_kwargs = merge(sim_kwargs, (; solver = args[1]))
+        end
+
+        sim_kwargs = _with_fmu_problem_state_kwargs(prob, sim_kwargs)
+        solution = simulateME(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
+        _update_fmu_problem_after_solve!(prob, solution)
+        return solution.states
+
+    elseif prob.mode == :CS
+        # CS advances through the FMU's internal solver, so ODE solver concepts do not apply.
+        if length(args) > 0
+            throw(
+                ArgumentError(
+                    "Co-Simulation FMUProblem uses the FMU's internal solver and does not accept an ODE solver algorithm. Use `dt`, `saveat` and `tolerance` keywords instead.",
+                ),
+            )
+        end
+        if prob.u0 !== nothing || haskey(sim_kwargs, :x0)
+            throw(
+                ArgumentError(
+                    "`u0`/`x0` is only supported for Model Exchange FMUProblem. Co-Simulation FMUs do not expose continuous states to the solver.",
+                ),
+            )
+        end
+        if haskey(sim_kwargs, :callback)
+            throw(
+                ArgumentError(
+                    "`callback` is only supported for Model Exchange FMUProblem. Co-Simulation FMUs advance through `doStep`.",
+                ),
+            )
+        end
+
+        solution = simulateCS(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
+        # CS does not produce an ODESolution; keep returning the FMUSolution wrapper.
+        return _update_fmu_problem_after_solve!(prob, solution)
+
+    elseif prob.mode == :SE
+        # Scheduled Execution is surfaced for completeness, but implementation is still delegated.
+        if length(args) > 0
+            throw(
+                ArgumentError(
+                    "Scheduled-Execution FMUProblem does not accept an ODE solver algorithm.",
+                ),
+            )
+        end
+
+        solution = simulateSE(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
+        _update_fmu_problem_after_solve!(prob, solution)
+        return solution.states
+    end
+
+    throw(ArgumentError("Unknown FMUProblem mode `$(prob.mode)`."))
+end
 
 # [TODO] implement scheduled execution
 """
-    simulateSE(fmu, instance=nothing, tspan=nothing; kwargs...)
-    simulateSE(fmu, tspan; kwargs...)
-    simulateSE(instance, tspan; kwargs...)
+    simulateSE(fmu, instance=nothing; tspan=nothing, kwargs...)
+    simulateSE(instance; tspan=nothing, kwargs...)
 
 To be implemented ...
 
 # Arguments
 - `fmu::FMU3`: The FMU to be simulated. Note: SE is only available in FMI3.
 - `c::Union{FMU3Instance, Nothing}=nothing`: The instance (FMI3) of the FMU, `nothing` if not available. 
-- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 
 # Keyword arguments
+- `tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing`: Simulation-time-span as tuple (default = nothing: use default value from FMU's model description or (0.0, 1.0) if not specified)
 - To be implemented ...
 
 # Returns:
@@ -582,21 +669,19 @@ See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateCS`](@ref).
 """
 function simulateSE(
     fmu::FMU2,
-    c::Union{FMU2Component,Nothing},
+    c::Union{FMU2Component,Nothing} = nothing;
     tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
 )
     @assert false "This is a FMI2-FMU, scheduled execution is not supported in FMI2."
 end
 function simulateSE(
     fmu::FMU3,
-    c::Union{FMU3Instance,Nothing},
+    c::Union{FMU3Instance,Nothing};
     tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
 )
     # [ToDo]   
     @assert false "Not implemented yet. Please open an issue if this is needed."
 end
-simulateSE(c::FMUInstance, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateSE(c.fmu, c, tspan; kwargs...)
-simulateSE(fmu::FMU, tspan::Tuple{Float64,Float64}; kwargs...) =
-    simulateSE(fmu, nothing, tspan; kwargs...)
+simulateSE(c::FMUInstance; kwargs...) = simulateSE(c.fmu, c; kwargs...)
+simulateSE(fmu::FMU; kwargs...) = simulateSE(fmu, nothing; kwargs...)
 export simulateSE

@@ -16,8 +16,8 @@ fmuStruct, fmu = getFMUStruct("IO", :ME)
 @test fmu.isZeroState # check if zero state is identified
 
 solution = simulateME(
-    fmuStruct,
-    (t_start, t_stop);
+    fmuStruct;
+    tspan = (t_start, t_stop),
     solver = solver,
     recordValues = ["y_real"], # , "y_boolean", "y_integer"], # [ToDo] different types to record
     inputValueReferences = ["u_real"], # [ToDo] different types to set

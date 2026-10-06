@@ -13,12 +13,16 @@ t_start = 0.0
 t_stop = 8.0
 
 # test without recording values (just for completeness)
-solution = simulateCS(fmuStruct, (t_start, t_stop); dt = 1e-2)
+solution = simulateCS(fmuStruct; tspan = (t_start, t_stop), dt = 1e-2)
 @test solution.success
 
 # test with recording values
-solution =
-    simulateCS(fmuStruct, (t_start, t_stop); dt = 1e-2, recordValues = ["mass.s", "mass.v"])
+solution = simulateCS(
+    fmuStruct;
+    tspan = (t_start, t_stop),
+    dt = 1e-2,
+    recordValues = ["mass.s", "mass.v"],
+)
 @test solution.success
 @test length(solution.values.saveval) == t_start:1e-2:t_stop |> length
 @test length(solution.values.saveval[1]) == 2
@@ -54,8 +58,8 @@ for inpfct! in [extForce_ct!, extForce_t!]
     global solution
 
     solution = simulateCS(
-        fmustruct,
-        (t_start, t_stop);
+        fmustruct;
+        tspan = (t_start, t_stop),
         dt = 1e-2,
         recordValues = ["mass.s", "mass.v"],
         inputValueReferences = ["extForce"],

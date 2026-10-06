@@ -200,6 +200,8 @@ end
 # [NOTE] needs to be exported, because FMICore only exports `fmi2Instantiate`
 export fmi2Instantiate!
 
+lk_fmi2FreeInstance = ReentrantLock()
+
 """
     fmi2FreeInstance!(c::FMU2Component; popComponent::Bool = true)
 
@@ -220,7 +222,6 @@ Removes the component from the FMUs component list.
 - FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 See Also [`fmi2FreeInstance!`](@ref).
 """
-lk_fmi2FreeInstance = ReentrantLock()
 function fmi2FreeInstance!(
     c::FMU2Component;
     popComponent::Bool = true,
