@@ -161,3 +161,17 @@ function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
     end
 end
 export unloadFMU
+
+# load/unload sugar 
+function loadFMU(f::Function, pathToFMU::String; kwargs...)
+    fmu = loadFMU(pathToFMU; kwargs...)
+
+    try
+        f(fmu)
+    catch e
+        unloadFMU(fmu)
+        throw(w)
+    finally
+        unloadFMU(fmu)
+    end
+end

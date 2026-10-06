@@ -61,24 +61,18 @@ info(myFMU) # check if there is an error thrown
 
 @test length(getStateNames(myFMU.modelDescription)) == 2
 @test length(getStateNames(myFMU)) == 2
-@test getStateNames(myFMU; mode = :first) == ["mass.s", "mass.v"]
-@test getStateNames(myFMU; mode = :flat) == ["mass.s", "mass.v", "mass.v_relfric"]
-@test getStateNames(myFMU; mode = :group) == [["mass.s"], ["mass.v", "mass.v_relfric"]]
+# aliases (same value reference) are returned in model description declaration order
+@test getStateNames(myFMU; mode = :first) == ["mass.s", "mass.v_relfric"]
+@test getStateNames(myFMU; mode = :flat) == ["mass.s", "mass.v_relfric", "mass.v"]
+@test getStateNames(myFMU; mode = :group) == [["mass.s"], ["mass.v_relfric", "mass.v"]]
 
 @test length(getDerivativeNames(myFMU.modelDescription)) == 2
 @test length(getDerivativeNames(myFMU)) == 2
 @test getDerivativeNames(myFMU; mode = :first) == ["der(mass.s)", "mass.a_relfric"]
-# @test getDerivativeNames(myFMU; mode=:flat) == ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"]
-@test issetequal(
-    getDerivativeNames(myFMU; mode = :flat),
-    ["der(mass.s)", "mass.a_relfric", "mass.a", "der(mass.v)"],
-)
-@test all(
-    issetequal.(
-        getDerivativeNames(myFMU; mode = :group),
-        [["der(mass.s)"], ["mass.a_relfric", "mass.a", "der(mass.v)"]],
-    ),
-)
+@test getDerivativeNames(myFMU; mode = :flat) ==
+      ["der(mass.s)", "mass.a_relfric", "der(mass.v)", "mass.a"]
+@test getDerivativeNames(myFMU; mode = :group) ==
+      [["der(mass.s)"], ["mass.a_relfric", "der(mass.v)", "mass.a"]]
 
 @test length(getNamesAndDescriptions(myFMU.modelDescription)) == 50
 @test length(getNamesAndDescriptions(myFMU)) == 50

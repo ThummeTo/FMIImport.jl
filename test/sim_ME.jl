@@ -230,8 +230,13 @@ for solver in solvers
 
     fmuStruct, fmu = getFMUStruct("SpringFrictionPendulum1D", :ME)
 
-    solution =
-        simulateME(fmuStruct; tspan = (t_start, t_stop), x0 = rand_x0, solver = solver, kwargs...)
+    solution = simulateME(
+        fmuStruct;
+        tspan = (t_start, t_stop),
+        x0 = rand_x0,
+        solver = solver,
+        kwargs...,
+    )
     @test length(solution.states.u) > 0
     @test length(solution.states.t) > 0
 

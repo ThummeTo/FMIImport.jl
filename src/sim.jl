@@ -55,11 +55,7 @@ You can force a specific simulation mode by calling [`simulateCS`](@ref), [`simu
 
 See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateCS`](@ref), [`simulateSE`](@ref).
 """
-function simulate(
-    fmu::FMU2,
-    c::Union{FMU2Component,Nothing}=nothing;
-    kwargs...,
-)
+function simulate(fmu::FMU2, c::Union{FMU2Component,Nothing} = nothing; kwargs...)
 
     if fmu.type == fmi2TypeCoSimulation
         return simulateCS(fmu, c; kwargs...)
@@ -69,11 +65,7 @@ function simulate(
         error(unknownFMUType)
     end
 end
-function simulate(
-    fmu::FMU3,
-    c::Union{FMU3Instance,Nothing}=nothing;
-    kwargs...,
-)
+function simulate(fmu::FMU3, c::Union{FMU3Instance,Nothing} = nothing; kwargs...)
 
     if fmu.type == fmi3TypeCoSimulation
         return simulateCS(fmu, c; kwargs...)
@@ -85,10 +77,8 @@ function simulate(
         error(unknownFMUType)
     end
 end
-simulate(c::FMUInstance; kwargs...) =
-    simulate(c.fmu, c; kwargs...)
-simulate(fmu::FMU; kwargs...) =
-    simulate(fmu, nothing; kwargs...)
+simulate(c::FMUInstance; kwargs...) = simulate(c.fmu, c; kwargs...)
+simulate(fmu::FMU; kwargs...) = simulate(fmu, nothing; kwargs...)
 export simulate
 
 """
@@ -138,25 +128,25 @@ See also [`simulate`](@ref), [`simulateCS`](@ref), [`simulateSE`](@ref).
 """
 function simulateME(
     fmu::FMU,
-    c::Union{FMUInstance,Nothing}=nothing;
-    tspan::Union{Tuple{Float64,Float64},Nothing}=nothing,
-    solver=nothing, # [ToDo] type
-    recordValues::fmi2ValueReferenceFormat=nothing,
-    recordEventIndicators::Union{AbstractArray{<:Integer,1},UnitRange{<:Integer},Nothing}=nothing,
-    recordEigenvalues::Bool=false,
-    saveat=nothing, # [ToDo] type
-    x0::Union{AbstractArray{<:Real},Nothing}=nothing,
-    setup::Bool=fmu.executionConfig.setup,
-    reset::Bool=fmu.executionConfig.reset,
-    instantiate::Bool=fmu.executionConfig.instantiate,
-    freeInstance::Bool=fmu.executionConfig.freeInstance,
-    terminate::Bool=fmu.executionConfig.terminate,
-    inputValueReferences::fmi2ValueReferenceFormat=nothing,
-    inputFunction=nothing,
-    parameters::Union{Dict{<:Any,<:Any},Nothing}=nothing,
-    callbacksBefore::AbstractVector=[], # [ToDo] type
-    callbacksAfter::AbstractVector=[], # [ToDo] type
-    showProgress::Bool=true,
+    c::Union{FMUInstance,Nothing} = nothing;
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
+    solver = nothing, # [ToDo] type
+    recordValues::fmi2ValueReferenceFormat = nothing,
+    recordEventIndicators::Union{AbstractArray{<:Integer,1},UnitRange{<:Integer},Nothing} = nothing,
+    recordEigenvalues::Bool = false,
+    saveat = nothing, # [ToDo] type
+    x0::Union{AbstractArray{<:Real},Nothing} = nothing,
+    setup::Bool = fmu.executionConfig.setup,
+    reset::Bool = fmu.executionConfig.reset,
+    instantiate::Bool = fmu.executionConfig.instantiate,
+    freeInstance::Bool = fmu.executionConfig.freeInstance,
+    terminate::Bool = fmu.executionConfig.terminate,
+    inputValueReferences::fmi2ValueReferenceFormat = nothing,
+    inputFunction = nothing,
+    parameters::Union{Dict{<:Any,<:Any},Nothing} = nothing,
+    callbacksBefore::AbstractVector = [], # [ToDo] type
+    callbacksAfter::AbstractVector = [], # [ToDo] type
+    showProgress::Bool = true,
     solveKwargs...,
 )
 
@@ -178,9 +168,9 @@ function simulateME(
     if showProgress
         progressMeter = ProgressMeter.Progress(
             1000;
-            desc="Simulating ME-FMU ...",
-            color=:blue,
-            dt=1.0,
+            desc = "Simulating ME-FMU ...",
+            color = :blue,
+            dt = 1.0,
         ) #, barglyphs=ProgressMeter.BarGlyphs("[=> ]"))
         ProgressMeter.update!(progressMeter, 0) # show it!
     end
@@ -200,16 +190,16 @@ function simulateME(
         fmu,
         c,
         :ME;
-        parameters=parameters,
-        t_start=t_start,
-        t_stop=t_stop,
-        x0=x0,
-        inputs=inputs,
-        instantiate=instantiate,
-        freeInstance=freeInstance,
-        terminate=terminate,
-        reset=reset,
-        setup=setup,
+        parameters = parameters,
+        t_start = t_start,
+        t_stop = t_stop,
+        x0 = x0,
+        inputs = inputs,
+        instantiate = instantiate,
+        freeInstance = freeInstance,
+        terminate = terminate,
+        reset = reset,
+        setup = setup,
     )
 
     # Zero state FMU: add dummy state
@@ -224,7 +214,7 @@ function simulateME(
 
     @assert !isnothing(x0) "x0 is nothing after prepare!"
 
-    c.problem = setupODEProblem(c, x0, tspan; inputFunction=_inputFunction)
+    c.problem = setupODEProblem(c, x0, tspan; inputFunction = _inputFunction)
     cbs = setupCallbacks(
         c,
         recordValues,
@@ -271,9 +261,9 @@ function simulateME(
     # callback functions
 
     if isnothing(solver)
-        c.solution.states = solve(c.problem; callback=c.callback, solveKwargs...)
+        c.solution.states = solve(c.problem; callback = c.callback, solveKwargs...)
     else
-        c.solution.states = solve(c.problem, solver; callback=c.callback, solveKwargs...)
+        c.solution.states = solve(c.problem, solver; callback = c.callback, solveKwargs...)
     end
 
     c.solution.success = (c.solution.states.retcode == ReturnCode.Success)
@@ -300,12 +290,11 @@ function simulateME(
         ProgressMeter.finish!(progressMeter)
     end
 
-    finishSolveFMU(fmu, c; freeInstance=freeInstance, terminate=terminate)
+    finishSolveFMU(fmu, c; freeInstance = freeInstance, terminate = terminate)
 
     return c.solution
 end
-simulateME(c::FMUInstance; kwargs...) =
-    simulateME(c.fmu, c; kwargs...)
+simulateME(c::FMUInstance; kwargs...) = simulateME(c.fmu, c; kwargs...)
 export simulateME
 
 ############ Co-Simulation ############
@@ -378,21 +367,21 @@ See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateSE`](@ref).
 """
 function simulateCS(
     fmu::FMU,
-    c::Union{FMUInstance,Nothing}=nothing;
-    tspan::Union{Tuple{Float64,Float64},Nothing}=nothing,
-    tolerance::Union{Real,Nothing}=nothing,
-    dt::Union{Real,Nothing}=nothing,
-    recordValues::fmi2ValueReferenceFormat=nothing,
-    saveat=[],
-    setup::Bool=fmu.executionConfig.setup,
-    reset::Bool=fmu.executionConfig.reset,
-    instantiate::Bool=fmu.executionConfig.instantiate,
-    freeInstance::Bool=fmu.executionConfig.freeInstance,
-    terminate::Bool=fmu.executionConfig.terminate,
-    inputValueReferences::fmiValueReferenceFormat=nothing,
-    inputFunction=nothing,
-    showProgress::Bool=true,
-    parameters::Union{Dict{<:Any,<:Any},Nothing}=nothing,
+    c::Union{FMUInstance,Nothing} = nothing;
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
+    tolerance::Union{Real,Nothing} = nothing,
+    dt::Union{Real,Nothing} = nothing,
+    recordValues::fmi2ValueReferenceFormat = nothing,
+    saveat = [],
+    setup::Bool = fmu.executionConfig.setup,
+    reset::Bool = fmu.executionConfig.reset,
+    instantiate::Bool = fmu.executionConfig.instantiate,
+    freeInstance::Bool = fmu.executionConfig.freeInstance,
+    terminate::Bool = fmu.executionConfig.terminate,
+    inputValueReferences::fmiValueReferenceFormat = nothing,
+    inputFunction = nothing,
+    showProgress::Bool = true,
+    parameters::Union{Dict{<:Any,<:Any},Nothing} = nothing,
 )
 
     @assert isCoSimulation(fmu) "simulateCS(...): This function supports Co-Simulation FMUs only."
@@ -452,16 +441,16 @@ function simulateCS(
         fmu,
         c,
         :CS;
-        instantiate=instantiate,
-        freeInstance=freeInstance,
-        terminate=terminate,
-        reset=reset,
-        setup=setup,
-        parameters=parameters,
-        t_start=t_start,
-        t_stop=t_stop,
-        tolerance=tolerance,
-        inputs=inputs,
+        instantiate = instantiate,
+        freeInstance = freeInstance,
+        terminate = terminate,
+        reset = reset,
+        setup = setup,
+        parameters = parameters,
+        t_start = t_start,
+        t_stop = t_stop,
+        tolerance = tolerance,
+        inputs = inputs,
     )
     fmusol = c.solution
 
@@ -482,7 +471,7 @@ function simulateCS(
     progressMeter = nothing
     if showProgress
         progressMeter =
-            ProgressMeter.Progress(1000; desc="Sim. CS-FMU ...", color=:blue, dt=1.0)
+            ProgressMeter.Progress(1000; desc = "Sim. CS-FMU ...", color = :blue, dt = 1.0)
         ProgressMeter.update!(progressMeter, 0) # show it!
     end
 
@@ -509,7 +498,7 @@ function simulateCS(
         end
 
         if !first_step
-            ret = doStep(c, dt; currentCommunicationPoint=t)
+            ret = doStep(c, dt; currentCommunicationPoint = t)
 
             if !isStatusOK(fmu, ret)
                 fmusol.success = false
@@ -525,7 +514,7 @@ function simulateCS(
             u = eval!(_inputFunction, c, nothing, t)
         end
 
-        c(u=u, u_refs=u_refs, y=y, y_refs=y_refs)
+        c(u = u, u_refs = u_refs, y = y, y_refs = y_refs)
 
         svalues = (y...,)
         copyat_or_push!(fmusol.values.t, i, t)
@@ -548,24 +537,23 @@ function simulateCS(
         ProgressMeter.finish!(progressMeter)
     end
 
-    finishSolveFMU(fmu, c; freeInstance=freeInstance, terminate=terminate)
+    finishSolveFMU(fmu, c; freeInstance = freeInstance, terminate = terminate)
 
     return fmusol
 end
-simulateCS(c::FMUInstance; kwargs...) =
-    simulateCS(c.fmu, c; kwargs...)
+simulateCS(c::FMUInstance; kwargs...) = simulateCS(c.fmu, c; kwargs...)
 export simulateCS
 
 function _with_fmu_problem_state_kwargs(prob::FMUProblem, sim_kwargs::NamedTuple)
     # Bridge SciML problem fields to the existing FMI simulation keyword API.
     if prob.u0 !== nothing && !haskey(sim_kwargs, :x0)
-        sim_kwargs = merge(sim_kwargs, (; x0=prob.u0))
+        sim_kwargs = merge(sim_kwargs, (; x0 = prob.u0))
     end
 
     if !(prob.p isa NullParameters) &&
        prob.p isa AbstractDict &&
        !haskey(sim_kwargs, :parameters)
-        sim_kwargs = merge(sim_kwargs, (; parameters=prob.p))
+        sim_kwargs = merge(sim_kwargs, (; parameters = prob.p))
     end
 
     return sim_kwargs
@@ -605,11 +593,11 @@ function solveFMUProblem!(prob::FMUProblem, args...; kwargs...)
                 ),
             )
         elseif length(args) == 1
-            sim_kwargs = merge(sim_kwargs, (; solver=args[1]))
+            sim_kwargs = merge(sim_kwargs, (; solver = args[1]))
         end
 
         sim_kwargs = _with_fmu_problem_state_kwargs(prob, sim_kwargs)
-        solution = simulateME(prob.fmu, prob.instance; tspan=prob.tspan, sim_kwargs...)
+        solution = simulateME(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
         _update_fmu_problem_after_solve!(prob, solution)
         return solution.states
 
@@ -637,7 +625,7 @@ function solveFMUProblem!(prob::FMUProblem, args...; kwargs...)
             )
         end
 
-        solution = simulateCS(prob.fmu, prob.instance; tspan=prob.tspan, sim_kwargs...)
+        solution = simulateCS(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
         # CS does not produce an ODESolution; keep returning the FMUSolution wrapper.
         return _update_fmu_problem_after_solve!(prob, solution)
 
@@ -651,7 +639,7 @@ function solveFMUProblem!(prob::FMUProblem, args...; kwargs...)
             )
         end
 
-        solution = simulateSE(prob.fmu, prob.instance; tspan=prob.tspan, sim_kwargs...)
+        solution = simulateSE(prob.fmu, prob.instance; tspan = prob.tspan, sim_kwargs...)
         _update_fmu_problem_after_solve!(prob, solution)
         return solution.states
     end
@@ -681,21 +669,19 @@ See also [`simulate`](@ref), [`simulateME`](@ref), [`simulateCS`](@ref).
 """
 function simulateSE(
     fmu::FMU2,
-    c::Union{FMU2Component,Nothing}=nothing;
-    tspan::Union{Tuple{Float64,Float64},Nothing}=nothing,
+    c::Union{FMU2Component,Nothing} = nothing;
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
 )
     @assert false "This is a FMI2-FMU, scheduled execution is not supported in FMI2."
 end
 function simulateSE(
     fmu::FMU3,
     c::Union{FMU3Instance,Nothing};
-    tspan::Union{Tuple{Float64,Float64},Nothing}=nothing,
+    tspan::Union{Tuple{Float64,Float64},Nothing} = nothing,
 )
     # [ToDo]   
     @assert false "Not implemented yet. Please open an issue if this is needed."
 end
-simulateSE(c::FMUInstance; kwargs...) =
-    simulateSE(c.fmu, c; kwargs...)
-simulateSE(fmu::FMU; kwargs...) =
-    simulateSE(fmu, nothing; kwargs...)
+simulateSE(c::FMUInstance; kwargs...) = simulateSE(c.fmu, c; kwargs...)
+simulateSE(fmu::FMU; kwargs...) = simulateSE(fmu, nothing; kwargs...)
 export simulateSE
