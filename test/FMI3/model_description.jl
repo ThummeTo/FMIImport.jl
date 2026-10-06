@@ -4,6 +4,7 @@
 #
 
 import FMIImport.FMICore: fmi3VariableNamingConventionFlat
+using SparseArrays
 
 myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 
@@ -41,6 +42,17 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 
 
 info(myFMU) # check if there is an error thrown
+
+# DependencyMatrix: EventIndicator (VR=1) has no dependencies attribute -> depends on all knowns
+ext = Base.get_extension(FMIImport, :SparseArraysExt)
+depMatrix = ext.DependencyMatrix(myFMU.modelDescription)
+@test depMatrix isa ext.DependencyMatrix
+eventIndicatorVR = myFMU.modelDescription.eventIndicatorValueReferences[1]
+stateVRs = myFMU.modelDescription.stateValueReferences
+@test all(
+    depMatrix[eventIndicatorVR, stateVR] == fmi3DependencyKindDependent for
+    stateVR in stateVRs
+)
 
 unloadFMU(myFMU)
 
