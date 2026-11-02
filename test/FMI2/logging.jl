@@ -85,6 +85,12 @@ end
 #output = read(joinpath(pwd(), "stderr"), String)
 #@test output == ""
 
+### CASE D: Julia's own logging callbacks ###
+
+comp = fmi2Instantiate!(myFMU; loggingOn = true, externalCallbacks = false)
+@test comp != 0
+@test_logs (:error, r"^\[Error\]\[IllegalFunctionCall\]") match_mode = :any fmi2ExitInitializationMode(comp)
+
 # cleanup
 myFMU.executionConfig.assertOnError = true
 myFMU.executionConfig.assertOnWarning = true
