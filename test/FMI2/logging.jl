@@ -89,7 +89,9 @@ end
 
 comp = fmi2Instantiate!(myFMU; loggingOn = true, externalCallbacks = false)
 @test comp != 0
-@test_logs (:error, r"^\[Error\]\[IllegalFunctionCall\]") match_mode = :any fmi2ExitInitializationMode(comp)
+@test_logs (:error, r"^\[Error\]\[IllegalFunctionCall\]") match_mode = :any fmi2ExitInitializationMode(
+    comp,
+)
 
 # cleanup
 myFMU.executionConfig.assertOnError = true
