@@ -12,7 +12,17 @@ function testSparsity(fmiversion::String)
     @testset "Sparsity FMI $fmiversion" begin
         fmu = loadFMU("SpringPendulum1D", tool, version, fmiversion)
 
-        @testset "DependencyMatrix auto-loaded on loadFMU" begin
+        # [Note] loading the DependencyMatrix is switched off by default (bad loading performance for large models)
+        @testset "DependencyMatrix not loaded by default" begin
+            @test isnothing(fmu.dependencyMatrix)
+            @test isnothing(fmu.jac_prototype)
+        end
+
+        @testset "load_dep_matrix opt-in" begin
+            cfg = FMUExecutionConfiguration()
+            cfg.load_dep_matrix = true
+            fmu.executionConfig = cfg
+            loadDependencyMatrix!(fmu)
             @test fmu.dependencyMatrix isa FMIBase.AbstractDependencyMatrix
             @test fmu.jac_prototype isa AbstractMatrix
 

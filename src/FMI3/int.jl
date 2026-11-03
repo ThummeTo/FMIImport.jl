@@ -111,9 +111,9 @@ function fmi3InstantiateModelExchange!(
         if pushInstances
             push!(fmu.instances, instance)
         end
-
-        fmu.threadInstances[Threads.threadid()] = instance
     end
+
+    fmu.threadInstances[Threads.threadid()] = instance
 
     return getCurrentInstance(fmu)
 end
@@ -254,9 +254,9 @@ function fmi3InstantiateCoSimulation!(
         if pushInstances
             push!(fmu.instances, instance)
         end
-
-        fmu.threadInstances[Threads.threadid()] = instance
     end
+
+    fmu.threadInstances[Threads.threadid()] = instance
 
     return getCurrentInstance(fmu)
 end
@@ -374,9 +374,9 @@ function fmi3InstantiateScheduledExecution!(
         if pushInstances
             push!(fmu.instances, instance)
         end
-
-        fmu.threadInstances[Threads.threadid()] = instance
     end
+
+    fmu.threadInstances[Threads.threadid()] = instance
 
     return getCurrentInstance(fmu)
 end

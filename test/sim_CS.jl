@@ -40,6 +40,17 @@ v = collect(d[2] for d in solution.values.saveval)
 @test isapprox(s[end], 0.509219; atol = 1e-1)
 @test isapprox(v[end], 0.314074; atol = 1e-1)
 
+# test with parameters
+solution = simulateCS(
+    fmuStruct;
+    tspan = (t_start, t_stop),
+    dt = 1e-2,
+    parameters = Dict("mass_s0" => 1.5),
+    recordValues = ["mass.s"],
+)
+@test solution.success
+@test solution.values.saveval[1][1] == 1.5
+
 unloadFMU(fmu)
 
 # case 2: CS-FMU with input signal

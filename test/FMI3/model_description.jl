@@ -3,7 +3,16 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import FMIImport.FMICore: fmi3VariableNamingConventionFlat
+import FMIImport.FMICore:
+    fmi3VariableNamingConventionFlat,
+    fmi3CausalityParameter,
+    fmi3CausalityOutput,
+    fmi3CausalityLocal,
+    fmi3VariabilityConstant,
+    fmi3VariabilityFixed,
+    fmi3VariabilityTunable,
+    fmi3VariabilityContinuous,
+    fmi3InitialExact
 using SparseArrays
 
 myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
@@ -30,6 +39,15 @@ myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
 @test getDefaultStopTime(myFMU.modelDescription) ≈ 3.0
 @test getDefaultTolerance(myFMU.modelDescription) === nothing
 @test getDefaultStepSize(myFMU.modelDescription) === 0.01
+
+attributes = Dict(
+    mv.name => (mv.causality, mv.variability, mv.initial) for
+    mv in myFMU.modelDescription.modelVariables
+)
+@test attributes["g"] == (fmi3CausalityParameter, fmi3VariabilityFixed, fmi3InitialExact)
+@test attributes["e"] == (fmi3CausalityParameter, fmi3VariabilityTunable, fmi3InitialExact)
+@test attributes["h"] == (fmi3CausalityOutput, fmi3VariabilityContinuous, fmi3InitialExact)
+@test attributes["v_min"] == (fmi3CausalityLocal, fmi3VariabilityConstant, fmi3InitialExact)
 
 @test myFMU.modelDescription.numberOfEventIndicators == 1
 @test myFMU.modelDescription.eventIndicatorValueReferences == [1]

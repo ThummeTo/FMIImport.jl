@@ -24,18 +24,18 @@ function fmi2CallbackLogger(
 
     message = unsafe_string(_message)
     category = unsafe_string(_category)
-    status = fmi2StatusToString(_status)
+    status = statusToString(_status)
     instanceName = unsafe_string(_instanceName)
     componentEnvironment = unsafe_load(_componentEnvironment)
 
-    if status == fmi2StatusOK && componentEnvironment.logStatusOK
+    if _status == fmi2StatusOK && componentEnvironment.logStatusOK
         @info "[$status][$category][$instanceName]: $message"
-    elseif (status == fmi2StatusWarning && componentEnvironment.logStatusWarning) ||
-           (status == fmi2StatusPending && componentEnvironment.logStatusPending)
+    elseif (_status == fmi2StatusWarning && componentEnvironment.logStatusWarning) ||
+           (_status == fmi2StatusPending && componentEnvironment.logStatusPending)
         @warn "[$status][$category][$instanceName]: $message"
-    elseif (status == fmi2StatusDiscard && componentEnvironment.logStatusDiscard) ||
-           (status == fmi2StatusError && componentEnvironment.logStatusError) ||
-           (status == fmi2StatusFatal && componentEnvironment.logStatusFatal)
+    elseif (_status == fmi2StatusDiscard && componentEnvironment.logStatusDiscard) ||
+           (_status == fmi2StatusError && componentEnvironment.logStatusError) ||
+           (_status == fmi2StatusFatal && componentEnvironment.logStatusFatal)
         @error "[$status][$category][$instanceName]: $message"
     end
 

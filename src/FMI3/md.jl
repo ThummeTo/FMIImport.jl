@@ -206,6 +206,15 @@ end
 # [Sec. 1b] helpers for load function #
 #######################################
 
+# Default `initial` if the attribute is not present, see FMI 3.0 specification, table 22.
+function defaultInitial(mv::fmi3Variable)
+    if mv.variability == fmi3VariabilityConstant ||
+       mv.causality ∈ (fmi3CausalityParameter, fmi3CausalityStructuralParameter)
+        return fmi3InitialExact
+    end
+    return fmi3InitialCalculated
+end
+
 # Parses the model variables of the FMU model description.
 function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
     numberOfVariables = 0
@@ -269,6 +278,7 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
 
         if haskey(node, "causality")
             causality = stringToCausality(md, node["causality"])
+            modelVariables[index].causality = causality
 
             if causality == fmi3CausalityOutput
                 push!(md.outputValueReferences, valueReference)
@@ -280,7 +290,8 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
         end
 
         if haskey(node, "variability")
-            variability = stringToVariability(md, parseNode(node, "variability", String))
+            modelVariables[index].variability =
+                stringToVariability(md, parseNode(node, "variability", String))
         end
         modelVariables[index].canHandleMultipleSetPerTimeInstant =
             parseNode(node, "canHandleMultipleSetPerTimeInstant", Bool)
@@ -312,6 +323,8 @@ function parseModelVariables(md::fmi3ModelDescription, nodes::EzXML.Node)
             else
                 @warn "Unsupported typename `$(typename)` for modelVariable attribute `initial`."
             end
+        elseif typename ∉ ("Clock", "String")
+            modelVariables[index].initial = defaultInitial(modelVariables[index])
         end
 
         if haskey(node, "quantity")
