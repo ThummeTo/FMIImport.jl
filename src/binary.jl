@@ -129,7 +129,10 @@ function unloadFMU(fmu::FMU2, cleanUp::Bool = true; secure_pointers::Bool = true
         unloadPointers(fmu)
     end
 
-    dlclose(fmu.libHandle)
+    # FMUs created in memory (e.g. by FMIExport.jl) have no binary loaded
+    if fmu.libHandle != C_NULL
+        dlclose(fmu.libHandle)
+    end
 
     if cleanUp
         try
@@ -146,7 +149,10 @@ function unloadFMU(fmu::FMU3, cleanUp::Bool = true)
         fmi3FreeInstance!(fmu.instances[end])
     end
 
-    dlclose(fmu.libHandle)
+    # FMUs created in memory (e.g. by FMIExport.jl) have no binary loaded
+    if fmu.libHandle != C_NULL
+        dlclose(fmu.libHandle)
+    end
 
     # the instances are removed from the instances list via call to fmi3FreeInstance!
     @assert length(fmu.instances) == 0 "unloadFMU(fmu::FMU3, ...): Failure during deleting instances, $(length(fmu.instances)) remaining in stack."
