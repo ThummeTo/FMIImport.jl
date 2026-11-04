@@ -1,51 +1,51 @@
-![FMI.jl Logo](https://github.com/ThummeTo/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png?raw=true  "FMI.jl Logo")
+![FMI.jl Logo](https://github.com/JuliaFMI/FMI.jl/blob/main/logo/dark/fmijl_logo_640_320.png?raw=true  "FMI.jl Logo")
 # FMIImport.jl
 
 ## What is FMIImport.jl?
-[*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) implements the import functionalities of the FMI-standard ([fmi-standard.org](https://fmi-standard.org/)) for the Julia programming language. 
-[*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl).
+[*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl) implements the import functionalities of the FMI-standard ([fmi-standard.org](https://fmi-standard.org/)) for the Julia programming language. 
+[*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl) provides the foundation for the Julia packages [*FMI.jl*](https://github.com/JuliaFMI/FMI.jl) and [*FMIFlux.jl*](https://github.com/JuliaFMI/FMIFlux.jl).
 
 
-[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://thummeto.github.io/FMI.jl/dev/) 
-[![Test (latest)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLatest.yml) 
-[![Test (LTS)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/TestLTS.yml)
-[![Run PkgEval](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIImport.jl/actions/workflows/Eval.yml)
-[![Coverage](https://codecov.io/gh/ThummeTo/FMIImport.jl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ThummeTo/FMIImport.jl)
+[![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://juliafmi.github.io/FMI.jl/dev/) 
+[![Test (latest)](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/TestLatest.yml) 
+[![Test (LTS)](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/TestLTS.yml)
+[![Run PkgEval](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/JuliaFMI/FMIImport.jl/actions/workflows/Eval.yml)
+[![Coverage](https://codecov.io/gh/JuliaFMI/FMIImport.jl/branch/main/graph/badge.svg)](https://app.codecov.io/gh/JuliaFMI/FMIImport.jl)
 [![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
 [![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
 ## How can I use FMIImport.jl?
-[*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) is part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) might be the right way to go. You can install it via:
+[*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl) is part of [*FMI.jl*](https://github.com/JuliaFMI/FMI.jl). However, if you only need the import functionality without anything around and want to keep the dependencies as small as possible, [*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl) might be the right way to go. You can install it via:
 
 1\. Open a Julia-REPL, switch to package mode using `]`, activate your preferred environment.
 
-2\. Install [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+2\. Install [*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl):
 ```julia-repl
 (@v1) pkg> add FMIImport
 ```
 
-3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl):
+3\. If you want to check that everything works correctly, you can run the tests bundled with [*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl):
 ```julia-repl
 (@v1) pkg> test FMIImport
 ```
 
-4\. Have a look inside the [examples folder](https://github.com/ThummeTo/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://thummeto.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
+4\. Have a look inside the [examples folder](https://github.com/JuliaFMI/FMI.jl/tree/examples/examples) in the examples branch or the [examples section](https://juliafmi.github.io/FMI.jl/dev/examples/overview/) of the documentation of the [*FMI.jl*](https://github.com/JuliaFMI/FMI.jl) package. All examples are available as Julia-Script (*.jl*), Jupyter-Notebook (*.ipynb*) and Markdown (*.md*).
 
 ## What FMI.jl-Library should I use?
-![FMI.jl Family](https://github.com/ThummeTo/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
-To keep dependencies nice and clean, the original package [*FMI.jl*](https://github.com/ThummeTo/FMI.jl) had been split into new packages:
-- [*FMI.jl*](https://github.com/ThummeTo/FMI.jl): High level loading, manipulating, saving or building entire FMUs from scratch
-- [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl): Importing FMUs into Julia
-- [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl): Exporting stand-alone FMUs from Julia Code
-- [*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl): Common concepts for import and export of FMUs
-- [*FMICore.jl*](https://github.com/ThummeTo/FMICore.jl): C-code wrapper for the FMI-standard
-- [*FMISensitivity.jl*](https://github.com/ThummeTo/FMISensitivity.jl): Static and dynamic sensitivities over FMUs
-- [*FMIBuild.jl*](https://github.com/ThummeTo/FMIBuild.jl): Compiler/Compilation dependencies for FMIExport.jl
-- [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl): Machine Learning with FMUs
-- [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
+![FMI.jl Family](https://github.com/JuliaFMI/FMI.jl/blob/main/docs/src/assets/FMI_JL_family.png?raw=true "FMI.jl Family")
+To keep dependencies nice and clean, the original package [*FMI.jl*](https://github.com/JuliaFMI/FMI.jl) had been split into new packages:
+- [*FMI.jl*](https://github.com/JuliaFMI/FMI.jl): High level loading, manipulating, saving or building entire FMUs from scratch
+- [*FMIImport.jl*](https://github.com/JuliaFMI/FMIImport.jl): Importing FMUs into Julia
+- [*FMIExport.jl*](https://github.com/JuliaFMI/FMIExport.jl): Exporting stand-alone FMUs from Julia Code
+- [*FMIBase.jl*](https://github.com/JuliaFMI/FMIBase.jl): Common concepts for import and export of FMUs
+- [*FMICore.jl*](https://github.com/JuliaFMI/FMICore.jl): C-code wrapper for the FMI-standard
+- [*FMISensitivity.jl*](https://github.com/JuliaFMI/FMISensitivity.jl): Static and dynamic sensitivities over FMUs
+- [*FMIBuild.jl*](https://github.com/JuliaFMI/FMIBuild.jl): Compiler/Compilation dependencies for FMIExport.jl
+- [*FMIFlux.jl*](https://github.com/JuliaFMI/FMIFlux.jl): Machine Learning with FMUs
+- [*FMIZoo.jl*](https://github.com/JuliaFMI/FMIZoo.jl): A collection of testing and example FMUs
 
 ## What Platforms are supported?
-[FMIImport.jl](https://github.com/ThummeTo/FMIImport.jl) is tested (and testing) under Julia Versions *1.6 LTS* and *latest* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. Mac and x86-architectures might work, but are not tested.
+[FMIImport.jl](https://github.com/JuliaFMI/FMIImport.jl) is tested (and testing) under Julia Versions *1.6 LTS* and *latest* on Windows *latest* and Ubuntu *latest*. `x64` architectures are tested. Mac and x86-architectures might work, but are not tested.
 
 ## How to cite?
 Tobias Thummerer, Lars Mikelsons and Josef Kircher. 2021. **NeuralFMU: towards structural integration of FMUs into neural networks.** Martin Sjölund, Lena Buffoni, Adrian Pop and Lennart Ochel (Ed.). Proceedings of 14th Modelica Conference 2021, Linköping, Sweden, September 20-24, 2021. Linköping University Electronic Press, Linköping (Linköping Electronic Conference Proceedings ; 181), 297-306. [DOI: 10.3384/ecp21181297](https://doi.org/10.3384/ecp21181297)
