@@ -155,7 +155,13 @@ function fmi3LoadModelDescription(pathToModellDescription::String)
             md.scheduledExecution.providesPerElementDependencies =
                 parseNode(node, "providesPerElementDependencies", Bool; onfail = false)
 
-        elseif node.name ∈ ("TypeDefinitions", "LogCategories", "UnitDefinitions")
+        elseif node.name == "UnitDefinitions"
+            md.unitDefinitions = parseUnitDefinitions(md, node)
+
+        elseif node.name == "TypeDefinitions"
+            md.typeDefinitions = parseTypeDefinitions(md, node)
+
+        elseif node.name == "LogCategories"
             @warn "FMU has $(node.name), but parsing is not implemented yet."
 
         elseif node.name == "ModelVariables"
@@ -205,6 +211,100 @@ end
 #######################################
 # [Sec. 1b] helpers for load function #
 #######################################
+
+# the value type `T` of a field of type `Union{T, Nothing}`
+attributeType(::Type{Union{T,Nothing}}) where {T} = T
+attributeType(T::Type) = T
+
+# sets the fields of `_struct` (except the ones in `skiplist`) from the XML attributes with the same name,
+# fields without attribute are not changed
+function parseAttributes!(_struct, node::EzXML.Node, skiplist = ())
+    for field in fieldnames(typeof(_struct))
+        key = String(field)
+        if field ∈ skiplist || !haskey(node, key)
+            continue
+        end
+
+        type = attributeType(fieldtype(typeof(_struct), field))
+        value = (type == String ? node[key] : parseNode(node, key, type))
+        setfield!(_struct, field, value)
+    end
+    return _struct
+end
+
+# Parses the element `UnitDefinitions` of the model description (annotations are not parsed).
+function parseUnitDefinitions(md::fmi3ModelDescription, nodes::EzXML.Node)
+    units = fmi3Unit[]
+    for node in eachelement(nodes)
+        unit = fmi3Unit(node["name"])
+        for subnode in eachelement(node)
+            if subnode.name == "BaseUnit"
+                unit.baseUnit = parseAttributes!(fmi3BaseUnit(), subnode)
+            elseif subnode.name == "DisplayUnit"
+                displayUnit = fmi3DisplayUnit(subnode["name"])
+                push!(unit.displayUnits, parseAttributes!(displayUnit, subnode, (:name,)))
+            end
+        end
+        push!(units, unit)
+    end
+    return units
+end
+
+# element names of the type definitions
+const FMI3_TYPE_DEFINITIONS = Dict(
+    "Float32Type" => fmi3Float32Type,
+    "Float64Type" => fmi3Float64Type,
+    "Int8Type" => fmi3Int8Type,
+    "UInt8Type" => fmi3UInt8Type,
+    "Int16Type" => fmi3Int16Type,
+    "UInt16Type" => fmi3UInt16Type,
+    "Int32Type" => fmi3Int32Type,
+    "UInt32Type" => fmi3UInt32Type,
+    "Int64Type" => fmi3Int64Type,
+    "UInt64Type" => fmi3UInt64Type,
+    "BooleanType" => fmi3BooleanType,
+    "StringType" => fmi3StringType,
+    "BinaryType" => fmi3BinaryType,
+    "EnumerationType" => fmi3EnumerationType,
+    "ClockType" => fmi3ClockType,
+)
+
+# Parses the element `TypeDefinitions` of the model description (annotations are not parsed).
+function parseTypeDefinitions(md::fmi3ModelDescription, nodes::EzXML.Node)
+    types = fmi3SimpleType[]
+    for node in eachelement(nodes)
+        type = get(FMI3_TYPE_DEFINITIONS, node.name, nothing)
+        if isnothing(type)
+            @warn "Unknown type definition `$(node.name)`, skipping it."
+            continue
+        end
+
+        simpleType = if type == fmi3ClockType
+            fmi3ClockType(node["name"], node["intervalVariability"])
+        else
+            type(node["name"])
+        end
+        parseAttributes!(simpleType, node, (:name, :intervalVariability, :items))
+
+        if isa(simpleType, fmi3EnumerationType)
+            for subnode in eachelement(node)
+                if subnode.name == "Item"
+                    item = fmi3EnumerationItem(
+                        subnode["name"],
+                        parseNode(subnode, "value", fmi3Int64),
+                    )
+                    push!(
+                        simpleType.items,
+                        parseAttributes!(item, subnode, (:name, :value)),
+                    )
+                end
+            end
+        end
+
+        push!(types, simpleType)
+    end
+    return types
+end
 
 # Default `initial` if the attribute is not present, see FMI 3.0 specification, table 22.
 function defaultInitial(mv::fmi3Variable)
