@@ -13,6 +13,7 @@ import FMIImport.FMICore:
     fmi3VariabilityTunable,
     fmi3VariabilityContinuous,
     fmi3InitialExact
+using FMIImport.EzXML: parsexml, eachelement
 using SparseArrays
 
 myFMU = loadFMU("BouncingBall", "ModelicaReferenceFMUs", "0.0.30", "3.0")
@@ -59,6 +60,18 @@ attributes = Dict(
 )
 
 
+# unit and type definitions
+units = Dict(unit.name => unit for unit in myFMU.modelDescription.unitDefinitions)
+@test sort(collect(keys(units))) == ["m", "m/s", "m/s2"]
+@test (units["m/s2"].baseUnit.m, units["m/s2"].baseUnit.s) == (1, -2)
+@test isnothing(units["m/s2"].baseUnit.kg)
+@test isempty(units["m/s2"].displayUnits)
+types = Dict(type.name => type for type in myFMU.modelDescription.typeDefinitions)
+@test sort(collect(keys(types))) == ["Acceleration", "Position", "Velocity"]
+@test types["Velocity"] isa fmi3Float64Type
+@test (types["Velocity"].quantity, types["Velocity"].unit) == ("Velocity", "m/s")
+@test isnothing(types["Velocity"].min)
+
 info(myFMU) # check if there is an error thrown
 
 # DependencyMatrix: EventIndicator (VR=1) has no dependencies attribute -> depends on all knowns
@@ -80,3 +93,68 @@ myFMU = loadFMU("Dahlquist", "ModelicaReferenceFMUs", "0.0.36", "3.0")
 info(myFMU) # check if there is an error thrown
 
 unloadFMU(myFMU)
+
+# all kinds of unit and type definitions
+definitions = collect(
+    eachelement(
+        parsexml(
+            """
+            <fmiModelDescription>
+              <UnitDefinitions>
+                <Unit name="rad/s">
+                  <BaseUnit s="-1" rad="1"/>
+                  <DisplayUnit name="deg/s" factor="57.29577951308232"/>
+                  <DisplayUnit name="s/rad" inverse="true"/>
+                </Unit>
+              </UnitDefinitions>
+              <TypeDefinitions>
+                <Float32Type name="F32" min="-1.5" relativeQuantity="true"/>
+                <Int8Type name="I8" min="-128" max="127"/>
+                <UInt64Type name="U64" max="18446744073709551615"/>
+                <BooleanType name="B" description="flag"/>
+                <StringType name="S"/>
+                <BinaryType name="Bin" mimeType="image/png" maxSize="1024"/>
+                <EnumerationType name="E" quantity="Option">
+                  <Item name="a" value="-1"/>
+                  <Item name="b" value="2" description="second"/>
+                </EnumerationType>
+                <ClockType name="C" intervalVariability="constant" intervalDecimal="0.1" canBeDeactivated="true" priority="2"/>
+              </TypeDefinitions>
+            </fmiModelDescription>
+            """,
+        ).root,
+    ),
+)
+md = fmi3ModelDescription()
+
+unit = only(FMIImport.parseUnitDefinitions(md, definitions[1]))
+@test unit.name == "rad/s"
+@test (unit.baseUnit.s, unit.baseUnit.rad) == (-1, 1)
+@test isnothing(unit.baseUnit.m)
+@test [displayUnit.name for displayUnit in unit.displayUnits] == ["deg/s", "s/rad"]
+@test unit.displayUnits[1].factor == 57.29577951308232
+@test isnothing(unit.displayUnits[1].inverse)
+@test unit.displayUnits[2].inverse === true
+
+types = FMIImport.parseTypeDefinitions(md, definitions[2])
+@test typeof.(types) == [
+    fmi3Float32Type,
+    fmi3Int8Type,
+    fmi3UInt64Type,
+    fmi3BooleanType,
+    fmi3StringType,
+    fmi3BinaryType,
+    fmi3EnumerationType,
+    fmi3ClockType,
+]
+@test types[1].min === -1.5f0
+@test types[1].relativeQuantity === true
+@test (types[2].min, types[2].max) === (fmi3Int8(-128), fmi3Int8(127))
+@test types[3].max === typemax(fmi3UInt64)
+@test types[4].description == "flag"
+@test (types[6].mimeType, types[6].maxSize) == ("image/png", 1024)
+@test types[7].quantity == "Option"
+@test [(item.name, item.value, item.description) for item in types[7].items] == [("a", -1, nothing), ("b", 2, "second")]
+@test types[8].intervalVariability == "constant"
+@test (types[8].intervalDecimal, types[8].canBeDeactivated, types[8].priority) ==
+      (0.1, true, 2)
