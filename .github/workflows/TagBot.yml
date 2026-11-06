@@ -1,4 +1,5 @@
 name: TagBot
+
 on:
   issue_comment:
     types:
@@ -6,11 +7,21 @@ on:
   workflow_dispatch:
     inputs:
       lookback:
-        default: 3
+        default: "3"
+
 permissions:
+  actions: read
+  checks: read
   contents: write
+  deployments: read
+  issues: read
+  discussions: read
+  packages: read
+  pages: read
   pull-requests: read
-  issues: write
+  repository-projects: read
+  security-events: read
+  statuses: read
 
 jobs:
   TagBot:
@@ -20,7 +31,5 @@ jobs:
       - uses: JuliaRegistries/TagBot@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          # Edit the following line to reflect the actual name of the GitHub Secret containing your private key
+          # SSH deploy key, so the new tag triggers other workflows (e.g. Documentation)
           ssh: ${{ secrets.DOCUMENTER_KEY }}
-          lookback: ${{ github.event.inputs.lookback || 3 }}
-          # ssh: ${{ secrets.NAME_OF_MY_SSH_PRIVATE_KEY_SECRET }}
