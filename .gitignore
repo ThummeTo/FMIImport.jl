@@ -23,7 +23,12 @@ docs/site/
 # environment.
 Manifest.toml
 
-# Custom
+# Local settings of Preferences.jl, specific to the host computer
+LocalPreferences.toml
+
+# Editor settings and scratch files
 .vscode/
-\tmp
+tmp/
+
+# Custom (this repository only)
 *.fmu
